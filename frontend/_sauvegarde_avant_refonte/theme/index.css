@@ -1,0 +1,416 @@
+@import "tailwindcss";
+@import "leaflet/dist/leaflet.css";
+
+/* Police Poppins hébergée localement (fonctionne hors ligne) */
+@import "@fontsource/poppins/latin-400.css";
+@import "@fontsource/poppins/latin-500.css";
+@import "@fontsource/poppins/latin-600.css";
+@import "@fontsource/poppins/latin-700.css";
+@import "@fontsource/poppins/latin-ext-400.css";
+@import "@fontsource/poppins/latin-ext-500.css";
+@import "@fontsource/poppins/latin-ext-600.css";
+@import "@fontsource/poppins/latin-ext-700.css";
+
+@theme {
+  --font-sans: "Poppins", ui-sans-serif, system-ui, sans-serif;
+  --font-poppins: "Poppins", ui-sans-serif, system-ui, sans-serif;
+}
+
+:root {
+  font-family: "Poppins", sans-serif;
+  font-size: 14px;
+  line-height: 1.5;
+  font-weight: 400;
+  color: #17201b;
+  background: #f5f7f6;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  color-scheme: light;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  min-width: 320px;
+  background: #f5f7f6;
+  font-family: "Poppins", sans-serif;
+  font-size: 14px;
+}
+
+html[data-theme="dark"] body {
+  background: #0f172a;
+  color: #e2e8f0;
+}
+
+html[data-theme="dark"] .bg-white {
+  background-color: #172235;
+}
+
+html[data-theme="dark"] .bg-gray-50,
+html[data-theme="dark"] .bg-slate-50,
+html[data-theme="dark"] .bg-\[\#f7f9f8\],
+html[data-theme="dark"] .bg-\[\#f5f7f6\] {
+  background-color: #0f172a;
+}
+
+html[data-theme="dark"] .text-gray-900,
+html[data-theme="dark"] .text-slate-900,
+html[data-theme="dark"] .text-gray-800,
+html[data-theme="dark"] .text-slate-800 {
+  color: #f8fafc;
+}
+
+html[data-theme="dark"] .text-gray-700,
+html[data-theme="dark"] .text-slate-700,
+html[data-theme="dark"] .text-gray-600,
+html[data-theme="dark"] .text-slate-600,
+html[data-theme="dark"] .text-gray-500,
+html[data-theme="dark"] .text-slate-500 {
+  color: #cbd5e1;
+}
+
+html[data-theme="dark"] .border-gray-200,
+html[data-theme="dark"] .border-slate-200,
+html[data-theme="dark"] .border-gray-100,
+html[data-theme="dark"] .border-slate-100 {
+  border-color: #334155;
+}
+
+html[data-theme="dark"] input,
+html[data-theme="dark"] select,
+html[data-theme="dark"] textarea {
+  background-color: #1e293b;
+  color: #f8fafc;
+}
+
+button,
+input,
+select,
+textarea {
+  font-family: "Poppins", sans-serif;
+}
+
+button {
+  cursor: pointer;
+}
+
+button,
+a,
+input,
+select,
+textarea {
+  -webkit-tap-highlight-color: transparent;
+}
+
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 3px solid rgb(16 185 129 / 0.35);
+  outline-offset: 2px;
+}
+
+/* Dans la couche « base » pour ne pas écraser les classes de couleur Tailwind. */
+@layer base {
+  a {
+    color: inherit;
+    text-decoration: none;
+  }
+}
+
+img {
+  max-width: 100%;
+}
+
+.app-list-scroll {
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5d0 transparent;
+}
+
+.app-list-scroll::-webkit-scrollbar {
+  width: 6px;
+}
+
+.app-list-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.app-list-scroll::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: #cbd5d0;
+}
+
+.app-list-scroll::-webkit-scrollbar-thumb:hover {
+  background: #94a39b;
+}
+
+.app-page {
+  min-height: 100%;
+  padding: 1rem;
+}
+
+.app-container {
+  width: min(100%, 80rem);
+  margin-inline: auto;
+}
+
+.container-app {
+  width: min(100% - 3rem, 76rem);
+  margin-inline: auto;
+}
+
+.section-padding {
+  margin-inline: 0.75rem;
+  padding-block: 6.5rem;
+  border-radius: 2rem;
+  overflow: hidden;
+}
+
+.section-padding + .section-padding {
+  border-top: 1px solid rgb(226 232 240 / 0.55);
+}
+
+.landing-card {
+  border-radius: 1.75rem;
+  box-shadow: 0 18px 55px rgb(15 23 42 / 0.07);
+}
+
+.app-table-scroll {
+  width: 100%;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+.app-table-scroll > table {
+  min-width: 42rem;
+}
+
+.app-map {
+  min-height: 24rem;
+}
+
+@media (max-width: 768px) {
+  html,
+  body,
+  #root {
+    height: auto;
+    min-height: 100%;
+  }
+
+  body {
+    overflow-x: hidden;
+  }
+
+  .app-page {
+    padding: 0.875rem;
+  }
+
+  .app-map {
+    min-height: 20rem;
+  }
+
+  .container-app {
+    width: min(100% - 2rem, 76rem);
+  }
+
+  .section-padding {
+    margin-inline: 0.5rem;
+    padding-block: 4.75rem;
+    border-radius: 1.5rem;
+  }
+}
+
+@media (min-width: 640px) {
+  .app-page {
+    padding: 1.5rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .app-page {
+    padding: 2rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* ---------- Marqueurs de carte (bacs et agent) ---------- */
+.bac-marker {
+  background: none;
+  border: none;
+}
+
+.bac-pin {
+  position: relative;
+  width: 46px;
+  height: 58px;
+  filter: drop-shadow(0 4px 5px rgb(15 23 42 / 0.35));
+  transform-origin: 50% 96%;
+  transition: transform 0.2s ease;
+}
+
+.bac-pin--selectionne {
+  transform: scale(1.25);
+}
+
+.bac-pin__niveau {
+  position: absolute;
+  top: -5px;
+  right: -16px;
+  padding: 1px 6px;
+  border-radius: 999px;
+  border: 2px solid var(--c);
+  background: #fff;
+  color: var(--c);
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 14px;
+}
+
+.bac-pin__halo,
+.agent-pin__halo {
+  position: absolute;
+  border-radius: 999px;
+  background: var(--c, #2563eb);
+  opacity: 0;
+  pointer-events: none;
+  animation: halo-carte 1.8s ease-out infinite;
+}
+
+.bac-pin__halo {
+  left: 5px;
+  top: 4px;
+  width: 36px;
+  height: 36px;
+}
+
+.agent-pin {
+  position: relative;
+  width: 40px;
+  height: 40px;
+  --c: #2563eb;
+  filter: drop-shadow(0 3px 4px rgb(15 23 42 / 0.35));
+}
+
+.agent-pin__halo {
+  inset: 0;
+}
+
+@keyframes halo-carte {
+  0% {
+    transform: scale(0.7);
+    opacity: 0.55;
+  }
+  100% {
+    transform: scale(2);
+    opacity: 0;
+  }
+}
+
+/* ---------- Animations d'apparition ---------- */
+@keyframes carte-entree {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.anim-carte {
+  animation: carte-entree 0.35s ease-out both;
+}
+
+.anim-carte:nth-child(2) { animation-delay: 0.05s; }
+.anim-carte:nth-child(3) { animation-delay: 0.1s; }
+.anim-carte:nth-child(4) { animation-delay: 0.15s; }
+.anim-carte:nth-child(5) { animation-delay: 0.2s; }
+.anim-carte:nth-child(n + 6) { animation-delay: 0.25s; }
+
+/* ---------- Notifications (react-toastify) ---------- */
+.Toastify__toast-container {
+  width: min(92vw, 380px);
+  padding: 0;
+}
+
+.Toastify__toast {
+  min-height: 56px;
+  margin-bottom: 0.6rem;
+  padding: 0.75rem 0.9rem;
+  border-radius: 1rem;
+  border-left: 5px solid #64748b;
+  box-shadow: 0 12px 32px rgb(15 23 42 / 0.16);
+  font-family: "Poppins", sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  color: #0f172a;
+}
+
+.Toastify__toast--success { border-left-color: #16a34a; }
+.Toastify__toast--error { border-left-color: #dc2626; }
+.Toastify__toast--warning { border-left-color: #f97316; }
+.Toastify__toast--info { border-left-color: #0ea5e9; }
+
+.Toastify__progress-bar { height: 3px; }
+
+@media (max-width: 640px) {
+  .Toastify__toast-container--top-center {
+    top: 4.25rem;
+    left: 50%;
+    transform: translateX(-50%);
+  }
+}
+
+/* ---------- Fenêtres modales (entrée animée) ---------- */
+@keyframes overlay-entree {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes feuille-entree {
+  from {
+    opacity: 0;
+    transform: translateY(40px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.anim-overlay {
+  animation: overlay-entree 0.2s ease-out both;
+}
+
+.anim-feuille {
+  animation: feuille-entree 0.3s cubic-bezier(0.22, 1, 0.36, 1) both;
+}

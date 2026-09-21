@@ -1,0 +1,93 @@
+import { useRef, useState } from "react";
+import { Camera, Trash2 } from "lucide-react";
+
+interface AvatarPickerProps {
+  name: string;
+  value: string | null;
+  onChange: (value: string | null) => void;
+}
+
+const MAX_FILE_SIZE = 1.5 * 1024 * 1024;
+
+export default function AvatarPicker({
+  name,
+  value,
+  onChange,
+}: AvatarPickerProps) {
+  const inputRef = useRef<HTMLInputElement | null>(null);
+  const [error, setError] = useState("");
+  const initials = name
+    .split(" ")
+    .filter(Boolean)
+    .map((part) => part[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase() || "U";
+
+  const selectPhoto = (file?: File) => {
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      setError("Sélectionnez une image valide.");
+      return;
+    }
+
+    if (file.size > MAX_FILE_SIZE) {
+      setError("L'image doit faire moins de 1,5 Mo.");
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      setError("");
+      onChange(typeof reader.result === "string" ? reader.result : null);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  return (
+    <div className="flex flex-col items-center gap-3 sm:flex-row sm:items-center">
+      <div className="relative">
+        <div className="flex h-24 w-24 items-center justify-center overflow-hidden rounded-full bg-emerald-100 text-2xl font-bold text-emerald-700 ring-4 ring-emerald-50">
+          {value ? (
+            <img src={value} alt={`Photo de ${name}`} className="h-full w-full object-cover" />
+          ) : (
+            <span>{initials}</span>
+          )}
+        </div>
+        <button
+          type="button"
+          onClick={() => inputRef.current?.click()}
+          className="absolute bottom-0 right-0 flex h-9 w-9 items-center justify-center rounded-full bg-emerald-600 text-white shadow-lg transition hover:bg-emerald-700"
+          aria-label="Modifier la photo de profil"
+          title="Modifier la photo"
+        >
+          <Camera size={16} />
+        </button>
+        <input
+          ref={inputRef}
+          type="file"
+          accept="image/*"
+          className="hidden"
+          onChange={(event) => selectPhoto(event.target.files?.[0])}
+        />
+      </div>
+
+      <div className="text-center sm:text-left">
+        <p className="text-sm font-semibold text-slate-800">Photo de profil</p>
+        <p className="mt-1 text-xs text-slate-500">JPG, PNG ou WEBP, 1,5 Mo maximum.</p>
+        {value && (
+          <button
+            type="button"
+            onClick={() => onChange(null)}
+            className="mt-2 inline-flex items-center gap-1.5 text-xs font-semibold text-red-600 hover:text-red-700"
+          >
+            <Trash2 size={13} />
+            Supprimer la photo
+          </button>
+        )}
+        {error && <p className="mt-2 text-xs font-medium text-red-600">{error}</p>}
+      </div>
+    </div>
+  );
+}
