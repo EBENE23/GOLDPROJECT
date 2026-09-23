@@ -17,6 +17,17 @@ export interface AuthUser {
   dateCreation?: string;
 }
 
+// La photo (image encodée) reste en mémoire : elle est rechargée depuis l'API à chaque ouverture.
+const sansPhoto = ({ photoProfil: _photo, ...reste }: AuthUser) => reste;
+
+export const memoriserUtilisateur = (utilisateur: AuthUser) => {
+  try {
+    localStorage.setItem("smartcitywaste_user", JSON.stringify(sansPhoto(utilisateur)));
+  } catch {
+    /* stockage plein ou indisponible : la session reste valable en mémoire */
+  }
+};
+
 const normalizeRole = (role: string): UserRole | null => {
   const normalized = String(role || "").toUpperCase();
   if (normalized === "ADMIN" || normalized === "ADMINISTRATOR") {
@@ -78,10 +89,7 @@ export const useAuthStore = create<AuthState>((set) => ({
       token
     );
 
-    localStorage.setItem(
-      "smartcitywaste_user",
-      JSON.stringify(utilisateur)
-    );
+    memoriserUtilisateur(utilisateur);
 
     set({
       token,
@@ -117,10 +125,7 @@ export const saveAuthentication = (
     token
   );
 
-  localStorage.setItem(
-    "smartcitywaste_user",
-    JSON.stringify(utilisateurNormalise)
-  );
+  memoriserUtilisateur(utilisateurNormalise);
 
   useAuthStore.setState({
     token,

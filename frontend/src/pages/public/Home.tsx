@@ -26,6 +26,7 @@ import {
 import ScrollReveal from "../../components/ScrollReveal";
 import SectionTitle from "../../components/SectionTitle";
 import Badge from "../../components/ui/Badge";
+import { BandeauAgent, BandeauEquipe, SectionCycle, SectionRoles } from "./SectionsAccueil";
 
 const features = [
     {
@@ -721,6 +722,12 @@ export default function Home() {
                 </div>
             </section>
 
+            <BandeauEquipe />
+
+            <SectionRoles />
+
+            <SectionCycle />
+
             {/* =====================================================
                 FONCTIONNEMENT
             ====================================================== */}
@@ -936,6 +943,8 @@ export default function Home() {
                     </div>
                 </div>
             </section>
+
+            <BandeauAgent />
 
             {/* =====================================================
                 CTA

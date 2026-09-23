@@ -1,5 +1,7 @@
 const bcrypt = require("bcryptjs");
 const { DemandeInscription, Utilisateur, Zone } = require("../models");
+const { validerPhotoProfil } = require("../utils/photoProfil");
+const { occupationDesZones, verifierPlaceDansZone } = require("../services/zoneRegles");
 
 const creerDemandeInscription = async (req, res) => {
   try {
@@ -9,12 +11,21 @@ const creerDemandeInscription = async (req, res) => {
       email,
       motDePasse,
       telephone,
-      roleDemande
+      roleDemande,
+      photoProfil
     } = req.body;
 
     if (!nom || !prenom || !email || !motDePasse || !roleDemande) {
       return res.status(400).json({
         message: "Les champs obligatoires sont requis."
+      });
+    }
+
+    // Le formulaire vérifie déjà cette règle côté navigateur : elle est refaite
+    // ici pour qu'un appel direct à l'API ne puisse pas la contourner.
+    if (String(motDePasse).length < 8) {
+      return res.status(400).json({
+        message: "Le mot de passe doit contenir au moins 8 caractères."
       });
     }
 
@@ -24,9 +35,19 @@ const creerDemandeInscription = async (req, res) => {
       });
     }
 
+    const { photo, erreur: erreurPhoto } = validerPhotoProfil(photoProfil);
+
+    if (erreurPhoto) {
+      return res.status(400).json({ message: erreurPhoto });
+    }
+
+    // Normalisé pour qu'une même adresse ne puisse pas créer deux comptes en
+    // ne changeant que la casse (Ex@mail.com / ex@mail.com).
+    const emailNormalise = String(email).trim().toLowerCase();
+
     const demandeExistante = await DemandeInscription.findOne({
       where: {
-        email,
+        email: emailNormalise,
         statut: "EN_ATTENTE"
       }
     });
@@ -38,7 +59,7 @@ const creerDemandeInscription = async (req, res) => {
     }
 
     const utilisateurExistant = await Utilisateur.findOne({
-      where: { email }
+      where: { email: emailNormalise }
     });
 
     if (utilisateurExistant) {
@@ -47,14 +68,15 @@ const creerDemandeInscription = async (req, res) => {
       });
     }
 
-    const motDePasseHash = await bcrypt.hash(motDePasse, 10);
+    const motDePasseHash = await bcrypt.hash(motDePasse, 12);
 
     const demande = await DemandeInscription.create({
       nom,
       prenom,
-      email,
+      email: emailNormalise,
       motDePasse: motDePasseHash,
       telephone: telephone || null,
+      photoProfil: photo,
       roleDemande,
       statut: "EN_ATTENTE",
       dateDemande: new Date()
@@ -90,6 +112,19 @@ const listerDemandesInscription = async (req, res) => {
 
     return res.status(500).json({
       message: "Erreur lors de la récupération des demandes."
+    });
+  }
+};
+
+// Occupation des zones (superviseur en place, agents x/5) pour choisir l'affectation.
+const listerOccupationZones = async (req, res) => {
+  try {
+    return res.status(200).json({ zones: await occupationDesZones() });
+  } catch (error) {
+    console.error("Erreur occupation des zones :", error);
+
+    return res.status(500).json({
+      message: "Erreur lors de la récupération de l'occupation des zones."
     });
   }
 };
@@ -185,14 +220,15 @@ const approuverDemandeInscription = async (req, res) => {
       });
     }
 
-    if (
-      demande.roleDemande === "SUPERVISEUR" &&
-      zone.id_superviseur
-    ) {
+    const refus = await verifierPlaceDansZone(zone, demande.roleDemande, {
+      transaction
+    });
+
+    if (refus) {
       await transaction.rollback();
 
       return res.status(409).json({
-        message: "Cette zone possède déjà un superviseur."
+        message: refus
       });
     }
 
@@ -203,6 +239,7 @@ const approuverDemandeInscription = async (req, res) => {
         email: demande.email,
         motDePasse: demande.motDePasse,
         telephone: demande.telephone,
+        photoProfil: demande.photoProfil,
         statutCompte: "ACTIF",
         dateCreation: new Date(),
         role: demande.roleDemande,
@@ -330,6 +367,7 @@ const refuserDemandeInscription = async (req, res) => {
 module.exports = {
   creerDemandeInscription,
   listerDemandesInscription,
+  listerOccupationZones,
   consulterDemandeInscription,
   approuverDemandeInscription,
   refuserDemandeInscription

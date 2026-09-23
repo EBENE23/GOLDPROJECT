@@ -8,7 +8,7 @@ import Modal from "../components/ui/Modal";
 import api from "../services/api";
 import { logout, useAuthStore } from "../stores/authStore";
 import { ecouterTempsReel } from "../services/tempsReel";
-import { applyAppearance, loadUserAvatar, loadUserPreferences } from "../utils/userPreferences";
+import { applyAppearance, loadUserPreferences } from "../utils/userPreferences";
 
 export interface NavItem {
   label: string;
@@ -82,13 +82,26 @@ export default function AppShell({ config }: { config: ShellConfig }) {
   const { pathname } = useLocation();
   const utilisateur = useAuthStore((state) => state.utilisateur);
   const [feuillePlus, setFeuillePlus] = useState(false);
-  const avatar = loadUserAvatar(utilisateur);
+  const avatar = utilisateur?.photoProfil ?? null;
   const compteur = useCompteurCloche(config.cloche.source, utilisateur?.idUtilisateur);
 
   useEffect(() => {
     const { theme, accent } = loadUserPreferences(utilisateur);
     applyAppearance(theme, accent);
   }, [utilisateur]);
+
+  // Récupère le profil à jour (photo comprise) : elle n'est pas conservée dans le navigateur.
+  const idConnecte = utilisateur?.idUtilisateur;
+  useEffect(() => {
+    if (!idConnecte) return;
+    api
+      .get("/profil/me")
+      .then((reponse) => {
+        const profil = reponse.data?.utilisateur;
+        if (profil) useAuthStore.setState((etat) => ({ utilisateur: etat.utilisateur ? { ...etat.utilisateur, ...profil } : etat.utilisateur }));
+      })
+      .catch(() => undefined);
+  }, [idConnecte]);
 
   // Toast à l'arrivée d'une nouvelle notification (mission affectée, alerte de bac…).
   const dernierIdNotification = useRef<number | null>(null);

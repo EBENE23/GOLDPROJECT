@@ -4,11 +4,14 @@ import {
   AlertTriangle,
   CheckCircle2,
   Eye,
+  LocateFixed,
   MapPin,
+  Pencil,
   RefreshCw,
   Search,
   X,
 } from "lucide-react";
+import { toast } from "react-toastify";
 import api from "../../services/api";
 import {
   obtenirClasseFondNiveauBac,
@@ -123,10 +126,13 @@ export default function Bacs() {
   const [stateFilter, setStateFilter] = useState("TOUS");
   const [selected, setSelected] = useState<Bac | null>(null);
   const [showCreate, setShowCreate] = useState(false);
+  // Bac en cours de modification (null = création d'un nouveau bac).
+  const [editing, setEditing] = useState<Bac | null>(null);
   const [form, setForm] = useState<BacForm>(initialForm);
   const [submitting, setSubmitting] = useState(false);
   const [deleting, setDeleting] = useState<number | null>(null);
   const [message, setMessage] = useState("");
+  const [localisation, setLocalisation] = useState(false);
 
   const loadData = useCallback(async (manual = false) => {
     try {
@@ -180,7 +186,60 @@ export default function Bacs() {
     });
   }, [bacs, search, stateFilter]);
 
-  const createBac = async (
+  const ouvrirCreation = () => {
+    setEditing(null);
+    setForm(initialForm);
+    setMessage("");
+    setShowCreate(true);
+  };
+
+  const ouvrirModification = (bac: Bac) => {
+    setEditing(bac);
+    setForm({
+      reference: bac.reference,
+      capacite: String(bac.capacite),
+      hauteur: String(bac.hauteur),
+      latitude: bac.latitude != null ? String(bac.latitude) : "",
+      longitude: bac.longitude != null ? String(bac.longitude) : "",
+      id_zone: String(bac.id_zone),
+    });
+    setMessage("");
+    setShowCreate(true);
+  };
+
+  const fermerFormulaire = () => {
+    setShowCreate(false);
+    setEditing(null);
+  };
+
+  // Remplit latitude/longitude avec la position actuelle du téléphone ou de l'ordinateur.
+  // Utile pour recaler un bac connecté après l'avoir déplacé (ex. maison → lieu de soutenance).
+  const utiliserMaPosition = () => {
+    if (!("geolocation" in navigator) || !window.isSecureContext) {
+      toast.warning("La localisation n'est pas disponible sur cette connexion.");
+      return;
+    }
+
+    setLocalisation(true);
+    navigator.geolocation.getCurrentPosition(
+      (resultat) => {
+        setForm((f) => ({
+          ...f,
+          latitude: String(resultat.coords.latitude),
+          longitude: String(resultat.coords.longitude),
+        }));
+        setLocalisation(false);
+        toast.success("Position actuelle appliquée au bac.", { autoClose: 2000 });
+      },
+      () => {
+        setLocalisation(false);
+        toast.error("Impossible d'obtenir votre position. Vérifiez l'autorisation de localisation.");
+      },
+      { enableHighAccuracy: true, timeout: 15000 }
+    );
+  };
+
+  const enregistrerBac = async (
     event: React.FormEvent
   ) => {
     event.preventDefault();
@@ -189,7 +248,7 @@ export default function Bacs() {
       setSubmitting(true);
       setMessage("");
 
-      await api.post("/bacs", {
+      const donnees = {
         reference: form.reference.trim(),
         capacite: Number(form.capacite),
         hauteur: Number(form.hauteur),
@@ -200,16 +259,24 @@ export default function Bacs() {
           ? Number(form.longitude)
           : null,
         id_zone: Number(form.id_zone),
-      });
+      };
+
+      if (editing) {
+        await api.put(`/bacs/${editing.id_bac}`, donnees);
+        toast.success("Bac modifié avec succès.");
+      } else {
+        await api.post("/bacs", donnees);
+        toast.success("Bac créé avec succès.");
+      }
 
       setForm(initialForm);
-      setShowCreate(false);
+      fermerFormulaire();
 
       await loadData(true);
     } catch (error: any) {
       setMessage(
         error?.response?.data?.message ||
-          "Impossible de créer le bac."
+          `Impossible de ${editing ? "modifier" : "créer"} le bac.`
       );
     } finally {
       setSubmitting(false);
@@ -293,11 +360,7 @@ export default function Bacs() {
 
             <button
               type="button"
-              onClick={() => {
-                setForm(initialForm);
-                setMessage("");
-                setShowCreate(true);
-              }}
+              onClick={ouvrirCreation}
               className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 text-sm font-bold text-white shadow-sm transition hover:bg-emerald-700"
             >
               <AddBacIcon />
@@ -590,6 +653,18 @@ export default function Bacs() {
                     <button
                       type="button"
                       onClick={() =>
+                        ouvrirModification(bac)
+                      }
+                      className="flex h-10 w-11 shrink-0 items-center justify-center rounded-xl border border-slate-200 text-slate-500 transition hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-700"
+                      aria-label={`Modifier ${bac.reference}`}
+                      title="Modifier"
+                    >
+                      <Pencil size={16} />
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() =>
                         deleteBac(
                           bac.id_bac
                         )
@@ -659,19 +734,19 @@ export default function Bacs() {
             <div className="sticky top-0 flex items-center justify-between border-b border-slate-100 bg-white px-5 py-4">
               <div>
                 <h2 className="text-lg font-bold text-slate-900">
-                  Ajouter un bac
+                  {editing ? `Modifier ${editing.reference}` : "Ajouter un bac"}
                 </h2>
 
                 <p className="text-xs text-slate-500">
-                  Enregistrer un nouveau bac connecté.
+                  {editing
+                    ? "Mettre à jour les informations de ce bac connecté."
+                    : "Enregistrer un nouveau bac connecté."}
                 </p>
               </div>
 
               <button
                 type="button"
-                onClick={() =>
-                  setShowCreate(false)
-                }
+                onClick={fermerFormulaire}
                 className="flex h-9 w-9 items-center justify-center rounded-xl bg-slate-100 text-slate-500 transition hover:bg-slate-200"
                 aria-label="Fermer"
               >
@@ -680,7 +755,7 @@ export default function Bacs() {
             </div>
 
             <form
-              onSubmit={createBac}
+              onSubmit={enregistrerBac}
               className="space-y-4 p-5"
             >
               <div>
@@ -690,6 +765,7 @@ export default function Bacs() {
 
                 <input
                   required
+                  disabled={!!editing}
                   value={form.reference}
                   onChange={(event) =>
                     setForm({
@@ -699,8 +775,13 @@ export default function Bacs() {
                     })
                   }
                   placeholder="BAC-YDE2-001"
-                  className="h-11 w-full rounded-xl border border-slate-200 px-4 text-sm outline-none transition focus:border-emerald-400 focus:ring-4 focus:ring-emerald-50"
+                  className="h-11 w-full rounded-xl border border-slate-200 px-4 text-sm outline-none transition focus:border-emerald-400 focus:ring-4 focus:ring-emerald-50 disabled:bg-slate-50 disabled:text-slate-500"
                 />
+                {editing && (
+                  <p className="mt-1.5 text-xs text-slate-400">
+                    La référence identifie le bac auprès du capteur (ESP32) : elle ne se modifie pas.
+                  </p>
+                )}
               </div>
 
               <div className="grid gap-4 sm:grid-cols-2">
@@ -791,6 +872,19 @@ export default function Bacs() {
                 </div>
               </div>
 
+              <button
+                type="button"
+                onClick={utiliserMaPosition}
+                disabled={localisation}
+                className="inline-flex items-center gap-2 rounded-xl bg-indigo-50 px-3.5 py-2 text-xs font-bold text-indigo-700 transition hover:bg-indigo-100 active:scale-95 disabled:opacity-60"
+              >
+                <LocateFixed size={15} className={localisation ? "animate-pulse" : ""} />
+                {localisation ? "Localisation…" : "Utiliser ma position actuelle"}
+              </button>
+              <p className="-mt-2 text-xs text-slate-400">
+                Utile quand le bac vient d'être installé ou déplacé : tenez-vous près du bac avec votre téléphone.
+              </p>
+
               <div>
                 <label className="mb-1.5 block text-sm font-semibold text-slate-700">
                   Zone
@@ -868,7 +962,9 @@ export default function Bacs() {
               >
                 {submitting
                   ? "Enregistrement..."
-                  : "Enregistrer le bac"}
+                  : editing
+                    ? "Enregistrer les modifications"
+                    : "Enregistrer le bac"}
               </button>
             </form>
           </div>

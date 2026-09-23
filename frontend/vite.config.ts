@@ -24,9 +24,14 @@ export default defineConfig({
         host: true,
         port: 5173,
         proxy: proxyApi,
+        // Depuis Vite 6+, un nom d'hôte externe (tunnel ngrok/cloudflared, etc.)
+        // est refusé par défaut ("Blocked request. This host is not allowed.").
+        // Nécessaire pour partager l'application via un tunnel.
+        allowedHosts: true,
     },
     preview: {
         host: true,
         proxy: proxyApi,
+        allowedHosts: true,
     },
 });

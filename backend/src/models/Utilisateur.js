@@ -39,6 +39,11 @@ const Utilisateur = sequelize.define(
       allowNull: true,
     },
 
+    photoProfil: {
+      type: DataTypes.TEXT("long"),
+      allowNull: true,
+    },
+
     statutCompte: {
       type: DataTypes.STRING(30),
       allowNull: false,

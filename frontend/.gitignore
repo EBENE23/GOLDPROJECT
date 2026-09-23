@@ -22,3 +22,7 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Sauvegardes locales faites avant chaque refonte : utiles en développement,
+# redondantes une fois que Git suit l'historique du projet.
+_sauvegarde_avant_refonte/

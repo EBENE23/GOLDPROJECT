@@ -1,0 +1,9 @@
+node_modules/
+.env
+*.log
+npm-debug.log*
+
+# Sauvegardes locales faites avant chaque modification importante : utiles en
+# développement, redondantes une fois que Git suit l'historique du projet.
+_sauvegarde_avant_photos/
+_sauvegarde_avant_securite/

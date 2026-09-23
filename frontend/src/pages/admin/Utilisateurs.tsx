@@ -14,6 +14,7 @@ import {
   UserX,
   X,
 } from "lucide-react";
+import Avatar from "../../components/Avatar";
 import api from "../../services/api";
 import { useConfirmation } from "../../hooks/useConfirmation";
 import { toast } from "react-toastify";
@@ -29,6 +30,7 @@ interface Utilisateur {
   prenom: string;
   email: string;
   telephone?: string | null;
+  photoProfil?: string | null;
   statutCompte: string;
   role: UserRole;
   dateCreation?: string;
@@ -63,10 +65,6 @@ function extractArray(data: any, key: string) {
   }
 
   return [];
-}
-
-function getInitials(user: Utilisateur) {
-  return `${user.prenom?.charAt(0) || ""}${user.nom?.charAt(0) || ""}`.toUpperCase();
 }
 
 function getRoleLabel(role: UserRole) {
@@ -680,11 +678,7 @@ export default function Utilisateurs() {
                         >
                           <td className="px-6 py-4">
                             <div className="flex items-center gap-3">
-                              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-emerald-50 text-[11px] font-bold text-emerald-700">
-                                {getInitials(
-                                  user
-                                )}
-                              </div>
+                              <Avatar prenom={user.prenom} nom={user.nom} photo={user.photoProfil} taille={40} />
 
                               <div className="min-w-0">
                                 <p className="text-xs font-bold text-slate-800">
@@ -835,9 +829,7 @@ export default function Utilisateurs() {
                     className="relative rounded-xl border border-slate-200 bg-white p-3"
                   >
                     <div className="flex items-start gap-2.5">
-                      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-emerald-50 text-[9px] font-bold text-emerald-700">
-                        {getInitials(user)}
-                      </div>
+                      <Avatar prenom={user.prenom} nom={user.nom} photo={user.photoProfil} taille={36} />
 
                       <div className="min-w-0 flex-1">
                         <div className="flex items-start justify-between gap-2">
@@ -1113,11 +1105,7 @@ export default function Utilisateurs() {
 
             <div className="max-h-[75vh] overflow-y-auto p-4 sm:p-5">
               <div className="flex items-center gap-3 rounded-2xl bg-slate-50 p-4">
-                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-sm font-bold text-emerald-700">
-                  {getInitials(
-                    selectedUser
-                  )}
-                </div>
+                <Avatar prenom={selectedUser.prenom} nom={selectedUser.nom} photo={selectedUser.photoProfil} taille={64} />
 
                 <div className="min-w-0">
                   <p className="text-sm font-bold text-slate-900">

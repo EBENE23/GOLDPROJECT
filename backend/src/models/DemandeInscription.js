@@ -35,6 +35,11 @@ const DemandeInscription = sequelize.define(
       allowNull: true,
     },
 
+    photoProfil: {
+      type: DataTypes.TEXT("long"),
+      allowNull: true,
+    },
+
     roleDemande: {
       type: DataTypes.ENUM(
         "SUPERVISEUR",

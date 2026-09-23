@@ -11,6 +11,7 @@ import {
   Users,
   X,
 } from "lucide-react";
+import Avatar from "../../components/Avatar";
 import api from "../../services/api";
 
 interface Zone {
@@ -25,6 +26,7 @@ interface Utilisateur {
   nom: string;
   prenom: string;
   email: string;
+  photoProfil?: string | null;
   role: string;
   statutCompte: string;
 }
@@ -479,10 +481,13 @@ export default function Zones() {
                       </div>
 
                       {superviseur ? (
-                        <p className="mt-1 text-sm font-semibold text-slate-800">
-                          {superviseur.prenom}{" "}
-                          {superviseur.nom}
-                        </p>
+                        <div className="mt-1.5 flex items-center gap-2.5">
+                          <Avatar prenom={superviseur.prenom} nom={superviseur.nom} photo={superviseur.photoProfil} taille={32} />
+                          <p className="text-sm font-semibold text-slate-800">
+                            {superviseur.prenom}{" "}
+                            {superviseur.nom}
+                          </p>
+                        </div>
                       ) : (
                         <p className="mt-1 text-sm font-medium text-amber-600">
                           Aucun superviseur

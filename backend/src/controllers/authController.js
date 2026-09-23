@@ -48,6 +48,7 @@ const connexion = async (req, res) => {
       },
       process.env.JWT_SECRET,
       {
+        algorithm: "HS256",
         expiresIn: process.env.JWT_EXPIRES_IN || "1d",
       }
     );
@@ -61,6 +62,7 @@ const connexion = async (req, res) => {
         prenom: utilisateur.prenom,
         email: utilisateur.email,
         telephone: utilisateur.telephone,
+        photoProfil: utilisateur.photoProfil,
         statutCompte: utilisateur.statutCompte,
         role: utilisateur.role,
         dateCreation: utilisateur.dateCreation,

@@ -18,6 +18,7 @@ import { useMemo, useState } from "react";
 import type { FormEvent } from "react";
 import { Link } from "react-router-dom";
 import api from "../../services/api";
+import { preparerPhotoProfil } from "../../utils/imageProfil";
 
 type FormData = {
   nom: string;
@@ -292,10 +293,11 @@ export default function Register() {
 
   if (success) {
     return (
-      <main className="fixed inset-0 h-dvh w-full overflow-hidden bg-slate-950">
+      <main className="fixed inset-0 h-dvh w-full overflow-hidden bg-gradient-to-br from-emerald-900 via-slate-950 to-slate-950">
         <div className="absolute inset-0 overflow-hidden">
-          <div className="absolute -left-24 -top-24 h-72 w-72 rounded-full bg-emerald-500/10 blur-3xl" />
-          <div className="absolute -bottom-32 -right-24 h-96 w-96 rounded-full bg-emerald-400/10 blur-3xl" />
+          <div className="absolute -left-24 -top-24 h-72 w-72 rounded-full bg-green-400/25 blur-3xl" />
+          <div className="absolute -bottom-32 -right-24 h-96 w-96 rounded-full bg-emerald-400/20 blur-3xl" />
+          <div className="absolute right-1/4 top-1/3 h-56 w-56 rounded-full bg-cyan-400/10 blur-3xl" />
         </div>
 
         <div className="relative flex h-full w-full items-center justify-center px-5 py-6">
@@ -344,12 +346,12 @@ export default function Register() {
   }
 
   return (
-    <main className="fixed inset-0 h-dvh w-full overflow-hidden bg-slate-950 font-poppins">
+    <main className="fixed inset-0 h-dvh w-full overflow-hidden bg-gradient-to-br from-emerald-900 via-slate-950 to-slate-950 font-poppins">
       {/* Background */}
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
-        <div className="absolute -left-32 -top-32 h-80 w-80 rounded-full bg-emerald-500/10 blur-3xl" />
-        <div className="absolute -bottom-40 -right-32 h-[28rem] w-[28rem] rounded-full bg-emerald-400/10 blur-3xl" />
-        <div className="absolute left-1/2 top-1/2 h-64 w-64 -translate-x-1/2 -translate-y-1/2 rounded-full bg-cyan-500/5 blur-3xl" />
+        <div className="absolute -left-32 -top-32 h-80 w-80 rounded-full bg-green-400/25 blur-3xl" />
+        <div className="absolute -bottom-40 -right-32 h-[28rem] w-[28rem] rounded-full bg-emerald-400/20 blur-3xl" />
+        <div className="absolute left-1/2 top-1/2 h-64 w-64 -translate-x-1/2 -translate-y-1/2 rounded-full bg-cyan-400/10 blur-3xl" />
       </div>
 
       <div className="relative mx-auto flex h-full w-full max-w-[1500px] flex-col px-4 py-3 sm:px-6 sm:py-4 lg:px-8 lg:py-5">
@@ -619,7 +621,7 @@ export default function Register() {
                               <span className="flex h-12 w-12 items-center justify-center rounded-full bg-white text-slate-400"><Camera size={18} /></span>
                             )}
                             <span><strong className="block text-slate-700">Photo de profil <em className="font-normal not-italic text-slate-400">(facultatif)</em></strong><span>JPG ou PNG, aperçu uniquement avant l'envoi.</span></span>
-                            <input type="file" accept="image/png,image/jpeg,image/webp" className="sr-only" onChange={(event) => { const file = event.target.files?.[0]; if (!file) return; if (file.size > 2 * 1024 * 1024) { setServerError("La photo ne doit pas dépasser 2 Mo."); return; } const reader = new FileReader(); reader.onload = () => updateField("photoProfil", String(reader.result)); reader.readAsDataURL(file); }} />
+                            <input type="file" accept="image/png,image/jpeg,image/webp" className="sr-only" onChange={async (event) => { const file = event.target.files?.[0]; if (!file) return; try { updateField("photoProfil", await preparerPhotoProfil(file)); setServerError(""); } catch (err) { setServerError(err instanceof Error ? err.message : "Image invalide."); } }} />
                           </label>
                         </motion.div>
                       )}

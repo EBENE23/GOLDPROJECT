@@ -58,6 +58,16 @@ const mettreAJourSchema = async () => {
     { table: "bacs", field: "id_bac" }
   );
 
+  // Photo de profil (visible par l'administrateur, le superviseur et les agents de la zone).
+  await ajouterColonneSiAbsente("utilisateurs", "photoProfil", {
+    type: DataTypes.TEXT("long"),
+    allowNull: true,
+  });
+  await ajouterColonneSiAbsente("demandes_inscription", "photoProfil", {
+    type: DataTypes.TEXT("long"),
+    allowNull: true,
+  });
+
   // Suivi de la position de l'agent pendant une mission.
   await ajouterColonneSiAbsente("missions", "latitudeAgent", {
     type: DataTypes.DECIMAL(10, 7),

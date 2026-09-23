@@ -27,6 +27,7 @@ export interface Agent {
   prenom: string;
   email?: string;
   telephone?: string | null;
+  photoProfil?: string | null;
   statutCompte: string;
   role?: "AGENT_COLLECTE";
   id_zone?: number | null;

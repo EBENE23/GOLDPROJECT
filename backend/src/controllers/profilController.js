@@ -1,5 +1,6 @@
 const bcrypt = require("bcrypt");
-const { Utilisateur } = require("../models");
+const { Utilisateur, Zone } = require("../models");
+const { validerPhotoProfil } = require("../utils/photoProfil");
 
 const attributsPublics = [
   "idUtilisateur",
@@ -14,10 +15,60 @@ const attributsPublics = [
   "id_zone",
 ];
 
+// Profil à jour de l'utilisateur connecté (avec sa photo).
+const consulterProfil = async (req, res) => {
+  try {
+    const utilisateur = await Utilisateur.findByPk(req.user.idUtilisateur, {
+      attributes: attributsPublics,
+    });
+
+    if (!utilisateur) {
+      return res.status(404).json({ message: "Utilisateur introuvable." });
+    }
+
+    return res.status(200).json({ utilisateur });
+  } catch (error) {
+    console.error("Erreur consultation profil :", error);
+    return res.status(500).json({ message: "Impossible de charger le profil." });
+  }
+};
+
+// Superviseur de la zone de l'agent connecté : nom, coordonnées et photo.
+const consulterMonSuperviseur = async (req, res) => {
+  try {
+    const moi = await Utilisateur.findByPk(req.user.idUtilisateur, {
+      attributes: ["idUtilisateur", "role", "id_zone"],
+    });
+
+    if (!moi?.id_zone) {
+      return res.status(200).json({ superviseur: null, zone: null });
+    }
+
+    const zone = await Zone.findByPk(moi.id_zone);
+    const attributsSuperviseur = ["idUtilisateur", "nom", "prenom", "email", "telephone", "photoProfil", "statutCompte"];
+    // Le superviseur d'une zone est désigné par zone.id_superviseur.
+    const superviseur =
+      (zone?.id_superviseur &&
+        (await Utilisateur.findByPk(zone.id_superviseur, { attributes: attributsSuperviseur }))) ||
+      (await Utilisateur.findOne({
+        where: { role: "SUPERVISEUR", id_zone: moi.id_zone },
+        attributes: attributsSuperviseur,
+      }));
+
+    return res.status(200).json({
+      superviseur,
+      zone: zone ? { idZone: zone.idZone, nomZone: zone.nomZone } : null,
+    });
+  } catch (error) {
+    console.error("Erreur consultation superviseur :", error);
+    return res.status(500).json({ message: "Impossible de charger votre superviseur." });
+  }
+};
+
 const modifierProfil = async (req, res) => {
   try {
     const utilisateur = await Utilisateur.findByPk(
-      req.utilisateur.idUtilisateur
+      req.user.idUtilisateur
     );
 
     if (!utilisateur) {
@@ -53,7 +104,13 @@ const modifierProfil = async (req, res) => {
     utilisateur.email = emailNormalise;
     utilisateur.telephone = telephone ? String(telephone).trim() : null;
     if (photoProfil !== undefined) {
-      utilisateur.photoProfil = photoProfil || null;
+      const { photo, erreur } = validerPhotoProfil(photoProfil);
+
+      if (erreur) {
+        return res.status(400).json({ message: erreur });
+      }
+
+      utilisateur.photoProfil = photo;
     }
     await utilisateur.save();
 
@@ -74,7 +131,7 @@ const modifierProfil = async (req, res) => {
 const modifierMotDePasse = async (req, res) => {
   try {
     const utilisateur = await Utilisateur.findByPk(
-      req.utilisateur.idUtilisateur
+      req.user.idUtilisateur
     );
     const { ancienMotDePasse, nouveauMotDePasse } = req.body;
 
@@ -107,7 +164,7 @@ const modifierMotDePasse = async (req, res) => {
       });
     }
 
-    utilisateur.motDePasse = await bcrypt.hash(nouveauMotDePasse, 10);
+    utilisateur.motDePasse = await bcrypt.hash(nouveauMotDePasse, 12);
     await utilisateur.save();
 
     return res.status(200).json({
@@ -122,6 +179,8 @@ const modifierMotDePasse = async (req, res) => {
 };
 
 module.exports = {
+  consulterProfil,
+  consulterMonSuperviseur,
   modifierProfil,
   modifierMotDePasse,
 };

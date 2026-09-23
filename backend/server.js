@@ -3,6 +3,7 @@ require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
 const helmet = require("helmet");
+const rateLimit = require("express-rate-limit");
 
 const {
   sequelize,
@@ -62,6 +63,23 @@ app.use(
 app.use(
   express.urlencoded({
     extended: true,
+  })
+);
+
+// Filet de sécurité global : au-delà, une IP est très probablement un script
+// abusif plutôt qu'un usage normal (le tableau de bord actualise au plus
+// toutes les 10 secondes). Les routes sensibles (connexion, inscription) ont
+// en plus leur propre limite, plus stricte.
+app.use(
+  "/api",
+  rateLimit({
+    windowMs: 15 * 60 * 1000,
+    limit: 600,
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: {
+      message: "Trop de requêtes depuis cette connexion. Réessayez dans quelques minutes.",
+    },
   })
 );
 
@@ -189,12 +207,19 @@ app.use(
       error
     );
 
-    res.status(
-      error.status || 500
-    ).json({
-      message:
-        error.message ||
-        "Une erreur interne est survenue.",
+    const statut = error.status || error.statusCode || 500;
+
+    // En dessous de 500, l'erreur vient d'une bibliothèque (JSON mal formé,
+    // corps trop volumineux…) et son message est déjà sûr à afficher. À partir
+    // de 500, c'est un bug non prévu : le détail (requête SQL, chemin de
+    // fichier…) reste dans les journaux du serveur, jamais dans la réponse.
+    const message =
+      statut < 500
+        ? error.message || "Requête invalide."
+        : "Une erreur interne est survenue.";
+
+    res.status(statut).json({
+      message,
     });
   }
 );

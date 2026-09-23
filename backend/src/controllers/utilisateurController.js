@@ -1,4 +1,5 @@
 const { Utilisateur, Zone } = require("../models");
+const { verifierPlaceDansZone } = require("../services/zoneRegles");
 
 const listerUtilisateurs = async (req, res) => {
   try {
@@ -241,6 +242,16 @@ const affecterZone = async (
         message:
           "Seul un agent de collecte peut être affecté à une zone par cette opération.",
       });
+    }
+
+    if (Number(utilisateur.id_zone) !== Number(id_zone)) {
+      const refus = await verifierPlaceDansZone(zone, "AGENT_COLLECTE", {
+        exclure: utilisateur.idUtilisateur,
+      });
+
+      if (refus) {
+        return res.status(409).json({ message: refus });
+      }
     }
 
     await utilisateur.update({

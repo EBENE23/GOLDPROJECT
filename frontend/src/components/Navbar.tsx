@@ -24,6 +24,10 @@ const navigation = [
         href: "#fonctionnalites",
     },
     {
+        label: "Rôles",
+        href: "#roles",
+    },
+    {
         label: "Fonctionnement",
         href: "#fonctionnement",
     },
@@ -37,10 +41,39 @@ export default function Navbar() {
     const [mobileMenuOpen, setMobileMenuOpen] =
         useState(false);
 
+    // Onglet correspondant à la section actuellement visible à l'écran.
+    const [ongletActif, setOngletActif] = useState("#accueil");
+
     const location = useLocation();
 
     useEffect(() => {
         setMobileMenuOpen(false);
+    }, [location.pathname]);
+
+    // Suit le défilement de la page d'accueil pour surligner l'onglet de la section visible.
+    useEffect(() => {
+        if (location.pathname !== "/home") return;
+
+        const sections = navigation
+            .map((item) => document.querySelector(item.href))
+            .filter((el): el is Element => el !== null);
+
+        if (sections.length === 0) return;
+
+        const observateur = new IntersectionObserver(
+            (entrees) => {
+                const visible = entrees
+                    .filter((e) => e.isIntersecting)
+                    .sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
+
+                if (visible) setOngletActif(`#${visible.target.id}`);
+            },
+            { rootMargin: "-35% 0px -55% 0px", threshold: [0, 0.25, 0.5, 0.75, 1] }
+        );
+
+        sections.forEach((section) => observateur.observe(section));
+
+        return () => observateur.disconnect();
     }, [location.pathname]);
 
     useEffect(() => {
@@ -76,7 +109,7 @@ export default function Navbar() {
     ) => {
         setMobileMenuOpen(false);
 
-        if (location.pathname === "/") {
+        if (location.pathname === "/home") {
             const element =
                 document.querySelector(href);
 
@@ -128,26 +161,40 @@ export default function Navbar() {
                     {/* =================================================
                         NAVIGATION DESKTOP
                     ================================================== */}
-                    <div className="hidden items-center gap-6 md:flex lg:gap-7">
+                    <div className="hidden items-center gap-1 md:flex lg:gap-1.5">
                         {navigation.map(
-                            (item) => (
-                                <button
-                                    key={
-                                        item.href
-                                    }
-                                    type="button"
-                                    onClick={() =>
-                                        handleNavigation(
+                            (item) => {
+                                const actif =
+                                    location.pathname === "/home" &&
+                                    ongletActif === item.href;
+
+                                return (
+                                    <button
+                                        key={
                                             item.href
-                                        )
-                                    }
-                                    className="rounded-lg px-2 py-2 text-sm font-medium text-slate-600 transition-colors hover:bg-green-50 hover:text-green-600"
-                                >
-                                    {
-                                        item.label
-                                    }
-                                </button>
-                            )
+                                        }
+                                        type="button"
+                                        aria-current={actif ? "true" : undefined}
+                                        onClick={() =>
+                                            handleNavigation(
+                                                item.href
+                                            )
+                                        }
+                                        className={`relative rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+                                            actif
+                                                ? "text-green-700"
+                                                : "text-slate-600 hover:bg-green-50 hover:text-green-600"
+                                        }`}
+                                    >
+                                        {
+                                            item.label
+                                        }
+                                        {actif && (
+                                            <span className="absolute inset-x-3 -bottom-0.5 h-0.5 rounded-full bg-green-600" />
+                                        )}
+                                    </button>
+                                );
+                            }
                         )}
                     </div>
 
@@ -203,24 +250,36 @@ export default function Navbar() {
                         <div className="absolute left-0 right-0 top-[calc(100%+10px)] overflow-hidden rounded-2xl border border-slate-100 bg-white p-3 shadow-xl shadow-slate-900/10 md:hidden">
                             <div className="flex flex-col">
                                 {navigation.map(
-                                    (item) => (
-                                        <button
-                                            key={
-                                                item.href
-                                            }
-                                            type="button"
-                                            onClick={() =>
-                                                handleNavigation(
+                                    (item) => {
+                                        const actif =
+                                            location.pathname === "/home" &&
+                                            ongletActif === item.href;
+
+                                        return (
+                                            <button
+                                                key={
                                                     item.href
-                                                )
-                                            }
-                                            className="rounded-xl px-4 py-3 text-left text-sm font-medium text-slate-600 transition-colors hover:bg-green-50 hover:text-green-700"
-                                        >
-                                            {
-                                                item.label
-                                            }
-                                        </button>
-                                    )
+                                                }
+                                                type="button"
+                                                aria-current={actif ? "true" : undefined}
+                                                onClick={() =>
+                                                    handleNavigation(
+                                                        item.href
+                                                    )
+                                                }
+                                                className={`flex items-center gap-2 rounded-xl px-4 py-3 text-left text-sm font-medium transition-colors ${
+                                                    actif
+                                                        ? "bg-green-50 text-green-700"
+                                                        : "text-slate-600 hover:bg-green-50 hover:text-green-700"
+                                                }`}
+                                            >
+                                                {actif && <span className="h-1.5 w-1.5 rounded-full bg-green-600" />}
+                                                {
+                                                    item.label
+                                                }
+                                            </button>
+                                        );
+                                    }
                                 )}
 
                                 <div className="my-2 h-px bg-slate-100" />

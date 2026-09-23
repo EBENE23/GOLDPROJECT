@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
+import Avatar from "../../components/Avatar";
 import { useNavigate } from "react-router-dom";
 import { ClipboardPlus, Mail, Phone, RefreshCw, UserCheck, Users } from "lucide-react";
 
@@ -117,9 +118,7 @@ const Agents = () => {
             return (
               <Card key={agent.idUtilisateur} className="flex flex-col p-4 sm:p-5">
                 <div className="flex items-start gap-3">
-                  <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-emerald-100 text-sm font-bold text-emerald-800">
-                    {`${agent.prenom.charAt(0)}${agent.nom.charAt(0)}`.toUpperCase()}
-                  </span>
+                  <Avatar prenom={agent.prenom} nom={agent.nom} photo={agent.photoProfil} taille={52} />
                   <div className="min-w-0 flex-1">
                     <p className="truncate font-bold text-slate-900">
                       {agent.prenom} {agent.nom}

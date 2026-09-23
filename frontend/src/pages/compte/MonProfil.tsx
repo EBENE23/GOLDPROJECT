@@ -1,19 +1,31 @@
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { toast } from "react-toastify";
-import { Eye, EyeOff, KeyRound, Mail, Phone, Save, ShieldCheck, User } from "lucide-react";
+import { Eye, EyeOff, KeyRound, Mail, MapPin, Phone, Save, ShieldCheck, User, UserCog } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
+import Avatar from "../../components/Avatar";
 import AvatarPicker from "../../components/AvatarPicker";
 import { Card, PageHeader, PrimaryButton, SectionTitle, StatutBadge } from "../../components/ui/kit";
 import api from "../../services/api";
-import { useAuthStore } from "../../stores/authStore";
-import { loadUserAvatar, saveUserAvatar } from "../../utils/userPreferences";
+import { memoriserUtilisateur, useAuthStore } from "../../stores/authStore";
 
 const LIBELLES_ROLE: Record<string, string> = {
   ADMINISTRATEUR: "Administrateur",
   SUPERVISEUR: "Superviseur",
   AGENT_COLLECTE: "Agent de collecte",
 };
+
+interface SuperviseurZone {
+  superviseur: {
+    idUtilisateur: number;
+    nom: string;
+    prenom: string;
+    email: string;
+    telephone?: string | null;
+    photoProfil?: string | null;
+  } | null;
+  zone: { idZone: number; nomZone: string } | null;
+}
 
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -48,7 +60,8 @@ export default function MonProfil() {
     telephone: utilisateur?.telephone ?? "",
   });
   const [erreurs, setErreurs] = useState<Record<string, string>>({});
-  const [avatar, setAvatar] = useState<string | null>(() => loadUserAvatar(utilisateur));
+  const [avatar, setAvatar] = useState<string | null>(utilisateur?.photoProfil ?? null);
+  const [equipe, setEquipe] = useState<SuperviseurZone | null>(null);
   const [envoi, setEnvoi] = useState(false);
 
   const [mdp, setMdp] = useState({ ancien: "", nouveau: "", confirmation: "" });
@@ -56,7 +69,47 @@ export default function MonProfil() {
   const [voirMdp, setVoirMdp] = useState(false);
   const [envoiMdp, setEnvoiMdp] = useState(false);
 
+  // La photo arrive du serveur après l'ouverture de la page.
+  useEffect(() => {
+    setAvatar(utilisateur?.photoProfil ?? null);
+  }, [utilisateur?.photoProfil]);
+
+  // L'agent de collecte retrouve les informations de son superviseur.
+  const estAgent = utilisateur?.role === "AGENT_COLLECTE";
+  useEffect(() => {
+    if (!estAgent) return;
+    api
+      .get<SuperviseurZone>("/profil/mon-superviseur")
+      .then((reponse) => setEquipe(reponse.data))
+      .catch(() => setEquipe({ superviseur: null, zone: null }));
+  }, [estAgent]);
+
   if (!utilisateur) return null;
+
+  // La photo est enregistrée dès qu'elle est choisie, sans attendre le bouton « Enregistrer ».
+  const changerPhoto = async (photo: string | null) => {
+    const precedente = avatar;
+    setAvatar(photo);
+
+    try {
+      const reponse = await api.put("/profil/me", {
+        prenom: utilisateur.prenom,
+        nom: utilisateur.nom,
+        email: utilisateur.email,
+        telephone: utilisateur.telephone ?? null,
+        photoProfil: photo,
+      });
+      const misAJour = reponse.data?.utilisateur;
+      if (misAJour) {
+        useAuthStore.setState({ utilisateur: misAJour });
+        memoriserUtilisateur(misAJour);
+      }
+      toast.success(photo ? "Photo de profil enregistrée." : "Photo de profil supprimée.");
+    } catch (err: any) {
+      setAvatar(precedente);
+      toast.error(err?.response?.data?.message || "Impossible d'enregistrer la photo.");
+    }
+  };
 
   const enregistrer = async (event: FormEvent) => {
     event.preventDefault();
@@ -79,14 +132,14 @@ export default function MonProfil() {
         nom: form.nom.trim(),
         email: form.email.trim(),
         telephone: form.telephone.trim() || null,
+        photoProfil: avatar,
       });
 
       const misAJour = reponse.data?.utilisateur;
       if (misAJour) {
         useAuthStore.setState({ utilisateur: misAJour });
-        localStorage.setItem("smartcitywaste_user", JSON.stringify(misAJour));
+        memoriserUtilisateur(misAJour);
       }
-      saveUserAvatar(utilisateur, avatar);
       toast.success(reponse.data?.message || "Profil mis à jour.");
     } catch (err: any) {
       toast.error(err?.response?.data?.message || "Impossible de mettre à jour le profil.");
@@ -130,7 +183,7 @@ export default function MonProfil() {
 
       <Card className="p-5 sm:p-6">
         <div className="flex flex-col items-center gap-4 sm:flex-row sm:items-center">
-          <AvatarPicker name={nomComplet} value={avatar} onChange={setAvatar} />
+          <AvatarPicker name={nomComplet} value={avatar} onChange={changerPhoto} />
           <div className="min-w-0 text-center sm:text-left">
             <p className="truncate text-lg font-bold text-slate-900">{nomComplet}</p>
             <p className="truncate text-sm text-slate-500">{utilisateur.email}</p>
@@ -141,6 +194,39 @@ export default function MonProfil() {
           </div>
         </div>
       </Card>
+
+      {estAgent && (
+        <Card className="p-5 sm:p-6">
+          <SectionTitle icone={UserCog} titre="Mon superviseur" sousTitre={equipe?.zone ? `Zone ${equipe.zone.nomZone}` : undefined} />
+          {equipe === null ? (
+            <p className="mt-4 text-sm text-slate-500">Chargement…</p>
+          ) : equipe.superviseur ? (
+            <div className="mt-4 flex flex-col items-center gap-4 sm:flex-row">
+              <Avatar prenom={equipe.superviseur.prenom} nom={equipe.superviseur.nom} photo={equipe.superviseur.photoProfil} taille={72} />
+              <div className="min-w-0 space-y-1 text-center sm:text-left">
+                <p className="truncate text-base font-bold text-slate-900">
+                  {equipe.superviseur.prenom} {equipe.superviseur.nom}
+                </p>
+                <a href={`mailto:${equipe.superviseur.email}`} className="flex items-center justify-center gap-2 truncate text-sm text-slate-600 hover:text-emerald-700 sm:justify-start">
+                  <Mail size={14} className="shrink-0" /> {equipe.superviseur.email}
+                </a>
+                {equipe.superviseur.telephone ? (
+                  <a href={`tel:${equipe.superviseur.telephone}`} className="flex items-center justify-center gap-2 text-sm text-slate-600 hover:text-emerald-700 sm:justify-start">
+                    <Phone size={14} className="shrink-0" /> {equipe.superviseur.telephone}
+                  </a>
+                ) : null}
+                {equipe.zone && (
+                  <p className="flex items-center justify-center gap-2 text-sm text-slate-600 sm:justify-start">
+                    <MapPin size={14} className="shrink-0" /> {equipe.zone.nomZone}
+                  </p>
+                )}
+              </div>
+            </div>
+          ) : (
+            <p className="mt-4 text-sm text-slate-500">Aucun superviseur n'est encore affecté à votre zone.</p>
+          )}
+        </Card>
+      )}
 
       <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
         <Card className="p-5 sm:p-6">

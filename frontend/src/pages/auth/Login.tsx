@@ -196,16 +196,20 @@ export default function Login() {
                             1,
                         ],
                     }}
-                    className="relative hidden h-full overflow-hidden bg-slate-950 lg:flex lg:w-[48%] xl:w-[52%]"
+                    className="relative hidden h-full overflow-hidden bg-gradient-to-br from-emerald-900 via-slate-950 to-slate-950 lg:flex lg:w-[48%] xl:w-[52%]"
                 >
 
                     {/* Décor haut gauche */}
 
-                    <div className="pointer-events-none absolute -left-32 -top-32 h-96 w-96 rounded-full bg-green-500/20 blur-3xl" />
+                    <div className="pointer-events-none absolute -left-32 -top-32 h-96 w-96 rounded-full bg-green-400/30 blur-3xl" />
 
                     {/* Décor bas droit */}
 
-                    <div className="pointer-events-none absolute -bottom-40 -right-20 h-[500px] w-[500px] rounded-full bg-emerald-500/10 blur-3xl" />
+                    <div className="pointer-events-none absolute -bottom-40 -right-20 h-[500px] w-[500px] rounded-full bg-emerald-400/20 blur-3xl" />
+
+                    {/* Touche de couleur froide, pour ne pas rester monochrome */}
+
+                    <div className="pointer-events-none absolute right-10 top-1/3 h-64 w-64 rounded-full bg-cyan-400/10 blur-3xl" />
 
                     {/* Cercle décoratif */}
 
@@ -446,9 +450,9 @@ export default function Login() {
 
                     {/* Décoration */}
 
-                    <div className="pointer-events-none absolute -right-32 -top-32 h-72 w-72 rounded-full bg-green-100/70 blur-3xl" />
+                    <div className="pointer-events-none absolute -right-32 -top-32 h-72 w-72 rounded-full bg-green-200/70 blur-3xl" />
 
-                    <div className="pointer-events-none absolute -bottom-32 -left-32 h-72 w-72 rounded-full bg-emerald-50 blur-3xl" />
+                    <div className="pointer-events-none absolute -bottom-32 -left-32 h-72 w-72 rounded-full bg-emerald-100/80 blur-3xl" />
 
                     {/* =================================================
                         BOUTON RETOUR

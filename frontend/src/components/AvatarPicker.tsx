@@ -1,13 +1,13 @@
 import { useRef, useState } from "react";
 import { Camera, Trash2 } from "lucide-react";
 
+import { preparerPhotoProfil } from "../utils/imageProfil";
+
 interface AvatarPickerProps {
   name: string;
   value: string | null;
   onChange: (value: string | null) => void;
 }
-
-const MAX_FILE_SIZE = 1.5 * 1024 * 1024;
 
 export default function AvatarPicker({
   name,
@@ -24,25 +24,15 @@ export default function AvatarPicker({
     .slice(0, 2)
     .toUpperCase() || "U";
 
-  const selectPhoto = (file?: File) => {
+  const selectPhoto = async (file?: File) => {
     if (!file) return;
 
-    if (!file.type.startsWith("image/")) {
-      setError("Sélectionnez une image valide.");
-      return;
-    }
-
-    if (file.size > MAX_FILE_SIZE) {
-      setError("L'image doit faire moins de 1,5 Mo.");
-      return;
-    }
-
-    const reader = new FileReader();
-    reader.onload = () => {
+    try {
       setError("");
-      onChange(typeof reader.result === "string" ? reader.result : null);
-    };
-    reader.readAsDataURL(file);
+      onChange(await preparerPhotoProfil(file));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Image invalide.");
+    }
   };
 
   return (
@@ -75,7 +65,7 @@ export default function AvatarPicker({
 
       <div className="text-center sm:text-left">
         <p className="text-sm font-semibold text-slate-800">Photo de profil</p>
-        <p className="mt-1 text-xs text-slate-500">JPG, PNG ou WEBP, 1,5 Mo maximum.</p>
+        <p className="mt-1 text-xs text-slate-500">JPG, PNG ou WEBP. Elle est recadrée automatiquement.</p>
         {value && (
           <button
             type="button"

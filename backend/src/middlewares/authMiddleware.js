@@ -22,7 +22,11 @@ const verifierToken = async (req, res, next) => {
 
     const token = parties[1];
 
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    // Épingle l'algorithme accepté : un jeton signé (ou falsifié) avec un autre
+    // algorithme, y compris "none", est rejeté avant toute autre vérification.
+    const decoded = jwt.verify(token, process.env.JWT_SECRET, {
+      algorithms: ["HS256"],
+    });
 
     // Recharge l'état réel du compte : rôle, zone d'affectation et statut
     // peuvent avoir changé depuis l'émission du jeton.
