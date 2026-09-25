@@ -10,30 +10,34 @@ import {
   RefPill,
   SecondaryButton,
   StatutBadge,
-  libelleStatut,
+  useLibelleStatut,
   tonStatut,
 } from "./ui/kit";
 import { demarrerMission, reprendreMission, type AgentMission } from "../services/agentService";
 import { obtenirCategorieNiveauBac } from "../utils/bacLevel";
+import { LOCALE_INTL, useTranslation } from "../i18n";
 
 const tonPriorite = (priorite?: string) =>
   priorite === "CRITIQUE" ? "rouge" : priorite === "HAUTE" ? "orange" : priorite === "MOYENNE" ? "bleu" : "gris";
 
-const formaterDate = (valeur?: string | null) => {
-  if (!valeur) return null;
-  const date = new Date(valeur);
-
-  return Number.isNaN(date.getTime())
-    ? null
-    : new Intl.DateTimeFormat("fr-FR", { dateStyle: "medium", timeStyle: "short" }).format(date);
-};
-
 /** Carte d'une mission de collecte, avec ses actions rapides. */
 export default function MissionCard({ mission, onChange }: { mission: AgentMission; onChange?: () => void }) {
+  const { t, langue } = useTranslation();
+  const libelleStatut = useLibelleStatut();
   const navigate = useNavigate();
   const [action, setAction] = useState(false);
   const bac = mission.intervention?.bac;
   const superviseur = mission.intervention?.superviseur;
+
+  const formaterDate = (valeur?: string | null) => {
+    if (!valeur) return null;
+    const date = new Date(valeur);
+
+    return Number.isNaN(date.getTime())
+      ? null
+      : new Intl.DateTimeFormat(LOCALE_INTL[langue], { dateStyle: "medium", timeStyle: "short" }).format(date);
+  };
+
   const prevue = formaterDate(mission.intervention?.datePrevue);
 
   const lancer = async (fn: (id: number) => Promise<unknown>, succes: string) => {
@@ -44,7 +48,7 @@ export default function MissionCard({ mission, onChange }: { mission: AgentMissi
       onChange?.();
       navigate(`/agent/missions/${mission.idMission}/localisation`);
     } catch (err: any) {
-      toast.error(err?.response?.data?.message || "Action impossible pour le moment.");
+      toast.error(err?.response?.data?.message || t("missionCard.actionImpossible"));
     } finally {
       setAction(false);
     }
@@ -68,7 +72,7 @@ export default function MissionCard({ mission, onChange }: { mission: AgentMissi
             )}
           </div>
           <p className="mt-2 text-sm font-bold text-slate-900">
-            {bac?.zone?.nomZone ? `Collecte · ${bac.zone.nomZone}` : `Mission n°${mission.idMission}`}
+            {bac?.zone?.nomZone ? t("missionCard.collecteZone", { zone: bac.zone.nomZone }) : t("missionCard.missionNumero", { n: mission.idMission })}
           </p>
           {mission.intervention?.motif && (
             <p className="mt-0.5 line-clamp-2 text-xs text-slate-500">{mission.intervention.motif}</p>
@@ -87,7 +91,7 @@ export default function MissionCard({ mission, onChange }: { mission: AgentMissi
           {prevue && (
             <span className="inline-flex items-center gap-1.5">
               <CalendarClock size={13} />
-              Prévue {prevue}
+              {t("missionCard.prevue", { date: prevue })}
             </span>
           )}
         </div>
@@ -99,12 +103,12 @@ export default function MissionCard({ mission, onChange }: { mission: AgentMissi
             <PrimaryButton
               icone={Play}
               chargement={action}
-              onClick={() => lancer(demarrerMission, "Mission démarrée.")}
+              onClick={() => lancer(demarrerMission, t("missionCard.missionDemarree"))}
             >
-              Démarrer
+              {t("missionCard.demarrer")}
             </PrimaryButton>
             <SecondaryButton icone={Navigation} onClick={itineraire}>
-              Itinéraire
+              {t("missionCard.itineraire")}
             </SecondaryButton>
           </>
         )}
@@ -112,10 +116,10 @@ export default function MissionCard({ mission, onChange }: { mission: AgentMissi
         {mission.statut === "EN_COURS" && (
           <>
             <PrimaryButton icone={Navigation} onClick={itineraire}>
-              Suivre l'itinéraire
+              {t("missionCard.suivreItineraire")}
             </PrimaryButton>
             <SecondaryButton icone={FileText} onClick={detail}>
-              Détails
+              {t("missionCard.details")}
             </SecondaryButton>
           </>
         )}
@@ -125,19 +129,19 @@ export default function MissionCard({ mission, onChange }: { mission: AgentMissi
             <PrimaryButton
               icone={RotateCcw}
               chargement={action}
-              onClick={() => lancer(reprendreMission, "Mission reprise.")}
+              onClick={() => lancer(reprendreMission, t("missionCard.missionReprise"))}
             >
-              Reprendre
+              {t("missionCard.reprendre")}
             </PrimaryButton>
             <SecondaryButton icone={FileText} onClick={detail}>
-              Détails
+              {t("missionCard.details")}
             </SecondaryButton>
           </>
         )}
 
         {(mission.statut === "TERMINEE" || mission.statut === "ANNULEE") && (
           <SecondaryButton icone={FileText} onClick={detail} className="col-span-2">
-            Consulter la mission
+            {t("missionCard.consulterMission")}
           </SecondaryButton>
         )}
       </div>

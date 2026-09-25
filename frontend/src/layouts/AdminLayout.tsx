@@ -1,6 +1,8 @@
 import AppShell from "./AppShell";
-import { adminShell } from "./shellConfigs";
+import { buildAdminShell } from "./shellConfigs";
+import { useTranslation } from "../i18n";
 
 export default function AdminLayout() {
-  return <AppShell config={adminShell} />;
+  const { t } = useTranslation();
+  return <AppShell config={buildAdminShell(t)} />;
 }

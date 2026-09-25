@@ -38,29 +38,10 @@ import type {
 import { obtenirCouleurNiveauBac } from "../../utils/bacLevel";
 import FiltreDates from "../../components/ui/FiltreDates";
 import { dansPlage, joursEnArriere, libellePlage, type PlageDates } from "../../utils/plageDates";
-
-const formatNumber = (value: number) =>
-  new Intl.NumberFormat("fr-FR").format(value);
-
-const formatDate = (value?: string | null) => {
-  if (!value) {
-    return "Date inconnue";
-  }
-
-  const date = new Date(value);
-
-  if (Number.isNaN(date.getTime())) {
-    return "Date inconnue";
-  }
-
-  return new Intl.DateTimeFormat("fr-FR", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-  }).format(date);
-};
+import { LOCALE_INTL, useTranslation } from "../../i18n";
 
 export default function Rapports() {
+  const { t, langue } = useTranslation();
   const [bacs, setBacs] = useState<RapportBac[]>([]);
   const [interventions, setInterventions] = useState<
     RapportIntervention[]
@@ -70,6 +51,27 @@ export default function Rapports() {
   const [refreshing, setRefreshing] = useState(false);
   const [periode, setPeriode] = useState<PlageDates>(() => joursEnArriere(30));
   const [error, setError] = useState("");
+
+  const formatNumber = (value: number) =>
+    new Intl.NumberFormat(LOCALE_INTL[langue]).format(value);
+
+  const formatDate = (value?: string | null) => {
+    if (!value) {
+      return t("adminRapports.dateInconnue");
+    }
+
+    const date = new Date(value);
+
+    if (Number.isNaN(date.getTime())) {
+      return t("adminRapports.dateInconnue");
+    }
+
+    return new Intl.DateTimeFormat(LOCALE_INTL[langue], {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+    }).format(date);
+  };
 
   const loadData = useCallback(async (manual = false) => {
     try {
@@ -99,14 +101,14 @@ export default function Rapports() {
         )?.response?.data?.message ||
         (requestError instanceof Error
           ? requestError.message
-          : "Impossible de charger les données du rapport.");
+          : t("adminRapports.erreurGenerique"));
 
       setError(message);
     } finally {
       setLoading(false);
       setRefreshing(false);
     }
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     loadData();
@@ -129,45 +131,45 @@ export default function Rapports() {
   const stateData = useMemo(
     () => [
       {
-        name: "Normal",
+        name: t("commun.etatNormal"),
         value: stats.bacsNormaux,
       },
       {
-        name: "Alerte",
+        name: t("commun.etatAlerte"),
         value: stats.bacsAlerte,
       },
       {
-        name: "Plein",
+        name: t("adminRapports.etatPlein"),
         value: stats.bacsPleins,
       },
     ],
-    [stats]
+    [stats, t]
   );
 
   const interventionData = useMemo(
     () => [
       {
-        name: "En attente",
+        name: t("commun.statutEnAttente"),
         value: stats.interventionsEnAttente,
       },
       {
-        name: "Planifiées",
+        name: t("adminInterventions.optPlanifiees"),
         value: stats.interventionsPlanifiees,
       },
       {
-        name: "En cours",
+        name: t("commun.statutEnCours"),
         value: stats.interventionsEnCours,
       },
       {
-        name: "Terminées",
+        name: t("adminInterventions.optTerminees"),
         value: stats.interventionsTerminees,
       },
       {
-        name: "Annulées",
+        name: t("adminInterventions.optAnnulees"),
         value: stats.interventionsAnnulees,
       },
     ],
-    [stats]
+    [stats, t]
   );
 
   const zoneData = useMemo(() => {
@@ -206,7 +208,7 @@ export default function Rapports() {
 
   const generateReport = () => {
     const dateGeneration =
-      new Intl.DateTimeFormat("fr-FR", {
+      new Intl.DateTimeFormat(LOCALE_INTL[langue], {
         day: "2-digit",
         month: "2-digit",
         year: "numeric",
@@ -215,42 +217,40 @@ export default function Rapports() {
       }).format(new Date());
 
     const contenu = [
-      "SMARTCITYWASTE — RAPPORT DE SUPERVISION",
+      t("adminRapports.rapportTitre"),
       "",
-      `Date de génération : ${dateGeneration}`,
-      `Période sélectionnée : ${libellePlage(periode)}`,
+      t("adminRapports.dateGeneration", { date: dateGeneration }),
+      t("adminRapports.periodeSelectionnee", { periode: libellePlage(periode, t, LOCALE_INTL[langue]) }),
       "",
-      "INDICATEURS GÉNÉRAUX",
-      `Nombre total de zones : ${stats.totalZones}`,
-      `Nombre total de bacs : ${stats.totalBacs}`,
-      `Bacs normaux : ${stats.bacsNormaux}`,
-      `Bacs en alerte : ${stats.bacsAlerte}`,
-      `Bacs pleins : ${stats.bacsPleins}`,
-      `Niveau moyen actuel des bacs : ${stats.remplissageMoyen.toFixed(
-        1
-      )} %`,
+      t("adminRapports.indicateursGeneraux"),
+      t("adminRapports.nombreTotalZones", { n: stats.totalZones }),
+      t("adminRapports.nombreTotalBacs", { n: stats.totalBacs }),
+      t("adminRapports.bacsNormauxLigne", { n: stats.bacsNormaux }),
+      t("adminRapports.bacsAlerteLigne", { n: stats.bacsAlerte }),
+      t("adminRapports.bacsPleinsLigne", { n: stats.bacsPleins }),
+      t("adminRapports.niveauMoyenActuel", { n: stats.remplissageMoyen.toFixed(1) }),
       "",
-      "INTERVENTIONS SUR LA PÉRIODE",
-      `Total : ${stats.totalInterventions}`,
-      `En attente : ${stats.interventionsEnAttente}`,
-      `Planifiées : ${stats.interventionsPlanifiees}`,
-      `En cours : ${stats.interventionsEnCours}`,
-      `Terminées : ${stats.interventionsTerminees}`,
-      `Annulées : ${stats.interventionsAnnulees}`,
+      t("adminRapports.interventionsSurPeriode"),
+      t("adminRapports.totalLigne", { n: stats.totalInterventions }),
+      t("adminRapports.enAttenteLigne", { n: stats.interventionsEnAttente }),
+      t("adminRapports.planifieesLigne", { n: stats.interventionsPlanifiees }),
+      t("adminRapports.enCoursLigne", { n: stats.interventionsEnCours }),
+      t("adminRapports.termineesLigne", { n: stats.interventionsTerminees }),
+      t("adminRapports.annuleesLigne", { n: stats.interventionsAnnulees }),
       "",
-      "PRIORITÉS DES INTERVENTIONS",
-      `Normales : ${stats.interventionsNormales}`,
-      `Moyennes : ${stats.interventionsMoyennes}`,
-      `Hautes : ${stats.interventionsHautes}`,
-      `Critiques : ${stats.interventionsCritiques}`,
+      t("adminRapports.prioritesInterventions"),
+      t("adminRapports.normalesLigne", { n: stats.interventionsNormales }),
+      t("adminRapports.moyennesLigne", { n: stats.interventionsMoyennes }),
+      t("adminRapports.hautesLigne", { n: stats.interventionsHautes }),
+      t("adminRapports.critiquesLigne", { n: stats.interventionsCritiques }),
       "",
-      "NIVEAU MOYEN PAR ZONE",
+      t("adminRapports.niveauMoyenParZoneMaj"),
       ...zoneData.map(
         (zone) =>
-          `${zone.name} : ${zone.niveau}% (${zone.bacs} bac(s))`
+          `${zone.name} : ${zone.niveau}% (${zone.bacs} ${t("adminRapports.bacUnite")})`
       ),
       "",
-      "INTERVENTIONS RÉCENTES",
+      t("adminRapports.interventionsRecentesMaj"),
       ...interventionsRecentes.map(
         (intervention) =>
           `#${intervention.idIntervention} - Bac ${intervention.id_bac} - ${
@@ -284,7 +284,7 @@ export default function Rapports() {
     return (
       <div>
         <div className="rounded-2xl border border-slate-200 bg-white p-16 text-center text-sm text-slate-500 shadow-sm">
-          Génération des indicateurs...
+          {t("adminRapports.generationIndicateurs")}
         </div>
       </div>
     );
@@ -297,15 +297,15 @@ export default function Rapports() {
           <div>
             <div className="mb-2 flex items-center gap-2 text-sm font-medium text-emerald-700">
               <BarChart3 size={16} />
-              Administration
+              {t("adminDashboard.administration")}
             </div>
 
             <h1 className="text-xl font-bold tracking-tight text-slate-900 sm:text-2xl">
-              Rapports & statistiques
+              {t("adminRapports.titre")}
             </h1>
 
             <p className="mt-1 text-sm text-slate-500">
-              Analyse synthétique de l'activité de SmartCityWaste.
+              {t("adminRapports.description")}
             </p>
           </div>
 
@@ -316,7 +316,7 @@ export default function Rapports() {
               onClick={() => loadData(true)}
               disabled={refreshing}
               className="flex h-11 w-11 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-600 shadow-sm transition hover:border-emerald-200 hover:text-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
-              title="Actualiser"
+              title={t("adminDemandes.actualiser")}
             >
               <RefreshCw
                 size={17}
@@ -336,14 +336,14 @@ export default function Rapports() {
             >
               <Download size={17} />
               <span className="hidden sm:inline">
-                Exporter
+                {t("adminRapports.exporter")}
               </span>
             </button>
           </div>
         </div>
 
         <div className="mb-6">
-          <FiltreDates valeur={periode} onChange={setPeriode} libelle="Période du rapport" />
+          <FiltreDates valeur={periode} onChange={setPeriode} libelle={t("adminRapports.periodeRapport")} />
         </div>
 
 
@@ -359,7 +359,7 @@ export default function Rapports() {
 
             <div className="flex-1">
               <p className="font-semibold">
-                Impossible de charger les données
+                {t("adminRapports.erreurChargementTitre")}
               </p>
 
               <p className="mt-1">
@@ -372,7 +372,7 @@ export default function Rapports() {
               onClick={() => loadData(true)}
               className="rounded-lg border border-red-200 bg-white px-3 py-2 text-xs font-bold text-red-700 hover:bg-red-100"
             >
-              Réessayer
+              {t("commun.reessayer")}
             </button>
           </div>
         )}
@@ -385,7 +385,7 @@ export default function Rapports() {
             />
 
             <p className="text-xs text-slate-500">
-              Bacs
+              {t("shell.navBacs")}
             </p>
 
             <p className="mt-1 text-2xl font-bold text-slate-900">
@@ -400,7 +400,7 @@ export default function Rapports() {
             />
 
             <p className="text-xs text-slate-500">
-              Normaux
+              {t("adminRapports.kpiNormaux")}
             </p>
 
             <p className="mt-1 text-2xl font-bold text-slate-900">
@@ -415,7 +415,7 @@ export default function Rapports() {
             />
 
             <p className="text-xs text-slate-500">
-              Alertes
+              {t("adminRapports.kpiAlertes")}
             </p>
 
             <p className="mt-1 text-2xl font-bold text-slate-900">
@@ -430,7 +430,7 @@ export default function Rapports() {
             />
 
             <p className="text-xs text-slate-500">
-              Pleins
+              {t("adminRapports.kpiPleins")}
             </p>
 
             <p className="mt-1 text-2xl font-bold text-slate-900">
@@ -445,7 +445,7 @@ export default function Rapports() {
             />
 
             <p className="text-xs text-slate-500">
-              Interventions
+              {t("adminDashboard.kpiInterventions")}
             </p>
 
             <p className="mt-1 text-2xl font-bold text-slate-900">
@@ -462,7 +462,7 @@ export default function Rapports() {
             />
 
             <p className="text-xs text-slate-500">
-              Niveau moyen
+              {t("adminRapports.kpiNiveauMoyen")}
             </p>
 
             <p className="mt-1 text-2xl font-bold text-slate-900">
@@ -475,18 +475,18 @@ export default function Rapports() {
           <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
             <div className="mb-5">
               <h2 className="font-bold text-slate-900">
-                Niveau moyen par zone
+                {t("adminRapports.niveauMoyenParZone")}
               </h2>
 
               <p className="mt-1 text-xs text-slate-500">
-                Comparaison du remplissage actuel des bacs.
+                {t("adminRapports.comparaisonRemplissage")}
               </p>
             </div>
 
             <div className="h-[300px]">
               {zoneData.length === 0 ? (
                 <div className="flex h-full items-center justify-center text-sm text-slate-400">
-                  Aucune donnée de zone.
+                  {t("adminRapports.aucuneDonneeZone")}
                 </div>
               ) : (
                 <ResponsiveContainer
@@ -537,18 +537,18 @@ export default function Rapports() {
           <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
             <div className="mb-5">
               <h2 className="font-bold text-slate-900">
-                État des bacs
+                {t("adminRapports.etatDesBacs")}
               </h2>
 
               <p className="mt-1 text-xs text-slate-500">
-                Répartition selon leur niveau actuel.
+                {t("adminRapports.repartitionSelonNiveau")}
               </p>
             </div>
 
             <div className="h-[300px]">
               {bacs.length === 0 ? (
                 <div className="flex h-full items-center justify-center text-sm text-slate-400">
-                  Aucun bac enregistré.
+                  {t("adminRapports.aucunBacEnregistre")}
                 </div>
               ) : (
                 <ResponsiveContainer
@@ -622,12 +622,11 @@ export default function Rapports() {
         <section className="mt-5 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
           <div className="mb-5">
             <h2 className="font-bold text-slate-900">
-              Activité des interventions
+              {t("adminRapports.activiteInterventions")}
             </h2>
 
             <p className="mt-1 text-xs text-slate-500">
-              Interventions créées pendant les{" "}
-              {libellePlage(periode)}.
+              {t("adminRapports.interventionsCreesPendant", { periode: libellePlage(periode, t, LOCALE_INTL[langue]) })}
             </p>
           </div>
 
@@ -635,7 +634,7 @@ export default function Rapports() {
             {interventionsPeriode.length ===
             0 ? (
               <div className="flex h-full items-center justify-center text-sm text-slate-400">
-                Aucune intervention sur cette période.
+                {t("adminRapports.aucuneInterventionPeriode")}
               </div>
             ) : (
               <ResponsiveContainer
@@ -683,11 +682,11 @@ export default function Rapports() {
           <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
             <div>
               <h2 className="font-bold text-slate-900">
-                Interventions récentes
+                {t("adminRapports.interventionsRecentesTitre")}
               </h2>
 
               <p className="mt-1 text-xs text-slate-500">
-                Dernières opérations de la période sélectionnée.
+                {t("adminRapports.dernieresOperations")}
               </p>
             </div>
 
@@ -701,7 +700,7 @@ export default function Rapports() {
             {interventionsRecentes.length ===
             0 ? (
               <div className="p-8 text-center text-sm text-slate-500">
-                Aucune intervention enregistrée sur cette période.
+                {t("adminRapports.aucuneInterventionEnregistree")}
               </div>
             ) : (
               interventionsRecentes.map(
@@ -728,7 +727,7 @@ export default function Rapports() {
 
                         <p className="truncate text-xs text-slate-500">
                           {item.motif ||
-                            "Intervention de collecte"}
+                            t("adminRapports.interventionDeCollecte")}
                         </p>
                       </div>
                     </div>

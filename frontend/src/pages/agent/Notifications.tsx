@@ -12,7 +12,7 @@ import {
   PrimaryButton,
   RefPill,
   SecondaryButton,
-  dateRelative,
+  useDateRelative,
 } from "../../components/ui/kit";
 import { useAuthStore } from "../../stores/authStore";
 import {
@@ -23,9 +23,12 @@ import {
 } from "../../services/notificationService";
 import { obtenirCategorieNiveauBac } from "../../utils/bacLevel";
 import { useTempsReel } from "../../hooks/useTempsReel";
+import { useTranslation } from "../../i18n";
 
 /** Notifications de l'utilisateur connecté (agent ou superviseur). */
 export default function Notifications() {
+  const { t } = useTranslation();
+  const dateRelative = useDateRelative();
   const estSuperviseur = useAuthStore((state) => state.utilisateur?.role) === "SUPERVISEUR";
   const [notifications, setNotifications] = useState<NotificationAgent[]>([]);
   const [nonLues, setNonLues] = useState(0);
@@ -41,12 +44,12 @@ export default function Notifications() {
       setNotifications(resultat.notifications);
       setNonLues(resultat.nonLues);
     } catch (err: any) {
-      setError(err?.response?.data?.message || "Impossible de charger les notifications.");
+      setError(err?.response?.data?.message || t("notifications.erreurChargement"));
     } finally {
       setLoading(false);
       setRefreshing(false);
     }
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     charger();
@@ -76,28 +79,28 @@ export default function Notifications() {
       setNotifications((liste) => liste.map((n) => ({ ...n, lu: true })));
       setNonLues(0);
     } catch (err: any) {
-      setError(err?.response?.data?.message || "Impossible de marquer les notifications comme lues.");
+      setError(err?.response?.data?.message || t("notifications.impossibleMarquerLues"));
     }
   };
 
-  if (loading) return <Chargement texte="Chargement des notifications..." />;
+  if (loading) return <Chargement texte={t("notifications.chargement")} />;
 
   return (
     <div className="mx-auto max-w-3xl space-y-5">
       <PageHeader
-        titre="Notifications"
+        titre={t("shell.navNotifications")}
         description={
           estSuperviseur
-            ? "Alertes de remplissage des bacs et signalements de vos agents."
-            : "Nouvelles missions et informations de votre superviseur."
+            ? t("notifications.descriptionSuperviseur")
+            : t("notifications.descriptionAgent")
         }
         actions={
           <>
             <SecondaryButton icone={RefreshCw} chargement={refreshing} onClick={() => charger(true)}>
-              Actualiser
+              {t("adminDemandes.actualiser")}
             </SecondaryButton>
             <PrimaryButton icone={CheckCheck} onClick={toutLire} disabled={nonLues === 0}>
-              Tout lire
+              {t("notifications.toutLire")}
             </PrimaryButton>
           </>
         }
@@ -105,11 +108,11 @@ export default function Notifications() {
 
       {error && <BandeauErreur message={error} onReessayer={() => charger()} />}
 
-      <p className="text-sm font-medium text-slate-500">{nonLues} non lue(s)</p>
+      <p className="text-sm font-medium text-slate-500">{t("notifications.nonLues", { n: nonLues })}</p>
 
       {notifications.length === 0 ? (
         <Card>
-          <EtatVide icone={Bell} titre="Aucune notification" description="Les nouvelles notifications apparaîtront ici." />
+          <EtatVide icone={Bell} titre={t("notifications.aucuneNotification")} description={t("notifications.nouvellesApparaitront")} />
         </Card>
       ) : (
         <div className="space-y-3">
@@ -125,7 +128,7 @@ export default function Notifications() {
                     {notification.contenu}
                   </p>
                   {!notification.lu && (
-                    <span className="mt-1 h-2.5 w-2.5 shrink-0 rounded-full bg-emerald-500" aria-label="Non lue" />
+                    <span className="mt-1 h-2.5 w-2.5 shrink-0 rounded-full bg-emerald-500" aria-label={t("notifications.nonLueAria")} />
                   )}
                 </div>
 
@@ -136,7 +139,7 @@ export default function Notifications() {
                       {notification.bac.reference}
                     </RefPill>
                     <span className="rounded-md bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-600">
-                      {Math.round(Number(notification.bac.niveau_remplissage))}% rempli
+                      {t("notifications.pourcentRempli", { n: Math.round(Number(notification.bac.niveau_remplissage)) })}
                     </span>
                     <EtatBadge niveau={notification.bac.niveau_remplissage} />
                   </div>
@@ -153,14 +156,14 @@ export default function Notifications() {
                         to={`/agent/missions/${notification.mission.idMission}`}
                         className="inline-flex items-center gap-1.5 rounded-xl bg-emerald-800 px-3.5 py-2 text-xs font-bold text-white hover:bg-emerald-900"
                       >
-                        Voir la mission
+                        {t("notifications.voirLaMission")}
                       </Link>
                       <Link
                         to={`/agent/missions/${notification.mission.idMission}/localisation`}
                         className="inline-flex items-center gap-1.5 rounded-xl bg-indigo-50 px-3.5 py-2 text-xs font-bold text-indigo-700 hover:bg-indigo-100"
                       >
                         <Navigation size={13} />
-                        Itinéraire
+                        {t("missionCard.itineraire")}
                       </Link>
                     </>
                   )}
@@ -170,14 +173,14 @@ export default function Notifications() {
                         to={`/superviseur/interventions?ouvrir=1&bac=${notification.bac.id_bac}`}
                         className="inline-flex items-center gap-1.5 rounded-xl bg-emerald-800 px-3.5 py-2 text-xs font-bold text-white hover:bg-emerald-900"
                       >
-                        Planifier une intervention
+                        {t("notifications.planifierIntervention")}
                       </Link>
                       <Link
                         to="/superviseur/localisation"
                         className="inline-flex items-center gap-1.5 rounded-xl bg-indigo-50 px-3.5 py-2 text-xs font-bold text-indigo-700 hover:bg-indigo-100"
                       >
                         <MapPin size={13} />
-                        Voir sur la carte
+                        {t("superviseurDashboard.voirSurCarte")}
                       </Link>
                     </>
                   )}

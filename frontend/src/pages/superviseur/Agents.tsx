@@ -14,15 +14,18 @@ import {
   RefPill,
   SecondaryButton,
   StatutBadge,
-  libelleStatut,
+  useLibelleStatut,
   tonStatut,
 } from "../../components/ui/kit";
 import { listerAgentsSuperviseur, type Agent, type Zone } from "../../services/superviseurService";
 import { useTempsReel } from "../../hooks/useTempsReel";
+import { useTranslation } from "../../i18n";
 
 type Filtre = "TOUS" | "DISPONIBLES" | "OCCUPES";
 
 const Agents = () => {
+  const { t } = useTranslation();
+  const libelleStatut = useLibelleStatut();
   const navigate = useNavigate();
   const [agents, setAgents] = useState<Agent[]>([]);
   const [zone, setZone] = useState<Zone | undefined>();
@@ -39,12 +42,12 @@ const Agents = () => {
       setAgents(reponse.agents);
       setZone(reponse.zone);
     } catch (err: any) {
-      setError(err?.response?.data?.message || "Impossible de charger les agents de votre zone.");
+      setError(err?.response?.data?.message || t("superviseurAgents.erreurChargement"));
     } finally {
       setLoading(false);
       setRefreshing(false);
     }
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     charger();
@@ -65,16 +68,16 @@ const Agents = () => {
     [agents, filtre]
   );
 
-  if (loading) return <Chargement texte="Chargement des agents..." />;
+  if (loading) return <Chargement texte={t("superviseurAgents.chargement")} />;
 
   return (
     <div className="space-y-5">
       <PageHeader
-        titre="Agents de ma zone"
-        description={zone ? `Agents de collecte affectés à ${zone.nomZone}` : "Agents de collecte de votre zone"}
+        titre={t("shell.titreAgentsZone")}
+        description={zone ? t("superviseurAgents.descriptionZone", { zone: zone.nomZone }) : t("superviseurAgents.descriptionGenerique")}
         actions={
           <SecondaryButton icone={RefreshCw} chargement={refreshing} onClick={() => charger(true)}>
-            Actualiser
+            {t("adminDemandes.actualiser")}
           </SecondaryButton>
         }
       />
@@ -82,18 +85,18 @@ const Agents = () => {
       {error && <BandeauErreur message={error} onReessayer={() => charger()} />}
 
       <div className="grid grid-cols-3 gap-3 lg:gap-4">
-        <KpiCard libelle="Agents" valeur={agents.length} icone={Users} teinte="gris" />
-        <KpiCard libelle="Disponibles" valeur={disponibles} icone={UserCheck} teinte="vert" />
-        <KpiCard libelle="En mission" valeur={enMission} icone={ClipboardPlus} teinte="bleu" />
+        <KpiCard libelle={t("shell.navAgents")} valeur={agents.length} icone={Users} teinte="gris" />
+        <KpiCard libelle={t("superviseurAgents.kpiDisponibles")} valeur={disponibles} icone={UserCheck} teinte="vert" />
+        <KpiCard libelle={t("superviseurAgents.kpiEnMission")} valeur={enMission} icone={ClipboardPlus} teinte="bleu" />
       </div>
 
       <FilterChips
         valeur={filtre}
         onChange={setFiltre}
         options={[
-          { valeur: "TOUS", libelle: "Tous", compteur: agents.length },
-          { valeur: "DISPONIBLES", libelle: "Disponibles", compteur: disponibles, couleur: "#16a34a" },
-          { valeur: "OCCUPES", libelle: "En mission", compteur: enMission, couleur: "#0ea5e9" },
+          { valeur: "TOUS", libelle: t("adminUtilisateurs.filtreTous"), compteur: agents.length },
+          { valeur: "DISPONIBLES", libelle: t("superviseurAgents.kpiDisponibles"), compteur: disponibles, couleur: "#16a34a" },
+          { valeur: "OCCUPES", libelle: t("superviseurAgents.kpiEnMission"), compteur: enMission, couleur: "#0ea5e9" },
         ]}
       />
 
@@ -101,10 +104,10 @@ const Agents = () => {
         <Card>
           <EtatVide
             icone={Users}
-            titre={agents.length === 0 ? "Aucun agent dans votre zone" : "Aucun agent pour ce filtre"}
+            titre={agents.length === 0 ? t("superviseurAgents.aucunAgentZone") : t("superviseurAgents.aucunAgentFiltre")}
             description={
               agents.length === 0
-                ? "L'administrateur doit affecter des agents de collecte à votre zone."
+                ? t("superviseurAgents.adminDoitAffecter")
                 : undefined
             }
           />
@@ -126,10 +129,10 @@ const Agents = () => {
                     <div className="mt-1">
                       <StatutBadge ton={agent.disponible ? "vert" : "orange"}>
                         {agent.statutCompte !== "ACTIF"
-                          ? "Compte inactif"
+                          ? t("superviseurAgents.compteInactif")
                           : agent.disponible
-                            ? "Disponible"
-                            : "Charge maximale"}
+                            ? t("superviseurAgents.disponible")
+                            : t("superviseurAgents.chargeMaximale")}
                       </StatutBadge>
                     </div>
                   </div>
@@ -152,7 +155,7 @@ const Agents = () => {
 
                 <div className="mt-4">
                   <div className="mb-1.5 flex justify-between text-xs">
-                    <span className="font-medium text-slate-500">Missions actives</span>
+                    <span className="font-medium text-slate-500">{t("superviseurAgents.missionsActives")}</span>
                     <span className="font-bold text-slate-800">
                       {actives} / {limite}
                     </span>
@@ -186,7 +189,7 @@ const Agents = () => {
                     disabled={!agent.disponible}
                     onClick={() => navigate(`/superviseur/interventions?ouvrir=1&agent=${agent.idUtilisateur}`)}
                   >
-                    Assigner une intervention
+                    {t("superviseurAgents.assignerIntervention")}
                   </SecondaryButton>
                 </div>
               </Card>

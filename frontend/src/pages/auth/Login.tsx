@@ -32,6 +32,8 @@ import {
     saveAuthentication,
     type AuthUser,
 } from "../../stores/authStore";
+import { useTranslation } from "../../i18n";
+import SelecteurLangue from "../../components/SelecteurLangue";
 
 interface LoginResponse {
     message: string;
@@ -40,6 +42,7 @@ interface LoginResponse {
 }
 
 export default function Login() {
+    const { t } = useTranslation();
     const navigate = useNavigate();
 
     const [email, setEmail] =
@@ -69,7 +72,7 @@ export default function Login() {
             !motDePasse
         ) {
             setError(
-                "Veuillez renseigner votre adresse e-mail et votre mot de passe."
+                t("auth.login.erreurChampsVides")
             );
 
             return;
@@ -151,18 +154,18 @@ export default function Login() {
             ) {
                 setError(
                     requestError.response?.data?.message ||
-                        "Votre compte n'est pas encore actif. Un administrateur doit approuver votre demande."
+                        t("auth.login.erreurCompteInactif")
                 );
             } else if (
                 requestError?.code ===
                 "ECONNABORTED"
             ) {
                 setError(
-                    "Le serveur met trop de temps à répondre. Veuillez réessayer."
+                    t("auth.login.erreurTimeout")
                 );
             } else {
                 setError(
-                    "Impossible de se connecter au serveur. Vérifiez que l'API est démarrée."
+                    t("auth.login.erreurServeur")
                 );
             }
         } finally {
@@ -290,24 +293,19 @@ export default function Login() {
                                     <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-green-400/20 bg-green-400/10 px-3.5 py-2 text-xs font-semibold text-green-300">
                                         <Radio size={14} />
 
-                                        Plateforme IoT
+                                        {t("auth.login.badge")}
                                     </div>
 
                                     <h1 className="max-w-lg text-3xl font-extrabold leading-[1.12] tracking-tight text-white xl:text-5xl">
-                                        Gérez vos bacs{" "}
+                                        {t("auth.login.titre1")}{" "}
 
                                         <span className="text-green-400">
-                                            intelligemment.
+                                            {t("auth.login.titreAccent")}
                                         </span>
                                     </h1>
 
                                     <p className="mt-5 max-w-lg text-sm leading-7 text-slate-400 xl:text-base">
-                                        Retrouvez toutes les
-                                        informations utiles à la
-                                        supervision des bacs
-                                        connectés et à
-                                        l'organisation des
-                                        interventions de collecte.
+                                        {t("auth.login.paragraphe")}
                                     </p>
                                 </motion.div>
 
@@ -334,7 +332,7 @@ export default function Login() {
 
                                         <img
                                             src="/images/bac-connecte.png"
-                                            alt="Bac connecté SmartCityWaste"
+                                            alt={t("commun.bacConnecteAlt")}
                                             className="absolute inset-0 h-full w-full object-cover opacity-80"
                                         />
 
@@ -343,7 +341,7 @@ export default function Login() {
                                         <div className="absolute bottom-4 left-4">
 
                                             <p className="text-[10px] text-slate-400">
-                                                Système de supervision
+                                                {t("auth.login.carteLabel")}
                                             </p>
 
                                             <p className="mt-1 text-sm font-bold text-white">
@@ -356,7 +354,7 @@ export default function Login() {
 
                                             <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-green-400" />
 
-                                            Système connecté
+                                            {t("auth.login.carteConnecte")}
 
                                         </div>
 
@@ -391,8 +389,7 @@ export default function Login() {
                                         />
 
                                         <p className="mt-2 text-[10px] font-medium leading-4 text-slate-300">
-                                            Données
-                                            connectées
+                                            {t("auth.login.avantage1")}
                                         </p>
 
                                     </div>
@@ -405,8 +402,7 @@ export default function Login() {
                                         />
 
                                         <p className="mt-2 text-[10px] font-medium leading-4 text-slate-300">
-                                            Accès
-                                            sécurisé
+                                            {t("auth.login.avantage2")}
                                         </p>
 
                                     </div>
@@ -419,8 +415,7 @@ export default function Login() {
                                         />
 
                                         <p className="mt-2 text-[10px] font-medium leading-4 text-slate-300">
-                                            Supervision
-                                            centralisée
+                                            {t("auth.login.avantage3")}
                                         </p>
 
                                     </div>
@@ -435,8 +430,7 @@ export default function Login() {
                         ================================================== */}
 
                         <p className="shrink-0 text-[10px] text-slate-600">
-                            SmartCityWaste · Gestion
-                            intelligente des déchets
+                            {t("auth.login.footer")}
                         </p>
 
                     </div>
@@ -455,7 +449,7 @@ export default function Login() {
                     <div className="pointer-events-none absolute -bottom-32 -left-32 h-72 w-72 rounded-full bg-emerald-100/80 blur-3xl" />
 
                     {/* =================================================
-                        BOUTON RETOUR
+                        BOUTON RETOUR + LANGUE
                     ================================================== */}
 
                     <motion.div
@@ -471,7 +465,7 @@ export default function Login() {
                             delay: 0.15,
                             duration: 0.5,
                         }}
-                        className="absolute left-5 top-5 z-20 sm:left-8 sm:top-8"
+                        className="absolute left-5 top-5 z-20 flex items-center gap-2 sm:left-8 sm:top-8"
                     >
                         <Link
                             to="/"
@@ -480,13 +474,17 @@ export default function Login() {
                             <ArrowLeft size={16} />
 
                             <span className="hidden sm:inline">
-                                Retour à l'accueil
+                                {t("auth.login.retourAccueil")}
                             </span>
 
                             <span className="sm:hidden">
-                                Retour
+                                {t("auth.login.retourCourt")}
                             </span>
                         </Link>
+
+                        <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
+                            <SelecteurLangue />
+                        </div>
                     </motion.div>
 
                     {/* =================================================
@@ -536,12 +534,11 @@ export default function Login() {
                             </div>
 
                             <h2 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
-                                Bienvenue !
+                                {t("auth.login.bienvenue")}
                             </h2>
 
                             <p className="mx-auto mt-2 max-w-sm text-sm leading-6 text-slate-500">
-                                Connectez-vous à votre
-                                espace SmartCityWaste.
+                                {t("auth.login.sousTitre")}
                             </p>
 
                         </div>
@@ -566,7 +563,7 @@ export default function Login() {
                                     htmlFor="email"
                                     className="mb-2 block text-sm font-semibold text-slate-700"
                                 >
-                                    Adresse e-mail
+                                    {t("auth.login.emailLabel")}
                                 </label>
 
                                 <div className="relative">
@@ -593,7 +590,7 @@ export default function Login() {
                                                     .value
                                             )
                                         }
-                                        placeholder="exemple@email.com"
+                                        placeholder={t("auth.login.emailPlaceholder")}
                                         className="h-12 w-full rounded-xl border border-slate-200 bg-slate-50 pl-11 pr-4 text-sm text-slate-900 outline-none transition-all placeholder:text-slate-400 focus:border-green-500 focus:bg-white focus:ring-4 focus:ring-green-500/10"
                                     />
 
@@ -611,11 +608,11 @@ export default function Login() {
                                         htmlFor="password"
                                         className="block text-sm font-semibold text-slate-700"
                                     >
-                                        Mot de passe
+                                        {t("auth.login.motDePasseLabel")}
                                     </label>
 
                                     <span className="text-[10px] font-medium text-slate-400 sm:text-xs">
-                                        Sécurisé par JWT
+                                        {t("auth.login.jwtBadge")}
                                     </span>
 
                                 </div>
@@ -648,7 +645,7 @@ export default function Login() {
                                                     .value
                                             )
                                         }
-                                        placeholder="Votre mot de passe"
+                                        placeholder={t("auth.login.motDePassePlaceholder")}
                                         className="h-12 w-full rounded-xl border border-slate-200 bg-slate-50 pl-11 pr-12 text-sm text-slate-900 outline-none transition-all placeholder:text-slate-400 focus:border-green-500 focus:bg-white focus:ring-4 focus:ring-green-500/10"
                                     />
 
@@ -665,8 +662,8 @@ export default function Login() {
                                         className="absolute right-3 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-lg text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700"
                                         aria-label={
                                             showPassword
-                                                ? "Masquer le mot de passe"
-                                                : "Afficher le mot de passe"
+                                                ? t("auth.login.masquerMotDePasse")
+                                                : t("auth.login.afficherMotDePasse")
                                         }
                                     >
                                         {showPassword ? (
@@ -747,11 +744,11 @@ export default function Login() {
                                     <>
                                         <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
 
-                                        Connexion en cours...
+                                        {t("auth.login.connexionEnCours")}
                                     </>
                                 ) : (
                                     <>
-                                        Se connecter
+                                        {t("auth.login.seConnecter")}
 
                                         <ArrowRight
                                             size={
@@ -772,15 +769,14 @@ export default function Login() {
                         <div className="mt-5 text-center">
 
                             <p className="text-sm text-slate-500">
-                                Vous n'avez pas encore
-                                de compte ?
+                                {t("auth.login.pasDeCompte")}
                             </p>
 
                             <Link
                                 to="/register"
                                 className="mt-1 inline-block text-sm font-bold text-green-600 transition-colors hover:text-green-700"
                             >
-                                Créer un compte
+                                {t("auth.login.creerCompte")}
                             </Link>
 
                         </div>
@@ -797,9 +793,7 @@ export default function Login() {
                             />
 
                             <span>
-                                Vos identifiants sont
-                                transmis de manière
-                                sécurisée.
+                                {t("auth.login.securite")}
                             </span>
 
                         </div>

@@ -15,10 +15,12 @@ import { listerMissionsAgent, type AgentMission } from "../../services/agentServ
 import FiltreDates from "../../components/ui/FiltreDates";
 import { dansPlage, plageVide, type PlageDates } from "../../utils/plageDates";
 import { useTempsReel } from "../../hooks/useTempsReel";
+import { useTranslation } from "../../i18n";
 
 type Filtre = "TOUTES" | "EN_COURS" | "AFFECTEE" | "SUSPENDUE" | "TERMINEE";
 
 const Missions = () => {
+  const { t } = useTranslation();
   const [missions, setMissions] = useState<AgentMission[]>([]);
   const [filtre, setFiltre] = useState<Filtre>("TOUTES");
   const [periode, setPeriode] = useState<PlageDates>(plageVide);
@@ -32,12 +34,12 @@ const Missions = () => {
       if (actualisation) setRefreshing(true);
       setMissions((await listerMissionsAgent()).missions);
     } catch (err: any) {
-      setError(err?.response?.data?.message || "Impossible de charger vos missions.");
+      setError(err?.response?.data?.message || t("agentMissions.erreurChargement"));
     } finally {
       setLoading(false);
       setRefreshing(false);
     }
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     charger();
@@ -63,16 +65,16 @@ const Missions = () => {
       );
   }, [missions, filtre, periode]);
 
-  if (loading) return <Chargement texte="Chargement de vos missions..." />;
+  if (loading) return <Chargement texte={t("agentMissions.chargement")} />;
 
   return (
     <div className="space-y-5">
       <PageHeader
-        titre="Mes missions"
-        description="Missions de collecte qui vous sont affectées par votre superviseur."
+        titre={t("shell.titreMesMissions")}
+        description={t("agentMissions.description")}
         actions={
           <SecondaryButton icone={RefreshCw} chargement={refreshing} onClick={() => charger(true)}>
-            Actualiser
+            {t("adminDemandes.actualiser")}
           </SecondaryButton>
         }
       />
@@ -83,25 +85,25 @@ const Missions = () => {
         valeur={filtre}
         onChange={setFiltre}
         options={[
-          { valeur: "TOUTES", libelle: "Toutes", compteur: missions.length },
-          { valeur: "EN_COURS", libelle: "En cours", compteur: compte("EN_COURS"), couleur: "#0ea5e9" },
-          { valeur: "AFFECTEE", libelle: "À démarrer", compteur: compte("AFFECTEE"), couleur: "#f97316" },
-          { valeur: "SUSPENDUE", libelle: "Suspendues", compteur: compte("SUSPENDUE"), couleur: "#94a3b8" },
-          { valeur: "TERMINEE", libelle: "Terminées", compteur: compte("TERMINEE"), couleur: "#16a34a" },
+          { valeur: "TOUTES", libelle: t("adminDemandes.filtreToutes"), compteur: missions.length },
+          { valeur: "EN_COURS", libelle: t("commun.statutEnCours"), compteur: compte("EN_COURS"), couleur: "#0ea5e9" },
+          { valeur: "AFFECTEE", libelle: t("agentDashboard.kpiADemarrer"), compteur: compte("AFFECTEE"), couleur: "#f97316" },
+          { valeur: "SUSPENDUE", libelle: t("agentMissions.filtreSuspendues"), compteur: compte("SUSPENDUE"), couleur: "#94a3b8" },
+          { valeur: "TERMINEE", libelle: t("adminInterventions.optTerminees"), compteur: compte("TERMINEE"), couleur: "#16a34a" },
         ]}
       />
 
-      <FiltreDates valeur={periode} onChange={setPeriode} libelle="Affectées" />
+      <FiltreDates valeur={periode} onChange={setPeriode} libelle={t("agentMissions.affectees")} />
 
       {visibles.length === 0 ? (
         <Card>
           <EtatVide
             icone={Truck}
-            titre="Aucune mission disponible"
+            titre={t("agentMissions.aucuneMissionDisponible")}
             description={
               missions.length === 0
-                ? "Vous serez notifié dès qu'un superviseur vous affectera une intervention."
-                : "Aucune mission ne correspond à ce filtre."
+                ? t("agentDashboard.seraNotifie")
+                : t("agentMissions.aucuneCorrespondFiltre")
             }
           />
         </Card>

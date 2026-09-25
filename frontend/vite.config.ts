@@ -7,6 +7,14 @@ import basicSsl from "@vitejs/plugin-basic-ssl";
 // l'agent) qu'en HTTPS. Le serveur de développement est donc servi en HTTPS avec
 // un certificat auto-signé, et l'API passe par le même serveur (/api) pour
 // éviter le blocage « contenu mixte » d'une page HTTPS appelant une API HTTP.
+//
+// Exception : derrière un tunnel (ngrok, cloudflared…), c'est le tunnel qui
+// fournit déjà un vrai certificat HTTPS au navigateur ; le certificat auto-signé
+// local devient inutile et complique la connexion du tunnel. On peut donc le
+// désactiver pour cette session avec VITE_HTTPS=false (PowerShell :
+// $env:VITE_HTTPS="false"; npm run dev).
+const httpsLocal = process.env.VITE_HTTPS !== "false";
+
 const proxyApi = {
     "/api": {
         target: "http://localhost:3000",
@@ -18,7 +26,7 @@ export default defineConfig({
     plugins: [
         react(),
         tailwindcss(),
-        basicSsl(),
+        ...(httpsLocal ? [basicSsl()] : []),
     ],
     server: {
         host: true,

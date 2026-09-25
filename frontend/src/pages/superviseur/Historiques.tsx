@@ -20,6 +20,7 @@ import { useTempsReel } from "../../hooks/useTempsReel";
 import api from "../../services/api";
 import { SEUIL_ALERTE, SEUIL_PLEIN } from "../../utils/bacLevel";
 import { joursEnArriere, type PlageDates } from "../../utils/plageDates";
+import { LOCALE_INTL, useTranslation } from "../../i18n";
 
 interface Bac {
   id_bac: number;
@@ -34,12 +35,14 @@ interface Mesure {
   qualiteMesure?: string | null;
 }
 
-const formaterDate = (valeur?: string | null) =>
-  valeur
-    ? new Intl.DateTimeFormat("fr-FR", { dateStyle: "medium", timeStyle: "short" }).format(new Date(valeur))
-    : "—";
-
 export default function Historiques() {
+  const { t, langue } = useTranslation();
+
+  const formaterDate = (valeur?: string | null) =>
+    valeur
+      ? new Intl.DateTimeFormat(LOCALE_INTL[langue], { dateStyle: "medium", timeStyle: "short" }).format(new Date(valeur))
+      : "—";
+
   const [bacs, setBacs] = useState<Bac[]>([]);
   const [bacId, setBacId] = useState("");
   const [mesures, setMesures] = useState<Mesure[]>([]);
@@ -57,11 +60,11 @@ export default function Historiques() {
       setBacs(liste);
       setBacId((courant) => courant || (liste[0] ? String(liste[0].id_bac) : ""));
     } catch (err: any) {
-      setError(err?.response?.data?.message || "Impossible de charger les bacs.");
+      setError(err?.response?.data?.message || t("superviseurHistoriques.erreurChargementBacs"));
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [t]);
 
   const chargerMesures = useCallback(async () => {
     if (!bacId) {
@@ -81,12 +84,12 @@ export default function Historiques() {
       });
       setMesures(Array.isArray(reponse.data?.mesures) ? reponse.data.mesures : []);
     } catch (err: any) {
-      setError(err?.response?.data?.message || "Impossible de charger l'historique.");
+      setError(err?.response?.data?.message || t("superviseurHistoriques.erreurChargementHistorique"));
       setMesures([]);
     } finally {
       setChargementMesures(false);
     }
-  }, [bacId, periode]);
+  }, [bacId, periode, t]);
 
   useEffect(() => {
     chargerBacs();
@@ -124,16 +127,16 @@ export default function Historiques() {
 
   const bacChoisi = bacs.find((bac) => String(bac.id_bac) === bacId);
 
-  if (loading) return <Chargement texte="Chargement de l'historique..." />;
+  if (loading) return <Chargement texte={t("superviseurHistoriques.chargement")} />;
 
   return (
     <div className="space-y-5">
       <PageHeader
-        titre="Historique des mesures"
-        description="Niveaux de remplissage transmis par les capteurs, sur la période choisie."
+        titre={t("superviseurHistoriques.titre")}
+        description={t("superviseurHistoriques.description")}
         actions={
           <SecondaryButton icone={RefreshCw} chargement={chargementMesures} onClick={() => chargerMesures()}>
-            Actualiser
+            {t("adminDemandes.actualiser")}
           </SecondaryButton>
         }
       />
@@ -142,7 +145,7 @@ export default function Historiques() {
 
       {bacs.length === 0 ? (
         <Card>
-          <EtatVide icone={History} titre="Aucun bac dans votre zone" />
+          <EtatVide icone={History} titre={t("superviseurHistoriques.aucunBacZone")} />
         </Card>
       ) : (
         <>
@@ -155,16 +158,16 @@ export default function Historiques() {
           <FiltreDates valeur={periode} onChange={setPeriode} />
 
           <div className="grid grid-cols-3 gap-3 lg:gap-4">
-            <KpiCard libelle="Mesures" valeur={mesures.length} icone={Gauge} teinte="gris" />
-            <KpiCard libelle="Maximum" valeur={stats ? `${Math.round(stats.max)}%` : "—"} icone={TrendingUp} teinte="rouge" />
-            <KpiCard libelle="Moyenne" valeur={stats ? `${stats.moyenne}%` : "—"} icone={Gauge} teinte="bleu" />
+            <KpiCard libelle={t("superviseurHistoriques.kpiMesures")} valeur={mesures.length} icone={Gauge} teinte="gris" />
+            <KpiCard libelle={t("superviseurHistoriques.kpiMaximum")} valeur={stats ? `${Math.round(stats.max)}%` : "—"} icone={TrendingUp} teinte="rouge" />
+            <KpiCard libelle={t("superviseurHistoriques.kpiMoyenne")} valeur={stats ? `${stats.moyenne}%` : "—"} icone={Gauge} teinte="bleu" />
           </div>
 
           <Card className="p-4 sm:p-5">
             <SectionTitle
               icone={TrendingUp}
-              titre={`Évolution — ${bacChoisi?.reference ?? ""}`}
-              sousTitre="Seuils : alerte 50 %, critique 80 %"
+              titre={t("superviseurHistoriques.evolution", { ref: bacChoisi?.reference ?? "" })}
+              sousTitre={t("superviseurHistoriques.seuilsLabel")}
               droite={stats ? <EtatBadge niveau={stats.dernier} /> : undefined}
             />
 
@@ -173,8 +176,8 @@ export default function Historiques() {
             ) : serie.length < 2 ? (
               <EtatVide
                 icone={History}
-                titre={serie.length === 0 ? "Aucune mesure sur cette période" : "Pas assez de mesures pour tracer une courbe"}
-                description="Élargissez la période pour afficher l'évolution."
+                titre={serie.length === 0 ? t("superviseurHistoriques.aucuneMesurePeriode") : t("superviseurHistoriques.pasAssezMesures")}
+                description={t("superviseurHistoriques.elargirPeriode")}
               />
             ) : (
               <div className="mt-4 h-56 w-full sm:h-72">
@@ -193,7 +196,7 @@ export default function Historiques() {
                       scale="time"
                       domain={["dataMin", "dataMax"]}
                       tickFormatter={(valeur) =>
-                        new Intl.DateTimeFormat("fr-FR", { day: "2-digit", month: "short" }).format(new Date(valeur))
+                        new Intl.DateTimeFormat(LOCALE_INTL[langue], { day: "2-digit", month: "short" }).format(new Date(valeur))
                       }
                       tick={{ fontSize: 11, fill: "#64748b" }}
                       minTickGap={28}
@@ -203,7 +206,7 @@ export default function Historiques() {
                     <ReferenceLine y={SEUIL_PLEIN} stroke="#dc2626" strokeDasharray="4 4" />
                     <Tooltip
                       labelFormatter={(valeur) => formaterDate(new Date(Number(valeur)).toISOString())}
-                      formatter={(valeur) => [`${Math.round(Number(valeur))}%`, "Remplissage"]}
+                      formatter={(valeur) => [`${Math.round(Number(valeur))}%`, t("superviseurHistoriques.remplissageTooltip")]}
                     />
                     <Area type="monotone" dataKey="niveau" stroke="#16a34a" strokeWidth={2.5} fill="url(#degradeNiveau)" />
                   </AreaChart>
@@ -214,14 +217,14 @@ export default function Historiques() {
 
           <Card className="divide-y divide-slate-100">
             {mesures.length === 0 ? (
-              <EtatVide icone={History} titre="Aucune mesure à afficher" />
+              <EtatVide icone={History} titre={t("superviseurHistoriques.aucuneMesureAAfficher")} />
             ) : (
               mesures.slice(0, 50).map((mesure) => (
                 <div key={mesure.idMesure} className="flex items-center justify-between gap-3 px-4 py-3">
                   <div className="min-w-0">
                     <p className="text-sm font-semibold text-slate-800">{formaterDate(mesure.dateMesure)}</p>
                     <p className="text-xs text-slate-400">
-                      {mesure.distance !== null && mesure.distance !== undefined ? `Distance ${Number(mesure.distance)} cm` : "Distance —"}
+                      {mesure.distance !== null && mesure.distance !== undefined ? t("superviseurHistoriques.distanceLabel", { n: Number(mesure.distance) }) : t("superviseurHistoriques.distanceInconnue")}
                       {mesure.qualiteMesure ? ` · ${mesure.qualiteMesure.toLowerCase()}` : ""}
                     </p>
                   </div>
@@ -234,7 +237,7 @@ export default function Historiques() {
             )}
           </Card>
           {mesures.length > 50 && (
-            <p className="text-center text-xs text-slate-400">50 mesures les plus récentes affichées sur {mesures.length}.</p>
+            <p className="text-center text-xs text-slate-400">{t("superviseurHistoriques.mesuresRecentesAffichees", { n: 50, total: mesures.length })}</p>
           )}
         </>
       )}

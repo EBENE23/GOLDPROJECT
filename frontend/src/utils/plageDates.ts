@@ -35,18 +35,23 @@ export const joursEnArriere = (jours: number): PlageDates => {
   return { debut: versJour(debut), fin: versJour(fin) };
 };
 
+// Les libellés (Aujourd'hui, 7 jours…) sont résolus à l'affichage via
+// useTraductionPresetsPeriode() ci-dessous, pour suivre la langue choisie.
 export const PRESETS_PERIODE = [
-  { id: "aujourdhui", libelle: "Aujourd'hui", plage: () => joursEnArriere(1) },
-  { id: "7j", libelle: "7 jours", plage: () => joursEnArriere(7) },
-  { id: "30j", libelle: "30 jours", plage: () => joursEnArriere(30) },
+  { id: "aujourdhui", cle: "filtreDates.aujourdhui", plage: () => joursEnArriere(1) },
+  { id: "7j", cle: "filtreDates.septJours", plage: () => joursEnArriere(7) },
+  { id: "30j", cle: "filtreDates.trenteJours", plage: () => joursEnArriere(30) },
 ] as const;
 
-export const libellePlage = (plage: PlageDates) => {
-  if (!plageActive(plage)) return "Toute la période";
+type T = (chemin: string, variables?: Record<string, string | number>) => string;
+
+/** Libellé de la période (« Toute la période », « Depuis le… », etc.), traduit et dans la bonne locale. */
+export const libellePlage = (plage: PlageDates, t: T, locale = "fr-FR") => {
+  if (!plageActive(plage)) return t("filtreDates.toutePeriode");
 
   const format = (jour: string) =>
-    new Intl.DateTimeFormat("fr-FR", { day: "2-digit", month: "short" }).format(new Date(`${jour}T00:00:00`));
+    new Intl.DateTimeFormat(locale, { day: "2-digit", month: "short" }).format(new Date(`${jour}T00:00:00`));
 
   if (plage.debut && plage.fin) return plage.debut === plage.fin ? format(plage.debut) : `${format(plage.debut)} → ${format(plage.fin)}`;
-  return plage.debut ? `Depuis le ${format(plage.debut)}` : `Jusqu'au ${format(plage.fin)}`;
+  return plage.debut ? t("filtreDates.depuisLe", { date: format(plage.debut) }) : t("filtreDates.jusquAu", { date: format(plage.fin) });
 };

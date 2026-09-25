@@ -21,24 +21,29 @@ import {
 
 import type { ShellConfig } from "./AppShell";
 
-export const superviseurShell: ShellConfig = {
-  roleLabel: "Superviseur",
+// Chaque fonction reçoit `t()` (fourni par le composant qui construit la
+// configuration) afin que le menu latéral, les titres de page et le libellé
+// du rôle changent avec la langue choisie.
+type T = (chemin: string, variables?: Record<string, string | number>) => string;
+
+export const buildSuperviseurShell = (t: T): ShellConfig => ({
+  roleLabel: t("shell.roleSuperviseur"),
   basePath: "/superviseur",
   navigation: [
-    { label: "Dashboard", titre: "Tableau de bord", path: "/superviseur", icon: LayoutDashboard },
-    { label: "Carte", titre: "Carte des bacs", path: "/superviseur/localisation", icon: MapIcon },
-    { label: "Bacs", titre: "Superviser les bacs", path: "/superviseur/bacs", icon: Boxes },
-    { label: "Interventions", path: "/superviseur/interventions", icon: ClipboardList },
-    { label: "Suivi", titre: "Suivi des interventions", path: "/superviseur/suivi", icon: Radar },
-    { label: "Agents", titre: "Agents de ma zone", path: "/superviseur/agents", icon: UserCheck },
-    { label: "Alertes", path: "/superviseur/alertes", icon: AlertTriangle },
-    { label: "Historiques", path: "/superviseur/historiques", icon: History },
-    { label: "Statistiques", path: "/superviseur/statistiques", icon: BarChart3 },
+    { label: t("shell.navDashboard"), titre: t("shell.titreTableauDeBord"), path: "/superviseur", icon: LayoutDashboard },
+    { label: t("shell.navCarte"), titre: t("shell.titreCarteBacs"), path: "/superviseur/localisation", icon: MapIcon },
+    { label: t("shell.navBacs"), titre: t("shell.titreSuperviserBacs"), path: "/superviseur/bacs", icon: Boxes },
+    { label: t("shell.navInterventions"), path: "/superviseur/interventions", icon: ClipboardList },
+    { label: t("shell.navSuivi"), titre: t("shell.titreSuiviInterventions"), path: "/superviseur/suivi", icon: Radar },
+    { label: t("shell.navAgents"), titre: t("shell.titreAgentsZone"), path: "/superviseur/agents", icon: UserCheck },
+    { label: t("shell.navAlertes"), path: "/superviseur/alertes", icon: AlertTriangle },
+    { label: t("shell.navHistoriques"), path: "/superviseur/historiques", icon: History },
+    { label: t("shell.navStatistiques"), path: "/superviseur/statistiques", icon: BarChart3 },
   ],
   compte: [
-    { label: "Profil", titre: "Mon profil", path: "/superviseur/profil", icon: User },
-    { label: "Notifications", path: "/superviseur/notifications", icon: Bell },
-    { label: "Paramètres", titre: "Préférences", path: "/superviseur/parametres", icon: Settings },
+    { label: t("shell.navProfil"), titre: t("shell.titreMonProfil"), path: "/superviseur/profil", icon: User },
+    { label: t("shell.navNotifications"), path: "/superviseur/notifications", icon: Bell },
+    { label: t("shell.navParametres"), titre: t("shell.titrePreferences"), path: "/superviseur/parametres", icon: Settings },
   ],
   barreInferieure: [
     "/superviseur",
@@ -47,43 +52,43 @@ export const superviseurShell: ShellConfig = {
     "/superviseur/alertes",
   ],
   cloche: { path: "/superviseur/notifications", source: "notifications" },
-};
+});
 
-export const agentShell: ShellConfig = {
-  roleLabel: "Agent de collecte",
+export const buildAgentShell = (t: T): ShellConfig => ({
+  roleLabel: t("shell.roleAgent"),
   basePath: "/agent",
   navigation: [
-    { label: "Dashboard", titre: "Tableau de bord", path: "/agent", icon: LayoutDashboard },
-    { label: "Missions", titre: "Mes missions", path: "/agent/missions", icon: Truck },
-    { label: "Carte", titre: "Carte des bacs", path: "/agent/localisation", icon: MapPinned },
-    { label: "Historique", path: "/agent/historique", icon: History },
-    { label: "Signalements", path: "/agent/signalements", icon: AlertTriangle },
+    { label: t("shell.navDashboard"), titre: t("shell.titreTableauDeBord"), path: "/agent", icon: LayoutDashboard },
+    { label: t("shell.navMissions"), titre: t("shell.titreMesMissions"), path: "/agent/missions", icon: Truck },
+    { label: t("shell.navCarte"), titre: t("shell.titreCarteBacs"), path: "/agent/localisation", icon: MapPinned },
+    { label: t("shell.navHistorique"), path: "/agent/historique", icon: History },
+    { label: t("shell.navSignalements"), path: "/agent/signalements", icon: AlertTriangle },
   ],
   compte: [
-    { label: "Notifications", path: "/agent/notifications", icon: Bell },
-    { label: "Profil", titre: "Mon profil", path: "/agent/profil", icon: User },
-    { label: "Paramètres", titre: "Préférences", path: "/agent/parametres", icon: Settings },
+    { label: t("shell.navNotifications"), path: "/agent/notifications", icon: Bell },
+    { label: t("shell.navProfil"), titre: t("shell.titreMonProfil"), path: "/agent/profil", icon: User },
+    { label: t("shell.navParametres"), titre: t("shell.titrePreferences"), path: "/agent/parametres", icon: Settings },
   ],
   barreInferieure: ["/agent", "/agent/missions", "/agent/localisation", "/agent/notifications"],
   cloche: { path: "/agent/notifications", source: "notifications" },
-};
+});
 
-export const adminShell: ShellConfig = {
-  roleLabel: "Administrateur",
+export const buildAdminShell = (t: T): ShellConfig => ({
+  roleLabel: t("shell.roleAdmin"),
   basePath: "/admin",
   navigation: [
-    { label: "Dashboard", titre: "Vue d'ensemble", path: "/admin", icon: LayoutDashboard },
-    { label: "Utilisateurs", path: "/admin/utilisateurs", icon: Users },
-    { label: "Demandes", titre: "Demandes d'inscription", path: "/admin/demandes", icon: UserPlus },
-    { label: "Zones", path: "/admin/zones", icon: MapPinned },
-    { label: "Bacs", titre: "Bacs à déchets", path: "/admin/bacs", icon: Trash2 },
-    { label: "Interventions", path: "/admin/interventions", icon: ClipboardList },
-    { label: "Rapports", path: "/admin/rapports", icon: FileText },
+    { label: t("shell.navDashboard"), titre: t("shell.titreVueEnsemble"), path: "/admin", icon: LayoutDashboard },
+    { label: t("shell.navUtilisateurs"), path: "/admin/utilisateurs", icon: Users },
+    { label: t("shell.navDemandes"), titre: t("shell.titreDemandesInscription"), path: "/admin/demandes", icon: UserPlus },
+    { label: t("shell.navZones"), path: "/admin/zones", icon: MapPinned },
+    { label: t("shell.navBacs"), titre: t("shell.titreBacsDechets"), path: "/admin/bacs", icon: Trash2 },
+    { label: t("shell.navInterventions"), path: "/admin/interventions", icon: ClipboardList },
+    { label: t("shell.navRapports"), path: "/admin/rapports", icon: FileText },
   ],
   compte: [
-    { label: "Profil", titre: "Mon profil", path: "/admin/profil", icon: User },
-    { label: "Paramètres", titre: "Préférences", path: "/admin/parametres", icon: Settings },
+    { label: t("shell.navProfil"), titre: t("shell.titreMonProfil"), path: "/admin/profil", icon: User },
+    { label: t("shell.navParametres"), titre: t("shell.titrePreferences"), path: "/admin/parametres", icon: Settings },
   ],
   barreInferieure: ["/admin", "/admin/utilisateurs", "/admin/bacs", "/admin/interventions"],
   cloche: { path: "/admin/demandes", source: "demandes" },
-};
+});

@@ -27,98 +27,93 @@ import ScrollReveal from "../../components/ScrollReveal";
 import SectionTitle from "../../components/SectionTitle";
 import Badge from "../../components/ui/Badge";
 import { BandeauAgent, BandeauEquipe, SectionCycle, SectionRoles } from "./SectionsAccueil";
-
-const features = [
-    {
-        icon: Activity,
-        title: "Supervision en temps réel",
-        description:
-            "Suivez l'état de remplissage des bacs et centralisez les informations utiles à la supervision.",
-        variant: "green" as const,
-    },
-    {
-        icon: MapPinned,
-        title: "Géolocalisation",
-        description:
-            "Visualisez la position des bacs sur une carte interactive afin de faciliter leur localisation.",
-        variant: "blue" as const,
-    },
-    {
-        icon: Route,
-        title: "Gestion des interventions",
-        description:
-            "Identifiez les bacs prioritaires et organisez les interventions de collecte de manière structurée.",
-        variant: "orange" as const,
-    },
-    {
-        icon: Truck,
-        title: "Missions de collecte",
-        description:
-            "Affectez les missions aux agents et suivez leur progression jusqu'à leur terminaison.",
-        variant: "slate" as const,
-    },
-];
-
-const steps = [
-    {
-        number: "01",
-        icon: Gauge,
-        title: "Mesure",
-        description:
-            "Le capteur ultrasonique mesure la distance entre le capteur et les déchets présents dans le bac.",
-    },
-    {
-        number: "02",
-        icon: Cpu,
-        title: "Transmission",
-        description:
-            "L'ESP32 récupère la mesure et la transmet au système via une connexion Wi-Fi et le protocole MQTT.",
-    },
-    {
-        number: "03",
-        icon: Server,
-        title: "Traitement",
-        description:
-            "Le serveur Node.js reçoit, traite et centralise les données dans la base de données.",
-    },
-    {
-        number: "04",
-        icon: Smartphone,
-        title: "Supervision",
-        description:
-            "Les utilisateurs consultent les informations et pilotent les interventions depuis l'application.",
-    },
-];
-
-const technologies = [
-    {
-        icon: Cpu,
-        name: "ESP32",
-        description: "Microcontrôleur connecté",
-    },
-    {
-        icon: Radio,
-        name: "MQTT",
-        description: "Communication IoT",
-    },
-    {
-        icon: Server,
-        name: "Node.js",
-        description: "Backend et API",
-    },
-    {
-        icon: Database,
-        name: "MySQL",
-        description: "Gestion des données",
-    },
-    {
-        icon: Globe2,
-        name: "React",
-        description: "Interface Web",
-    },
-];
+import { useTranslation } from "../../i18n";
 
 export default function Home() {
+    const { t } = useTranslation();
+
+    const features = [
+        {
+            icon: Activity,
+            title: t("home.fonctionnalites.item1Titre"),
+            description: t("home.fonctionnalites.item1Desc"),
+            variant: "green" as const,
+        },
+        {
+            icon: MapPinned,
+            title: t("home.fonctionnalites.item2Titre"),
+            description: t("home.fonctionnalites.item2Desc"),
+            variant: "blue" as const,
+        },
+        {
+            icon: Route,
+            title: t("home.fonctionnalites.item3Titre"),
+            description: t("home.fonctionnalites.item3Desc"),
+            variant: "orange" as const,
+        },
+        {
+            icon: Truck,
+            title: t("home.fonctionnalites.item4Titre"),
+            description: t("home.fonctionnalites.item4Desc"),
+            variant: "slate" as const,
+        },
+    ];
+
+    const steps = [
+        {
+            number: "01",
+            icon: Gauge,
+            title: t("home.fonctionnement.etape1Titre"),
+            description: t("home.fonctionnement.etape1Texte"),
+        },
+        {
+            number: "02",
+            icon: Cpu,
+            title: t("home.fonctionnement.etape2Titre"),
+            description: t("home.fonctionnement.etape2Texte"),
+        },
+        {
+            number: "03",
+            icon: Server,
+            title: t("home.fonctionnement.etape3Titre"),
+            description: t("home.fonctionnement.etape3Texte"),
+        },
+        {
+            number: "04",
+            icon: Smartphone,
+            title: t("home.fonctionnement.etape4Titre"),
+            description: t("home.fonctionnement.etape4Texte"),
+        },
+    ];
+
+    const technologies = [
+        {
+            icon: Cpu,
+            name: "ESP32",
+            description: t("home.technologies.esp32"),
+        },
+        {
+            icon: Radio,
+            name: "MQTT",
+            description: t("home.technologies.mqtt"),
+        },
+        {
+            icon: Server,
+            name: "Node.js",
+            description: t("home.technologies.node"),
+        },
+        {
+            icon: Database,
+            name: "MySQL",
+            description: t("home.technologies.mysql"),
+        },
+        {
+            icon: Globe2,
+            name: "React",
+            description: t("home.technologies.react"),
+        },
+    ];
+
     const { scrollYProgress } =
         useScroll();
 
@@ -163,7 +158,7 @@ export default function Home() {
                                         size={13}
                                         className="mr-1.5"
                                     />
-                                    Gestion intelligente des déchets
+                                    {t("home.hero.badge")}
                                 </Badge>
                             </ScrollReveal>
 
@@ -172,9 +167,9 @@ export default function Home() {
                                 delay={0.1}
                             >
                                 <h1 className="mt-6 max-w-3xl text-4xl font-extrabold leading-[1.12] tracking-tight text-slate-950 sm:text-5xl lg:text-6xl">
-                                    La gestion intelligente des{" "}
+                                    {t("home.hero.titre1")}{" "}
                                     <span className="text-green-600">
-                                        déchets urbains
+                                        {t("home.hero.titreAccent")}
                                     </span>
                                 </h1>
                             </ScrollReveal>
@@ -184,11 +179,7 @@ export default function Home() {
                                 delay={0.18}
                             >
                                 <p className="mt-6 max-w-xl text-base leading-8 text-slate-500 sm:text-lg">
-                                    SmartCityWaste permet de superviser les
-                                    bacs à déchets connectés, de suivre leur
-                                    niveau de remplissage, de les localiser
-                                    et de faciliter l'organisation des
-                                    interventions de collecte.
+                                    {t("home.hero.description")}
                                 </p>
                             </ScrollReveal>
 
@@ -202,7 +193,7 @@ export default function Home() {
                                         to="/register"
                                         className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-green-600 px-6 py-3.5 text-sm font-semibold text-white shadow-xl shadow-green-600/20 transition-all hover:-translate-y-1 hover:bg-green-700"
                                     >
-                                        Demander un accès
+                                        {t("home.hero.ctaPrimaire")}
                                         <ArrowRight size={18} />
                                     </Link>
 
@@ -210,7 +201,7 @@ export default function Home() {
                                         href="#fonctionnement"
                                         className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-6 py-3.5 text-sm font-semibold text-slate-700 shadow-sm transition-all hover:-translate-y-0.5 hover:border-green-200 hover:text-green-700"
                                     >
-                                        Comment ça marche ?
+                                        {t("home.hero.ctaSecondaire")}
                                     </a>
                                 </div>
                             </ScrollReveal>
@@ -225,7 +216,7 @@ export default function Home() {
                                             size={17}
                                             className="text-green-600"
                                         />
-                                        Supervision IoT
+                                        {t("home.hero.check1")}
                                     </div>
 
                                     <div className="flex items-center gap-2 text-xs font-medium text-slate-500 sm:text-sm">
@@ -233,7 +224,7 @@ export default function Home() {
                                             size={17}
                                             className="text-green-600"
                                         />
-                                        Données centralisées
+                                        {t("home.hero.check2")}
                                     </div>
 
                                     <div className="flex items-center gap-2 text-xs font-medium text-slate-500 sm:text-sm">
@@ -241,7 +232,7 @@ export default function Home() {
                                             size={17}
                                             className="text-green-600"
                                         />
-                                        Géolocalisation
+                                        {t("home.hero.check3")}
                                     </div>
                                 </div>
                             </ScrollReveal>
@@ -274,20 +265,20 @@ export default function Home() {
                                                 </p>
 
                                                 <p className="mt-1 text-sm font-bold text-slate-800">
-                                                    Bac connecté
+                                                    {t("home.hero.carteBac")}
                                                 </p>
                                             </div>
 
                                             <div className="flex items-center gap-2 rounded-full bg-green-50 px-3 py-1.5 text-xs font-semibold text-green-700">
                                                 <span className="h-2 w-2 animate-pulse rounded-full bg-green-500" />
-                                                Connecté
+                                                {t("home.hero.carteConnecte")}
                                             </div>
                                         </div>
 
                                         <div className="relative min-h-[340px] overflow-hidden rounded-3xl bg-gradient-to-br from-green-50 to-slate-100">
                                             <img
                                                 src="/images/bac-connecte.png"
-                                                alt="Bac connecté SmartCityWaste"
+                                                alt={t("commun.bacConnecteAlt")}
                                                 className="absolute inset-0 z-0 h-full w-full object-cover"
                                             />
 
@@ -316,7 +307,7 @@ export default function Home() {
 
                                                     <div>
                                                         <p className="text-[10px] font-medium text-slate-400 sm:text-xs">
-                                                            Connexion
+                                                            {t("home.hero.carteConnexionLabel")}
                                                         </p>
 
                                                         <p className="text-xs font-bold text-slate-800 sm:text-sm">
@@ -349,11 +340,11 @@ export default function Home() {
 
                                                     <div>
                                                         <p className="text-[10px] font-medium text-slate-400 sm:text-xs">
-                                                            IoT
+                                                            {t("home.hero.carteIotLabel")}
                                                         </p>
 
                                                         <p className="text-xs font-bold text-slate-800 sm:text-sm">
-                                                            Connecté
+                                                            {t("home.hero.carteConnecte")}
                                                         </p>
                                                     </div>
                                                 </div>
@@ -382,7 +373,7 @@ export default function Home() {
 
                                                     <div>
                                                         <p className="text-[10px] font-medium text-slate-300 sm:text-xs">
-                                                            Niveau de remplissage
+                                                            {t("home.hero.carteRemplissageLabel")}
                                                         </p>
 
                                                         <p className="mt-0.5 text-base font-bold sm:text-lg">
@@ -419,11 +410,11 @@ export default function Home() {
 
                                                     <div>
                                                         <p className="text-[10px] font-medium text-slate-400 sm:text-xs">
-                                                            Localisation GPS
+                                                            {t("home.hero.carteLocalisationLabel")}
                                                         </p>
 
                                                         <p className="text-xs font-bold text-slate-800 sm:text-sm">
-                                                            Yaoundé
+                                                            {t("home.hero.carteVille")}
                                                         </p>
                                                     </div>
                                                 </div>
@@ -434,7 +425,7 @@ export default function Home() {
                                             <div className="rounded-2xl bg-slate-50 p-4">
                                                 <div className="flex items-center gap-2 text-xs text-slate-400">
                                                     <Gauge size={14} />
-                                                    Remplissage
+                                                    {t("home.hero.carteRemplissageMini")}
                                                 </div>
 
                                                 <p className="mt-2 text-2xl font-bold text-slate-900">
@@ -449,15 +440,15 @@ export default function Home() {
                                             <div className="rounded-2xl bg-slate-50 p-4">
                                                 <div className="flex items-center gap-2 text-xs text-slate-400">
                                                     <Activity size={14} />
-                                                    État
+                                                    {t("home.hero.carteEtatMini")}
                                                 </div>
 
                                                 <p className="mt-2 text-lg font-bold text-green-600">
-                                                    NORMAL
+                                                    {t("home.hero.carteEtatValeur")}
                                                 </p>
 
                                                 <p className="mt-1 text-xs text-slate-400">
-                                                    Donnée reçue récemment
+                                                    {t("home.hero.carteEtatNote")}
                                                 </p>
                                             </div>
                                         </div>
@@ -493,23 +484,18 @@ export default function Home() {
                                     </div>
 
                                     <h3 className="mt-7 text-2xl font-bold text-white sm:text-3xl">
-                                        Une ville plus propre commence par
-                                        une meilleure information.
+                                        {t("home.problematique.titre")}
                                     </h3>
 
                                     <p className="mt-5 text-sm leading-7 text-slate-400 sm:text-base">
-                                        L'accumulation des déchets peut
-                                        entraîner des nuisances, dégrader
-                                        l'environnement urbain et compliquer
-                                        le travail des équipes de collecte.
+                                        {t("home.problematique.paragraphe")}
                                     </p>
 
                                     <div className="mt-8 flex items-center gap-3 border-t border-white/10 pt-6">
                                         <div className="h-2 w-2 rounded-full bg-green-400" />
 
                                         <span className="text-xs font-medium text-slate-400">
-                                            Une supervision centralisée pour
-                                            mieux décider.
+                                            {t("home.problematique.note")}
                                         </span>
                                     </div>
                                 </div>
@@ -519,20 +505,15 @@ export default function Home() {
                         <div>
                             <ScrollReveal direction="left">
                                 <Badge variant="green">
-                                    Notre approche
+                                    {t("home.problematique.badge")}
                                 </Badge>
 
                                 <h2 className="mt-5 text-3xl font-bold leading-tight tracking-tight text-slate-900 sm:text-4xl">
-                                    Transformer les données des bacs en
-                                    décisions utiles.
+                                    {t("home.problematique.titre2")}
                                 </h2>
 
                                 <p className="mt-5 text-base leading-7 text-slate-500">
-                                    SmartCityWaste s'appuie sur des capteurs
-                                    connectés afin de collecter les
-                                    informations sur les bacs et de les
-                                    centraliser au sein d'une plateforme de
-                                    supervision.
+                                    {t("home.problematique.paragraphe2")}
                                 </p>
                             </ScrollReveal>
 
@@ -547,12 +528,11 @@ export default function Home() {
                                         </div>
 
                                         <h3 className="mt-4 font-bold text-slate-800">
-                                            Mesurer
+                                            {t("home.problematique.etape1Titre")}
                                         </h3>
 
                                         <p className="mt-2 text-sm leading-6 text-slate-500">
-                                            Connaître le niveau de remplissage
-                                            des bacs.
+                                            {t("home.problematique.etape1Texte")}
                                         </p>
                                     </div>
                                 </ScrollReveal>
@@ -567,12 +547,11 @@ export default function Home() {
                                         </div>
 
                                         <h3 className="mt-4 font-bold text-slate-800">
-                                            Localiser
+                                            {t("home.problematique.etape2Titre")}
                                         </h3>
 
                                         <p className="mt-2 text-sm leading-6 text-slate-500">
-                                            Retrouver rapidement les bacs
-                                            dans la ville.
+                                            {t("home.problematique.etape2Texte")}
                                         </p>
                                     </div>
                                 </ScrollReveal>
@@ -587,12 +566,11 @@ export default function Home() {
                                         </div>
 
                                         <h3 className="mt-4 font-bold text-slate-800">
-                                            Centraliser
+                                            {t("home.problematique.etape3Titre")}
                                         </h3>
 
                                         <p className="mt-2 text-sm leading-6 text-slate-500">
-                                            Regrouper les informations dans
-                                            une plateforme.
+                                            {t("home.problematique.etape3Texte")}
                                         </p>
                                     </div>
                                 </ScrollReveal>
@@ -607,12 +585,11 @@ export default function Home() {
                                         </div>
 
                                         <h3 className="mt-4 font-bold text-slate-800">
-                                            Intervenir
+                                            {t("home.problematique.etape4Titre")}
                                         </h3>
 
                                         <p className="mt-2 text-sm leading-6 text-slate-500">
-                                            Organiser les missions de
-                                            collecte.
+                                            {t("home.problematique.etape4Texte")}
                                         </p>
                                     </div>
                                 </ScrollReveal>
@@ -631,9 +608,9 @@ export default function Home() {
             >
                 <div className="container-app">
                     <SectionTitle
-                        eyebrow="Fonctionnalités"
-                        title="Tout ce qu'il faut pour superviser les bacs"
-                        description="Une plateforme pensée pour centraliser les informations et faciliter le travail des superviseurs et des agents de collecte."
+                        eyebrow={t("home.fonctionnalites.eyebrow")}
+                        title={t("home.fonctionnalites.titre")}
+                        description={t("home.fonctionnalites.description")}
                     />
 
                     <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
@@ -737,9 +714,9 @@ export default function Home() {
             >
                 <div className="container-app">
                     <SectionTitle
-                        eyebrow="Architecture IoT"
-                        title="Comment fonctionne SmartCityWaste ?"
-                        description="Du capteur installé sur le bac jusqu'à l'interface de supervision, les données suivent une chaîne IoT complète."
+                        eyebrow={t("home.fonctionnement.eyebrow")}
+                        title={t("home.fonctionnement.titre")}
+                        description={t("home.fonctionnement.description")}
                     />
 
                     <div className="relative">
@@ -776,7 +753,7 @@ export default function Home() {
 
                                                 <div className="mt-6">
                                                     <span className="text-xs font-bold uppercase tracking-[0.2em] text-green-600">
-                                                        Étape{" "}
+                                                        {t("home.fonctionnement.etapeLabel")}{" "}
                                                         {
                                                             step.number
                                                         }
@@ -813,21 +790,16 @@ export default function Home() {
                                         <Radio size={18} />
 
                                         <span className="text-xs font-semibold uppercase tracking-[0.18em]">
-                                            Chaîne de communication
+                                            {t("home.fonctionnement.bandeauLabel")}
                                         </span>
                                     </div>
 
                                     <h3 className="mt-4 text-2xl font-bold text-white sm:text-3xl">
-                                        Une donnée captée, transmise et
-                                        exploitée.
+                                        {t("home.fonctionnement.bandeauTitre")}
                                     </h3>
 
                                     <p className="mt-4 text-sm leading-7 text-slate-400">
-                                        Les mesures issues du bac connecté
-                                        transitent par l'ESP32 et MQTT avant
-                                        d'être traitées par le backend et
-                                        stockées dans le système de gestion
-                                        des données.
+                                        {t("home.fonctionnement.bandeauTexte")}
                                     </p>
                                 </div>
 
@@ -885,9 +857,9 @@ export default function Home() {
             >
                 <div className="container-app">
                     <SectionTitle
-                        eyebrow="Technologies"
-                        title="Une architecture pensée autour de l'IoT"
-                        description="Les différentes briques technologiques collaborent pour assurer la collecte, la transmission, le traitement et la visualisation des données."
+                        eyebrow={t("home.technologies.eyebrow")}
+                        title={t("home.technologies.titre")}
+                        description={t("home.technologies.description")}
                     />
 
                     <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
@@ -963,19 +935,16 @@ export default function Home() {
                                         <Zap size={17} />
 
                                         <span className="text-xs font-semibold uppercase tracking-[0.18em]">
-                                            SmartCityWaste
+                                            {t("home.cta.label")}
                                         </span>
                                     </div>
 
                                     <h2 className="mt-4 text-3xl font-bold leading-tight text-white sm:text-4xl">
-                                        Prêt à entrer dans une nouvelle
-                                        génération de gestion des déchets ?
+                                        {t("home.cta.titre")}
                                     </h2>
 
                                     <p className="mt-4 text-sm leading-7 text-green-50/80 sm:text-base">
-                                        Découvrez une approche basée sur les
-                                        données, l'Internet des Objets et la
-                                        supervision centralisée.
+                                        {t("home.cta.paragraphe")}
                                     </p>
                                 </div>
 
@@ -984,7 +953,7 @@ export default function Home() {
                                     to="/register"
                                     className="inline-flex items-center justify-center gap-2 rounded-xl bg-white px-6 py-3.5 text-sm font-bold text-green-700 shadow-xl transition-all hover:-translate-y-1 hover:bg-green-50"
                                 >
-                                    Construire une ville plus propre
+                                    {t("home.cta.bouton")}
                                     <ArrowRight size={18} />
                                 </Link>
                             </div>

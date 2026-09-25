@@ -13,23 +13,15 @@ import {
   RefPill,
   SecondaryButton,
   StatutBadge,
-  libelleStatut,
+  useLibelleStatut,
   tonStatut,
 } from "../../components/ui/kit";
 import FiltreDates from "../../components/ui/FiltreDates";
 import { listerMissionsAgent, type AgentMission } from "../../services/agentService";
 import { dansPlage, plageVide, type PlageDates } from "../../utils/plageDates";
+import { LOCALE_INTL, useTranslation } from "../../i18n";
 
 type Filtre = "TOUTES" | "TERMINEE" | "ANNULEE";
-
-const formaterDateHeure = (valeur?: string | null) => {
-  if (!valeur) return "—";
-  const date = new Date(valeur);
-
-  return Number.isNaN(date.getTime())
-    ? "—"
-    : new Intl.DateTimeFormat("fr-FR", { dateStyle: "medium", timeStyle: "short" }).format(date);
-};
 
 const formaterDuree = (debut?: string | null, fin?: string | null) => {
   if (!debut || !fin) return null;
@@ -42,6 +34,18 @@ const formaterDuree = (debut?: string | null, fin?: string | null) => {
 const dateReference = (mission: AgentMission) => mission.dateFin || mission.dateAffectation;
 
 const Historique = () => {
+  const { t, langue } = useTranslation();
+  const libelleStatut = useLibelleStatut();
+
+  const formaterDateHeure = (valeur?: string | null) => {
+    if (!valeur) return "—";
+    const date = new Date(valeur);
+
+    return Number.isNaN(date.getTime())
+      ? "—"
+      : new Intl.DateTimeFormat(LOCALE_INTL[langue], { dateStyle: "medium", timeStyle: "short" }).format(date);
+  };
+
   const [missions, setMissions] = useState<AgentMission[]>([]);
   const [filtre, setFiltre] = useState<Filtre>("TOUTES");
   const [periode, setPeriode] = useState<PlageDates>(plageVide);
@@ -55,12 +59,12 @@ const Historique = () => {
       if (actualisation) setRefreshing(true);
       setMissions((await listerMissionsAgent()).missions);
     } catch (err: any) {
-      setError(err?.response?.data?.message || "Impossible de charger votre historique.");
+      setError(err?.response?.data?.message || t("agentHistorique.erreurChargement"));
     } finally {
       setLoading(false);
       setRefreshing(false);
     }
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     charger();
@@ -93,37 +97,37 @@ const Historique = () => {
 
   const visibles = clotures.filter((mission) => filtre === "TOUTES" || mission.statut === filtre);
 
-  if (loading) return <Chargement texte="Chargement de l'historique..." />;
+  if (loading) return <Chargement texte={t("superviseurHistoriques.chargement")} />;
 
   return (
     <div className="space-y-5">
       <PageHeader
-        titre="Historique des collectes"
-        description="Missions terminées ou annulées, filtrables par période."
+        titre={t("agentHistorique.titre")}
+        description={t("agentHistorique.description")}
         actions={
           <SecondaryButton icone={RefreshCw} chargement={refreshing} onClick={() => charger(true)}>
-            Actualiser
+            {t("adminDemandes.actualiser")}
           </SecondaryButton>
         }
       />
 
       {error && <BandeauErreur message={error} onReessayer={() => charger()} />}
 
-      <FiltreDates valeur={periode} onChange={setPeriode} libelle="Période" />
+      <FiltreDates valeur={periode} onChange={setPeriode} libelle={t("agentHistorique.periodeLabel")} />
 
       <div className="grid grid-cols-3 gap-3 lg:gap-4">
-        <KpiCard libelle="Terminées" valeur={terminees.length} icone={CheckCircle2} teinte="vert" />
-        <KpiCard libelle="Annulées" valeur={annulees.length} icone={XCircle} teinte="rouge" />
-        <KpiCard libelle="Durée moyenne" valeur={<span className="text-xl sm:text-2xl">{dureeMoyenne}</span>} icone={Clock} teinte="bleu" />
+        <KpiCard libelle={t("adminInterventions.optTerminees")} valeur={terminees.length} icone={CheckCircle2} teinte="vert" />
+        <KpiCard libelle={t("adminInterventions.optAnnulees")} valeur={annulees.length} icone={XCircle} teinte="rouge" />
+        <KpiCard libelle={t("agentHistorique.kpiDureeMoyenne")} valeur={<span className="text-xl sm:text-2xl">{dureeMoyenne}</span>} icone={Clock} teinte="bleu" />
       </div>
 
       <FilterChips
         valeur={filtre}
         onChange={setFiltre}
         options={[
-          { valeur: "TOUTES", libelle: "Toutes", compteur: clotures.length },
-          { valeur: "TERMINEE", libelle: "Terminées", compteur: terminees.length, couleur: "#16a34a" },
-          { valeur: "ANNULEE", libelle: "Annulées", compteur: annulees.length, couleur: "#dc2626" },
+          { valeur: "TOUTES", libelle: t("adminDemandes.filtreToutes"), compteur: clotures.length },
+          { valeur: "TERMINEE", libelle: t("adminInterventions.optTerminees"), compteur: terminees.length, couleur: "#16a34a" },
+          { valeur: "ANNULEE", libelle: t("adminInterventions.optAnnulees"), compteur: annulees.length, couleur: "#dc2626" },
         ]}
       />
 
@@ -131,8 +135,8 @@ const Historique = () => {
         <Card>
           <EtatVide
             icone={History}
-            titre="Aucune mission dans l'historique"
-            description="Modifiez la période ou le filtre pour élargir la recherche."
+            titre={t("agentHistorique.aucuneMissionHistorique")}
+            description={t("agentHistorique.modifierPeriodeFiltre")}
           />
         </Card>
       ) : (
@@ -147,7 +151,7 @@ const Historique = () => {
                   <div className="min-w-0">
                     <RefPill>#{bac?.reference ?? `MS-${mission.idMission}`}</RefPill>
                     <p className="mt-1.5 truncate text-sm font-bold text-slate-900">
-                      {bac?.zone?.nomZone ?? `Mission n°${mission.idMission}`}
+                      {bac?.zone?.nomZone ?? t("missionCard.missionNumero", { n: mission.idMission })}
                     </p>
                   </div>
                   <StatutBadge ton={tonStatut(mission.statut)}>{libelleStatut(mission.statut)}</StatutBadge>
@@ -155,16 +159,16 @@ const Historique = () => {
 
                 <dl className="mt-3 grid grid-cols-2 gap-2 rounded-xl bg-slate-50 p-3 text-xs">
                   <div>
-                    <dt className="text-slate-400">Début</dt>
+                    <dt className="text-slate-400">{t("agentHistorique.debut")}</dt>
                     <dd className="mt-0.5 font-semibold text-slate-700">{formaterDateHeure(mission.dateDebut)}</dd>
                   </div>
                   <div>
-                    <dt className="text-slate-400">Fin</dt>
+                    <dt className="text-slate-400">{t("agentHistorique.fin")}</dt>
                     <dd className="mt-0.5 font-semibold text-slate-700">{formaterDateHeure(mission.dateFin)}</dd>
                   </div>
                   {duree && (
                     <div className="col-span-2 flex items-center gap-1.5 text-slate-500">
-                      <Clock size={13} /> Durée : <span className="font-semibold text-slate-700">{duree}</span>
+                      <Clock size={13} /> {t("agentHistorique.dureeLabel", { duree })}
                     </div>
                   )}
                 </dl>
@@ -178,7 +182,7 @@ const Historique = () => {
                   className="mt-3 inline-flex items-center gap-1.5 text-xs font-bold text-emerald-700 hover:underline"
                 >
                   <CalendarCheck size={14} />
-                  Voir le détail
+                  {t("agentHistorique.voirLeDetail")}
                 </Link>
               </Card>
             );

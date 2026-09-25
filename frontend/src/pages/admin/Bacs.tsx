@@ -18,6 +18,7 @@ import {
   obtenirClasseTexteNiveauBac,
 } from "../../utils/bacLevel";
 import { useConfirmation } from "../../hooks/useConfirmation";
+import { useTranslation } from "../../i18n";
 
 interface Bac {
   id_bac: number;
@@ -79,18 +80,6 @@ const getProgressClass = (level: number) => {
   return obtenirClasseFondNiveauBac(level);
 };
 
-const getStateLabel = (etat: Bac["etat"]) => {
-  if (etat === "PLEIN") {
-    return "Plein";
-  }
-
-  if (etat === "ALERTE") {
-    return "Alerte";
-  }
-
-  return "Normal";
-};
-
 const AddBacIcon = ({
   size = 19,
   color = "#000000",
@@ -117,6 +106,7 @@ const AddBacIcon = ({
 );
 
 export default function Bacs() {
+  const { t } = useTranslation();
   const { confirmer, dialogue } = useConfirmation();
   const [bacs, setBacs] = useState<Bac[]>([]);
   const [zones, setZones] = useState<Zone[]>([]);
@@ -133,6 +123,12 @@ export default function Bacs() {
   const [deleting, setDeleting] = useState<number | null>(null);
   const [message, setMessage] = useState("");
   const [localisation, setLocalisation] = useState(false);
+
+  const getStateLabel = (etat: Bac["etat"]) => {
+    if (etat === "PLEIN") return t("adminRapports.etatPlein");
+    if (etat === "ALERTE") return t("commun.etatAlerte");
+    return t("commun.etatNormal");
+  };
 
   const loadData = useCallback(async (manual = false) => {
     try {
@@ -159,12 +155,12 @@ export default function Bacs() {
           : []
       );
     } catch {
-      setMessage("Impossible de charger les bacs.");
+      setMessage(t("adminBacs.erreurChargement"));
     } finally {
       setLoading(false);
       setRefreshing(false);
     }
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     loadData();
@@ -216,7 +212,7 @@ export default function Bacs() {
   // Utile pour recaler un bac connecté après l'avoir déplacé (ex. maison → lieu de soutenance).
   const utiliserMaPosition = () => {
     if (!("geolocation" in navigator) || !window.isSecureContext) {
-      toast.warning("La localisation n'est pas disponible sur cette connexion.");
+      toast.warning(t("adminBacs.localisationIndisponible"));
       return;
     }
 
@@ -229,11 +225,11 @@ export default function Bacs() {
           longitude: String(resultat.coords.longitude),
         }));
         setLocalisation(false);
-        toast.success("Position actuelle appliquée au bac.", { autoClose: 2000 });
+        toast.success(t("adminBacs.positionAppliquee"), { autoClose: 2000 });
       },
       () => {
         setLocalisation(false);
-        toast.error("Impossible d'obtenir votre position. Vérifiez l'autorisation de localisation.");
+        toast.error(t("adminBacs.erreurPosition"));
       },
       { enableHighAccuracy: true, timeout: 15000 }
     );
@@ -263,10 +259,10 @@ export default function Bacs() {
 
       if (editing) {
         await api.put(`/bacs/${editing.id_bac}`, donnees);
-        toast.success("Bac modifié avec succès.");
+        toast.success(t("adminBacs.bacModifie"));
       } else {
         await api.post("/bacs", donnees);
-        toast.success("Bac créé avec succès.");
+        toast.success(t("adminBacs.bacCree"));
       }
 
       setForm(initialForm);
@@ -276,7 +272,7 @@ export default function Bacs() {
     } catch (error: any) {
       setMessage(
         error?.response?.data?.message ||
-          `Impossible de ${editing ? "modifier" : "créer"} le bac.`
+          (editing ? t("adminBacs.impossibleModifier") : t("adminBacs.impossibleCreer"))
       );
     } finally {
       setSubmitting(false);
@@ -286,10 +282,9 @@ export default function Bacs() {
   const deleteBac = async (id: number) => {
     if (
       !(await confirmer({
-        titre: "Supprimer ce bac ?",
-        message:
-          "Le bac et son historique de mesures seront supprimés définitivement.",
-        libelle: "Supprimer",
+        titre: t("adminBacs.supprimerBacTitre"),
+        message: t("adminBacs.supprimerBacMessage"),
+        libelle: t("adminBacs.supprimer"),
         danger: true,
       }))
     ) {
@@ -308,7 +303,7 @@ export default function Bacs() {
     } catch (error: any) {
       setMessage(
         error?.response?.data?.message ||
-          "Impossible de supprimer le bac."
+          t("adminBacs.impossibleSupprimer")
       );
     } finally {
       setDeleting(null);
@@ -327,15 +322,15 @@ export default function Bacs() {
           <div>
             <div className="mb-2 flex items-center gap-2 text-sm font-medium text-emerald-700">
               <Activity size={16} />
-              Administration
+              {t("adminDashboard.administration")}
             </div>
 
             <h1 className="text-xl font-bold tracking-tight text-slate-900 sm:text-2xl">
-              Gestion des bacs
+              {t("adminBacs.titre")}
             </h1>
 
             <p className="mt-1 text-sm text-slate-500">
-              Supervisez les bacs connectés et leur niveau de remplissage.
+              {t("adminBacs.description")}
             </p>
           </div>
 
@@ -355,7 +350,7 @@ export default function Bacs() {
                 }
               />
 
-              Actualiser
+              {t("adminDemandes.actualiser")}
             </button>
 
             <button
@@ -366,11 +361,11 @@ export default function Bacs() {
               <AddBacIcon />
 
               <span className="hidden sm:inline">
-                Nouveau bac
+                {t("adminBacs.nouveauBac")}
               </span>
 
               <span className="sm:hidden">
-                Ajouter
+                {t("adminBacs.ajouter")}
               </span>
             </button>
           </div>
@@ -398,7 +393,7 @@ export default function Bacs() {
             />
 
             <p className="text-xs text-slate-500">
-              Total
+              {t("adminInterventions.total")}
             </p>
 
             <p className="mt-1 text-2xl font-bold text-slate-900">
@@ -413,7 +408,7 @@ export default function Bacs() {
             />
 
             <p className="text-xs text-slate-500">
-              Normaux
+              {t("adminRapports.kpiNormaux")}
             </p>
 
             <p className="mt-1 text-2xl font-bold text-slate-900">
@@ -433,7 +428,7 @@ export default function Bacs() {
             />
 
             <p className="text-xs text-slate-500">
-              En alerte
+              {t("adminBacs.kpiAlerte")}
             </p>
 
             <p className="mt-1 text-2xl font-bold text-slate-900">
@@ -453,7 +448,7 @@ export default function Bacs() {
             />
 
             <p className="text-xs text-slate-500">
-              Pleins
+              {t("adminRapports.kpiPleins")}
             </p>
 
             <p className="mt-1 text-2xl font-bold text-slate-900">
@@ -482,7 +477,7 @@ export default function Bacs() {
                     event.target.value
                   )
                 }
-                placeholder="Rechercher un bac..."
+                placeholder={t("adminBacs.rechercherPlaceholder")}
                 className="h-11 w-full rounded-xl border border-slate-200 bg-slate-50 pl-10 pr-4 text-sm outline-none transition focus:border-emerald-400 focus:bg-white focus:ring-4 focus:ring-emerald-50"
               />
             </div>
@@ -497,19 +492,19 @@ export default function Bacs() {
               className="h-11 rounded-xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 outline-none transition focus:border-emerald-400"
             >
               <option value="TOUS">
-                Tous les états
+                {t("adminBacs.tousLesEtats")}
               </option>
 
               <option value="NORMAL">
-                Normal
+                {t("commun.etatNormal")}
               </option>
 
               <option value="ALERTE">
-                Alerte
+                {t("commun.etatAlerte")}
               </option>
 
               <option value="PLEIN">
-                Plein
+                {t("adminRapports.etatPlein")}
               </option>
             </select>
           </div>
@@ -517,11 +512,11 @@ export default function Bacs() {
 
         {loading ? (
           <div className="rounded-2xl border border-slate-200 bg-white p-12 text-center text-sm text-slate-500">
-            Chargement des bacs...
+            {t("adminBacs.chargementBacs")}
           </div>
         ) : filteredBacs.length === 0 ? (
           <div className="rounded-2xl border border-slate-200 bg-white p-12 text-center text-sm text-slate-500">
-            Aucun bac trouvé.
+            {t("adminBacs.aucunBacTrouve")}
           </div>
         ) : (
           <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
@@ -584,7 +579,7 @@ export default function Bacs() {
                   <div className="mt-6">
                     <div className="mb-2 flex items-end justify-between">
                       <span className="text-xs font-medium text-slate-500">
-                        Niveau de remplissage
+                        {t("adminBacs.niveauDeRemplissage")}
                       </span>
 
                       <span
@@ -618,7 +613,7 @@ export default function Bacs() {
                   <div className="mt-5 grid grid-cols-2 gap-2">
                     <div className="rounded-xl bg-slate-50 p-3">
                       <p className="text-[10px] uppercase tracking-wide text-slate-400">
-                        Capacité
+                        {t("adminBacs.capacite")}
                       </p>
 
                       <p className="mt-1 text-sm font-bold text-slate-700">
@@ -628,7 +623,7 @@ export default function Bacs() {
 
                     <div className="rounded-xl bg-slate-50 p-3">
                       <p className="text-[10px] uppercase tracking-wide text-slate-400">
-                        Règle
+                        {t("adminBacs.regle")}
                       </p>
 
                       <p className="mt-1 text-sm font-bold text-slate-700">
@@ -647,7 +642,7 @@ export default function Bacs() {
                     >
                       <Eye size={16} />
 
-                      Consulter
+                      {t("adminDemandes.consulter")}
                     </button>
 
                     <button
@@ -656,8 +651,8 @@ export default function Bacs() {
                         ouvrirModification(bac)
                       }
                       className="flex h-10 w-11 shrink-0 items-center justify-center rounded-xl border border-slate-200 text-slate-500 transition hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-700"
-                      aria-label={`Modifier ${bac.reference}`}
-                      title="Modifier"
+                      aria-label={t("adminBacs.modifierAria", { ref: bac.reference })}
+                      title={t("adminBacs.modifier")}
                     >
                       <Pencil size={16} />
                     </button>
@@ -674,7 +669,7 @@ export default function Bacs() {
                         bac.id_bac
                       }
                       className="flex h-10 w-11 items-center justify-center rounded-xl bg-red-50 text-red-600 transition hover:bg-red-100 disabled:opacity-50"
-                      aria-label={`Supprimer ${bac.reference}`}
+                      aria-label={t("adminBacs.supprimerAria", { ref: bac.reference })}
                     >
                       <svg
                         width="18"
@@ -734,13 +729,13 @@ export default function Bacs() {
             <div className="sticky top-0 flex items-center justify-between border-b border-slate-100 bg-white px-5 py-4">
               <div>
                 <h2 className="text-lg font-bold text-slate-900">
-                  {editing ? `Modifier ${editing.reference}` : "Ajouter un bac"}
+                  {editing ? t("adminBacs.modifierBacTitre", { ref: editing.reference }) : t("adminBacs.ajouterBacTitre")}
                 </h2>
 
                 <p className="text-xs text-slate-500">
                   {editing
-                    ? "Mettre à jour les informations de ce bac connecté."
-                    : "Enregistrer un nouveau bac connecté."}
+                    ? t("adminBacs.majInfosBac")
+                    : t("adminBacs.enregistrerNouveauBac")}
                 </p>
               </div>
 
@@ -748,7 +743,7 @@ export default function Bacs() {
                 type="button"
                 onClick={fermerFormulaire}
                 className="flex h-9 w-9 items-center justify-center rounded-xl bg-slate-100 text-slate-500 transition hover:bg-slate-200"
-                aria-label="Fermer"
+                aria-label={t("adminBacs.fermer")}
               >
                 <X size={18} />
               </button>
@@ -760,7 +755,7 @@ export default function Bacs() {
             >
               <div>
                 <label className="mb-1.5 block text-sm font-semibold text-slate-700">
-                  Référence
+                  {t("adminBacs.reference")}
                 </label>
 
                 <input
@@ -779,7 +774,7 @@ export default function Bacs() {
                 />
                 {editing && (
                   <p className="mt-1.5 text-xs text-slate-400">
-                    La référence identifie le bac auprès du capteur (ESP32) : elle ne se modifie pas.
+                    {t("adminBacs.referenceHelper")}
                   </p>
                 )}
               </div>
@@ -787,7 +782,7 @@ export default function Bacs() {
               <div className="grid gap-4 sm:grid-cols-2">
                 <div>
                   <label className="mb-1.5 block text-sm font-semibold text-slate-700">
-                    Capacité
+                    {t("adminBacs.capacite")}
                   </label>
 
                   <input
@@ -808,7 +803,7 @@ export default function Bacs() {
 
                 <div>
                   <label className="mb-1.5 block text-sm font-semibold text-slate-700">
-                    Hauteur
+                    {t("adminBacs.hauteur")}
                   </label>
 
                   <input
@@ -831,7 +826,7 @@ export default function Bacs() {
               <div className="grid gap-4 sm:grid-cols-2">
                 <div>
                   <label className="mb-1.5 block text-sm font-semibold text-slate-700">
-                    Latitude
+                    {t("adminBacs.latitude")}
                   </label>
 
                   <input
@@ -852,7 +847,7 @@ export default function Bacs() {
 
                 <div>
                   <label className="mb-1.5 block text-sm font-semibold text-slate-700">
-                    Longitude
+                    {t("adminBacs.longitude")}
                   </label>
 
                   <input
@@ -879,15 +874,15 @@ export default function Bacs() {
                 className="inline-flex items-center gap-2 rounded-xl bg-indigo-50 px-3.5 py-2 text-xs font-bold text-indigo-700 transition hover:bg-indigo-100 active:scale-95 disabled:opacity-60"
               >
                 <LocateFixed size={15} className={localisation ? "animate-pulse" : ""} />
-                {localisation ? "Localisation…" : "Utiliser ma position actuelle"}
+                {localisation ? t("adminBacs.localisationEnCours") : t("adminBacs.utiliserMaPosition")}
               </button>
               <p className="-mt-2 text-xs text-slate-400">
-                Utile quand le bac vient d'être installé ou déplacé : tenez-vous près du bac avec votre téléphone.
+                {t("adminBacs.utiliserPositionHelper")}
               </p>
 
               <div>
                 <label className="mb-1.5 block text-sm font-semibold text-slate-700">
-                  Zone
+                  {t("adminBacs.zone")}
                 </label>
 
                 <select
@@ -903,7 +898,7 @@ export default function Bacs() {
                   className="h-11 w-full rounded-xl border border-slate-200 bg-white px-4 text-sm outline-none transition focus:border-emerald-400 focus:ring-4 focus:ring-emerald-50"
                 >
                   <option value="">
-                    Sélectionner
+                    {t("adminBacs.selectionner")}
                   </option>
 
                   {zones.map((zone) => (
@@ -919,37 +914,37 @@ export default function Bacs() {
 
               <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
                 <p className="text-sm font-semibold text-slate-700">
-                  Règles de remplissage
+                  {t("adminBacs.reglesRemplissage")}
                 </p>
 
                 <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-3">
                   <div className="rounded-xl bg-emerald-50 p-3">
                     <p className="text-xs font-bold text-emerald-700">
-                      0 à 40 %
+                      {t("adminBacs.etatNormalPlage")}
                     </p>
 
                     <p className="mt-1 text-xs text-emerald-600">
-                      Normal
+                      {t("commun.etatNormal")}
                     </p>
                   </div>
 
                   <div className="rounded-xl bg-orange-50 p-3">
                     <p className="text-xs font-bold text-orange-700">
-                      &gt; 40 à 80 %
+                      {t("adminBacs.etatAlertePlage")}
                     </p>
 
                     <p className="mt-1 text-xs text-orange-600">
-                      Alerte
+                      {t("commun.etatAlerte")}
                     </p>
                   </div>
 
                   <div className="rounded-xl bg-red-50 p-3">
                     <p className="text-xs font-bold text-red-700">
-                      &gt; 80 à 100 %
+                      {t("adminBacs.etatPleinPlage")}
                     </p>
 
                     <p className="mt-1 text-xs text-red-600">
-                      Plein
+                      {t("adminRapports.etatPlein")}
                     </p>
                   </div>
                 </div>
@@ -961,10 +956,10 @@ export default function Bacs() {
                 className="mt-2 flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 text-sm font-bold text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {submitting
-                  ? "Enregistrement..."
+                  ? t("adminZones.enregistrement")
                   : editing
-                    ? "Enregistrer les modifications"
-                    : "Enregistrer le bac"}
+                    ? t("adminBacs.enregistrerModifications")
+                    : t("adminBacs.enregistrerBac")}
               </button>
             </form>
           </div>
@@ -981,7 +976,7 @@ export default function Bacs() {
                 </h2>
 
                 <p className="text-xs text-slate-500">
-                  Informations du bac
+                  {t("adminBacs.informationsBac")}
                 </p>
               </div>
 
@@ -991,7 +986,7 @@ export default function Bacs() {
                   setSelected(null)
                 }
                 className="flex h-9 w-9 items-center justify-center rounded-xl bg-slate-100 text-slate-500 transition hover:bg-slate-200"
-                aria-label="Fermer"
+                aria-label={t("adminBacs.fermer")}
               >
                 <X size={18} />
               </button>
@@ -1000,7 +995,7 @@ export default function Bacs() {
             <div className="space-y-4 p-5">
               <div className="rounded-2xl bg-slate-50 p-5 text-center">
                 <p className="text-xs font-medium text-slate-400">
-                  Niveau actuel
+                  {t("adminBacs.niveauActuel")}
                 </p>
 
                 <p
@@ -1032,7 +1027,7 @@ export default function Bacs() {
               <div className="grid grid-cols-2 gap-3">
                 <div className="rounded-xl bg-slate-50 p-4">
                   <p className="text-xs text-slate-400">
-                    Zone
+                    {t("adminBacs.zone")}
                   </p>
 
                   <p className="mt-1 text-sm font-bold text-slate-700">
@@ -1044,7 +1039,7 @@ export default function Bacs() {
 
                 <div className="rounded-xl bg-slate-50 p-4">
                   <p className="text-xs text-slate-400">
-                    Capacité
+                    {t("adminBacs.capacite")}
                   </p>
 
                   <p className="mt-1 text-sm font-bold text-slate-700">
@@ -1054,7 +1049,7 @@ export default function Bacs() {
 
                 <div className="rounded-xl bg-slate-50 p-4">
                   <p className="text-xs text-slate-400">
-                    Hauteur
+                    {t("adminBacs.hauteur")}
                   </p>
 
                   <p className="mt-1 text-sm font-bold text-slate-700">
@@ -1064,7 +1059,7 @@ export default function Bacs() {
 
                 <div className="rounded-xl bg-slate-50 p-4">
                   <p className="text-xs text-slate-400">
-                    Règle
+                    {t("adminBacs.regle")}
                   </p>
 
                   <p className="mt-1 text-sm font-bold text-slate-700">
@@ -1075,7 +1070,7 @@ export default function Bacs() {
 
               <div className="rounded-xl border border-slate-100 p-4">
                 <p className="text-xs font-medium text-slate-400">
-                  Localisation
+                  {t("adminBacs.localisation")}
                 </p>
 
                 <p className="mt-1 text-sm font-semibold text-slate-700">
@@ -1089,14 +1084,14 @@ export default function Bacs() {
 
               <div className="rounded-xl border border-slate-100 p-4">
                 <p className="text-xs font-medium text-slate-400">
-                  Interprétation du niveau
+                  {t("adminBacs.interpretationNiveau")}
                 </p>
 
                 <div className="mt-3 space-y-2 text-xs">
                   <div className="flex items-center justify-between">
                     <span className="flex items-center gap-2 text-slate-600">
                       <span className="h-2.5 w-2.5 rounded-full bg-emerald-500" />
-                      Normal
+                      {t("commun.etatNormal")}
                     </span>
 
                     <span className="font-semibold text-slate-700">
@@ -1107,7 +1102,7 @@ export default function Bacs() {
                   <div className="flex items-center justify-between">
                     <span className="flex items-center gap-2 text-slate-600">
                       <span className="h-2.5 w-2.5 rounded-full bg-orange-500" />
-                      Alerte
+                      {t("commun.etatAlerte")}
                     </span>
 
                     <span className="font-semibold text-slate-700">
@@ -1118,7 +1113,7 @@ export default function Bacs() {
                   <div className="flex items-center justify-between">
                     <span className="flex items-center gap-2 text-slate-600">
                       <span className="h-2.5 w-2.5 rounded-full bg-red-500" />
-                      Plein
+                      {t("adminRapports.etatPlein")}
                     </span>
 
                     <span className="font-semibold text-slate-700">

@@ -8,6 +8,7 @@ import {
   plageVide,
   type PlageDates,
 } from "../../utils/plageDates";
+import { useTranslation } from "../../i18n";
 
 interface FiltreDatesProps {
   valeur: PlageDates;
@@ -22,7 +23,8 @@ const champDate =
  * Filtre par période : préréglages rapides (aujourd'hui, 7 jours, 30 jours), tout, ou
  * dates personnalisées avec le calendrier natif de l'appareil.
  */
-export default function FiltreDates({ valeur, onChange, libelle = "Période" }: FiltreDatesProps) {
+export default function FiltreDates({ valeur, onChange, libelle }: FiltreDatesProps) {
+  const { t } = useTranslation();
   const [personnalise, setPersonnalise] = useState(false);
   const active = plageActive(valeur);
 
@@ -43,7 +45,7 @@ export default function FiltreDates({ valeur, onChange, libelle = "Période" }: 
       <div className="-mx-4 flex items-center gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:flex-wrap sm:px-0 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         <span className="flex shrink-0 items-center gap-1.5 pr-1 text-xs font-semibold text-slate-500">
           <CalendarDays size={15} />
-          {libelle}
+          {libelle ?? t("filtreDates.periode")}
         </span>
 
         <button
@@ -54,7 +56,7 @@ export default function FiltreDates({ valeur, onChange, libelle = "Période" }: 
           }}
           className={puce(!active)}
         >
-          Tout
+          {t("filtreDates.tout")}
         </button>
 
         {PRESETS_PERIODE.map((preset) => (
@@ -67,7 +69,7 @@ export default function FiltreDates({ valeur, onChange, libelle = "Période" }: 
             }}
             className={puce(presetActif === preset.id)}
           >
-            {preset.libelle}
+            {t(preset.cle)}
           </button>
         ))}
 
@@ -77,7 +79,7 @@ export default function FiltreDates({ valeur, onChange, libelle = "Période" }: 
           className={puce(personnalise || (active && !presetActif))}
           aria-expanded={personnalise}
         >
-          Personnalisé
+          {t("filtreDates.personnalise")}
         </button>
 
         {active && (
@@ -87,7 +89,7 @@ export default function FiltreDates({ valeur, onChange, libelle = "Période" }: 
               onChange(plageVide);
               setPersonnalise(false);
             }}
-            aria-label="Effacer la période"
+            aria-label={t("filtreDates.effacerLaPeriode")}
             className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-slate-100 text-slate-500 transition hover:bg-slate-200"
           >
             <X size={14} />
@@ -106,7 +108,7 @@ export default function FiltreDates({ valeur, onChange, libelle = "Période" }: 
           >
             <div className="grid grid-cols-2 gap-2 pt-1 sm:max-w-md">
               <label className="text-xs font-semibold text-slate-500">
-                Du
+                {t("filtreDates.du")}
                 <input
                   type="date"
                   className={`${champDate} mt-1`}
@@ -116,7 +118,7 @@ export default function FiltreDates({ valeur, onChange, libelle = "Période" }: 
                 />
               </label>
               <label className="text-xs font-semibold text-slate-500">
-                Au
+                {t("filtreDates.au")}
                 <input
                   type="date"
                   className={`${champDate} mt-1`}

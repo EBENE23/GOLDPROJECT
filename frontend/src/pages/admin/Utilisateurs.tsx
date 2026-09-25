@@ -18,6 +18,7 @@ import Avatar from "../../components/Avatar";
 import api from "../../services/api";
 import { useConfirmation } from "../../hooks/useConfirmation";
 import { toast } from "react-toastify";
+import { LOCALE_INTL, useTranslation } from "../../i18n";
 
 type UserRole =
   | "ADMINISTRATEUR"
@@ -67,18 +68,6 @@ function extractArray(data: any, key: string) {
   return [];
 }
 
-function getRoleLabel(role: UserRole) {
-  if (role === "ADMINISTRATEUR") {
-    return "Administrateur";
-  }
-
-  if (role === "SUPERVISEUR") {
-    return "Superviseur";
-  }
-
-  return "Agent de collecte";
-}
-
 function getRoleClasses(role: UserRole) {
   if (role === "ADMINISTRATEUR") {
     return "bg-slate-100 text-slate-700";
@@ -89,26 +78,6 @@ function getRoleClasses(role: UserRole) {
   }
 
   return "bg-blue-50 text-blue-700";
-}
-
-function getStatusLabel(status: string) {
-  if (status === "ACTIF") {
-    return "Actif";
-  }
-
-  if (status === "EN_ATTENTE") {
-    return "En attente";
-  }
-
-  if (status === "DESACTIVE") {
-    return "Désactivé";
-  }
-
-  if (status === "INACTIF") {
-    return "Inactif";
-  }
-
-  return status;
 }
 
 function getStatusClasses(status: string) {
@@ -127,19 +96,8 @@ function getStatusClasses(status: string) {
   return "bg-slate-100 text-slate-500";
 }
 
-function formatDate(date?: string) {
-  if (!date) {
-    return "—";
-  }
-
-  return new Date(date).toLocaleDateString("fr-FR", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-  });
-}
-
 export default function Utilisateurs() {
+  const { t, langue } = useTranslation();
   const { confirmer, dialogue } = useConfirmation();
   const [users, setUsers] = useState<Utilisateur[]>([]);
   const [zones, setZones] = useState<Zone[]>([]);
@@ -169,6 +127,32 @@ export default function Utilisateurs() {
   const [openMenu, setOpenMenu] =
     useState<number | null>(null);
 
+  const getRoleLabel = (role: UserRole) => {
+    if (role === "ADMINISTRATEUR") return t("shell.roleAdmin");
+    if (role === "SUPERVISEUR") return t("shell.roleSuperviseur");
+    return t("shell.roleAgent");
+  };
+
+  const getStatusLabel = (status: string) => {
+    if (status === "ACTIF") return t("commun.statutActif");
+    if (status === "EN_ATTENTE") return t("commun.statutEnAttente");
+    if (status === "DESACTIVE") return t("commun.statutDesactive");
+    if (status === "INACTIF") return t("commun.statutInactif");
+    return status;
+  };
+
+  const formatDate = (date?: string) => {
+    if (!date) {
+      return "—";
+    }
+
+    return new Date(date).toLocaleDateString(LOCALE_INTL[langue], {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+    });
+  };
+
   const loadUsers = useCallback(async () => {
     try {
       setError("");
@@ -184,13 +168,13 @@ export default function Utilisateurs() {
     } catch (err) {
       console.error(err);
       setError(
-        "Impossible de récupérer les comptes utilisateurs."
+        t("adminUtilisateurs.erreurChargementComptes")
       );
     } finally {
       setLoading(false);
       setRefreshing(false);
     }
-  }, []);
+  }, [t]);
 
   const loadZones = useCallback(async () => {
     try {
@@ -205,10 +189,10 @@ export default function Utilisateurs() {
     } catch (err) {
       console.error(err);
       setZoneError(
-        "Impossible de récupérer les zones."
+        t("adminUtilisateurs.erreurChargementZones")
       );
     }
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     loadUsers();
@@ -334,7 +318,7 @@ export default function Utilisateurs() {
 
     if (!selectedZoneId) {
       setZoneError(
-        "Veuillez sélectionner une zone."
+        t("adminUtilisateurs.veuillezSelectionnerZone")
       );
       return;
     }
@@ -359,7 +343,7 @@ export default function Utilisateurs() {
 
       setZoneError(
         err?.response?.data?.message ||
-          "Impossible d'affecter cet agent à la zone."
+          t("adminUtilisateurs.impossibleAffecterAgent")
       );
     } finally {
       setZoneLoading(false);
@@ -372,9 +356,9 @@ export default function Utilisateurs() {
     setOpenMenu(null);
 
     const confirmed = await confirmer({
-      titre: "Désactiver ce compte ?",
-      message: `${user.prenom} ${user.nom} ne pourra plus se connecter tant que le compte n'est pas réactivé.`,
-      libelle: "Désactiver",
+      titre: t("adminUtilisateurs.desactiverTitre"),
+      message: t("adminUtilisateurs.desactiverMessage", { nom: `${user.prenom} ${user.nom}` }),
+      libelle: t("adminUtilisateurs.desactiver"),
       danger: true,
     });
 
@@ -409,7 +393,7 @@ export default function Utilisateurs() {
 
       toast.error(
         err?.response?.data?.message ||
-          "Impossible de désactiver ce compte."
+          t("adminUtilisateurs.impossibleDesactiver")
       );
     } finally {
       setActionLoading(false);
@@ -422,9 +406,9 @@ export default function Utilisateurs() {
     setOpenMenu(null);
 
     const confirmed = await confirmer({
-      titre: "Supprimer ce compte ?",
-      message: `Le compte de ${user.prenom} ${user.nom} sera supprimé définitivement. Cette action est irréversible.`,
-      libelle: "Supprimer",
+      titre: t("adminUtilisateurs.supprimerTitre"),
+      message: t("adminUtilisateurs.supprimerMessage", { nom: `${user.prenom} ${user.nom}` }),
+      libelle: t("adminBacs.supprimer"),
       danger: true,
     });
 
@@ -459,7 +443,7 @@ export default function Utilisateurs() {
 
       toast.error(
         err?.response?.data?.message ||
-          "Impossible de supprimer ce compte."
+          t("adminUtilisateurs.impossibleSupprimer")
       );
     } finally {
       setActionLoading(false);
@@ -472,13 +456,11 @@ export default function Utilisateurs() {
         <div className="mb-5 flex items-start justify-between gap-3">
           <div>
             <h1 className="text-xl font-bold tracking-tight text-slate-900 sm:text-xl">
-              Gestion Utilisateurs
+              {t("adminUtilisateurs.titre")}
             </h1>
 
             <p className="mt-1 text-[11px] text-slate-500 sm:text-sm">
-              {stats.total} compte
-              {stats.total > 1 ? "s" : ""} enregistré
-              {stats.total > 1 ? "s" : ""}
+              {t(stats.total > 1 ? "adminUtilisateurs.comptePluriel" : "adminUtilisateurs.compteSingulier", { n: stats.total })}
             </p>
           </div>
 
@@ -496,7 +478,7 @@ export default function Utilisateurs() {
               }`}
             />
 
-            Actualiser
+            {t("adminDemandes.actualiser")}
           </button>
         </div>
 
@@ -509,7 +491,7 @@ export default function Utilisateurs() {
         <div className="mb-4 grid grid-cols-3 gap-2 sm:grid-cols-4 sm:gap-3">
           <div className="rounded-xl border border-slate-200 bg-white p-3 shadow-sm sm:p-4">
             <p className="text-[9px] text-slate-400 sm:text-xs">
-              Comptes
+              {t("adminUtilisateurs.kpiComptes")}
             </p>
 
             <p className="mt-1 text-lg font-bold text-slate-900 sm:text-2xl">
@@ -519,7 +501,7 @@ export default function Utilisateurs() {
 
           <div className="rounded-xl border border-slate-200 bg-white p-3 shadow-sm sm:p-4">
             <p className="text-[9px] text-slate-400 sm:text-xs">
-              Superviseurs
+              {t("adminUtilisateurs.kpiSuperviseurs")}
             </p>
 
             <p className="mt-1 text-lg font-bold text-violet-700 sm:text-2xl">
@@ -529,7 +511,7 @@ export default function Utilisateurs() {
 
           <div className="rounded-xl border border-slate-200 bg-white p-3 shadow-sm sm:p-4">
             <p className="text-[9px] text-slate-400 sm:text-xs">
-              Agents
+              {t("adminUtilisateurs.kpiAgents")}
             </p>
 
             <p className="mt-1 text-lg font-bold text-blue-600 sm:text-2xl">
@@ -539,7 +521,7 @@ export default function Utilisateurs() {
 
           <div className="hidden rounded-xl border border-slate-200 bg-white p-3 shadow-sm sm:block sm:p-4">
             <p className="text-xs text-slate-400">
-              Actifs
+              {t("adminUtilisateurs.kpiActifs")}
             </p>
 
             <p className="mt-1 text-2xl font-bold text-emerald-700">
@@ -559,7 +541,7 @@ export default function Utilisateurs() {
                   onChange={(e) =>
                     setSearch(e.target.value)
                   }
-                  placeholder="Rechercher un utilisateur..."
+                  placeholder={t("adminUtilisateurs.rechercherPlaceholder")}
                   className="h-9 w-full rounded-lg border border-slate-200 bg-slate-50 pl-9 pr-3 text-[11px] outline-none transition focus:border-emerald-400 focus:bg-white focus:ring-2 focus:ring-emerald-100 sm:h-10 sm:text-xs"
                 />
               </div>
@@ -576,7 +558,7 @@ export default function Utilisateurs() {
                       : "bg-slate-100 text-slate-500 hover:bg-slate-200"
                   }`}
                 >
-                  Tous
+                  {t("adminUtilisateurs.filtreTous")}
                 </button>
 
                 <button
@@ -593,7 +575,7 @@ export default function Utilisateurs() {
                       : "bg-slate-100 text-slate-500 hover:bg-slate-200"
                   }`}
                 >
-                  Superviseurs
+                  {t("adminUtilisateurs.filtreSuperviseurs")}
                 </button>
 
                 <button
@@ -610,7 +592,7 @@ export default function Utilisateurs() {
                       : "bg-slate-100 text-slate-500 hover:bg-slate-200"
                   }`}
                 >
-                  Agents
+                  {t("adminUtilisateurs.filtreAgents")}
                 </button>
               </div>
             </div>
@@ -622,27 +604,27 @@ export default function Utilisateurs() {
                 <thead className="sticky top-0 z-10 bg-slate-50">
                   <tr className="border-b border-slate-100">
                     <th className="px-6 py-3 text-left text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                      Utilisateur
+                      {t("adminUtilisateurs.colUtilisateur")}
                     </th>
 
                     <th className="px-6 py-3 text-left text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                      Rôle
+                      {t("adminUtilisateurs.colRole")}
                     </th>
 
                     <th className="px-6 py-3 text-left text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                      Zone
+                      {t("adminUtilisateurs.colZone")}
                     </th>
 
                     <th className="px-6 py-3 text-left text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                      Statut
+                      {t("adminUtilisateurs.colStatut")}
                     </th>
 
                     <th className="px-6 py-3 text-left text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                      Création
+                      {t("adminUtilisateurs.colCreation")}
                     </th>
 
                     <th className="px-6 py-3 text-right text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                      Actions
+                      {t("adminUtilisateurs.colActions")}
                     </th>
                   </tr>
                 </thead>
@@ -654,7 +636,7 @@ export default function Utilisateurs() {
                         colSpan={6}
                         className="py-16 text-center text-xs text-slate-400"
                       >
-                        Chargement des comptes...
+                        {t("adminUtilisateurs.chargementComptes")}
                       </td>
                     </tr>
                   ) : paginatedUsers.length ===
@@ -664,7 +646,7 @@ export default function Utilisateurs() {
                         colSpan={6}
                         className="py-16 text-center text-xs text-slate-400"
                       >
-                        Aucun utilisateur trouvé.
+                        {t("adminUtilisateurs.aucunUtilisateur")}
                       </td>
                     </tr>
                   ) : (
@@ -709,8 +691,8 @@ export default function Utilisateurs() {
                             {user.zoneAffectation
                               ?.nomZone ||
                               (user.id_zone
-                                ? `Zone #${user.id_zone}`
-                                : "Non affectée")}
+                                ? t("adminUtilisateurs.zoneNumero", { n: user.id_zone })
+                                : t("adminUtilisateurs.nonAffectee"))}
                           </td>
 
                           <td className="px-6 py-4">
@@ -741,7 +723,7 @@ export default function Utilisateurs() {
                                   )
                                 }
                                 className="rounded-lg p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-700"
-                                title="Consulter"
+                                title={t("adminDemandes.consulter")}
                               >
                                 <Eye className="h-4 w-4" />
                               </button>
@@ -756,7 +738,7 @@ export default function Utilisateurs() {
                                     )
                                   }
                                   className="rounded-lg p-2 text-slate-400 hover:bg-blue-50 hover:text-blue-600"
-                                  title="Affecter une zone"
+                                  title={t("adminUtilisateurs.affecterZone")}
                                 >
                                   <MapPin className="h-4 w-4" />
                                 </button>
@@ -777,7 +759,7 @@ export default function Utilisateurs() {
                                       actionLoading
                                     }
                                     className="rounded-lg p-2 text-slate-400 hover:bg-orange-50 hover:text-orange-600 disabled:opacity-50"
-                                    title="Désactiver"
+                                    title={t("adminUtilisateurs.desactiver")}
                                   >
                                     <UserX className="h-4 w-4" />
                                   </button>
@@ -794,7 +776,7 @@ export default function Utilisateurs() {
                                   actionLoading
                                 }
                                 className="rounded-lg p-2 text-slate-400 hover:bg-red-50 hover:text-red-600 disabled:opacity-50"
-                                title="Supprimer"
+                                title={t("adminBacs.supprimer")}
                               >
                                 <Trash2 className="h-4 w-4" />
                               </button>
@@ -812,12 +794,12 @@ export default function Utilisateurs() {
           <div className="space-y-2.5 p-3 md:hidden">
             {loading ? (
               <div className="py-12 text-center text-xs text-slate-400">
-                Chargement...
+                {t("adminUtilisateurs.chargement")}
               </div>
             ) : paginatedUsers.length ===
               0 ? (
               <div className="py-12 text-center text-xs text-slate-400">
-                Aucun utilisateur trouvé.
+                {t("adminUtilisateurs.aucunUtilisateur")}
               </div>
             ) : (
               paginatedUsers.map(
@@ -871,7 +853,7 @@ export default function Utilisateurs() {
                             <span className="rounded-full bg-slate-100 px-2 py-1 text-[8px] text-slate-500">
                               {user.zoneAffectation
                                 ?.nomZone ||
-                                "Zone non affectée"}
+                                t("adminUtilisateurs.zoneNonAffectee")}
                             </span>
                           )}
                         </div>
@@ -887,7 +869,7 @@ export default function Utilisateurs() {
                           )
                         }
                         className="flex h-7 w-7 items-center justify-center rounded-lg bg-slate-50 text-slate-500"
-                        title="Consulter"
+                        title={t("adminDemandes.consulter")}
                       >
                         <Eye className="h-3.5 w-3.5" />
                       </button>
@@ -902,7 +884,7 @@ export default function Utilisateurs() {
                             )
                           }
                           className="flex h-7 w-7 items-center justify-center rounded-lg bg-blue-50 text-blue-600"
-                          title="Affecter une zone"
+                          title={t("adminUtilisateurs.affecterZone")}
                         >
                           <MapPin className="h-3.5 w-3.5" />
                         </button>
@@ -923,7 +905,7 @@ export default function Utilisateurs() {
                               actionLoading
                             }
                             className="flex h-7 w-7 items-center justify-center rounded-lg bg-orange-50 text-orange-600 disabled:opacity-50"
-                            title="Désactiver"
+                            title={t("adminUtilisateurs.desactiver")}
                           >
                             <UserX className="h-3.5 w-3.5" />
                           </button>
@@ -968,7 +950,7 @@ export default function Utilisateurs() {
                               className="flex w-full items-center gap-2 px-3 py-2.5 text-left text-[10px] text-slate-600 hover:bg-slate-50"
                             >
                               <Eye className="h-3.5 w-3.5" />
-                              Consulter
+                              {t("adminDemandes.consulter")}
                             </button>
 
                             {user.role ===
@@ -983,7 +965,7 @@ export default function Utilisateurs() {
                                 className="flex w-full items-center gap-2 px-3 py-2.5 text-left text-[10px] text-blue-600 hover:bg-blue-50"
                               >
                                 <MapPin className="h-3.5 w-3.5" />
-                                Affecter une zone
+                                {t("adminUtilisateurs.affecterZone")}
                               </button>
                             )}
 
@@ -1001,7 +983,7 @@ export default function Utilisateurs() {
                                   className="flex w-full items-center gap-2 px-3 py-2.5 text-left text-[10px] text-orange-600 hover:bg-orange-50"
                                 >
                                   <UserX className="h-3.5 w-3.5" />
-                                  Désactiver
+                                  {t("adminUtilisateurs.desactiver")}
                                 </button>
                               )}
 
@@ -1015,7 +997,7 @@ export default function Utilisateurs() {
                               className="flex w-full items-center gap-2 px-3 py-2.5 text-left text-[10px] text-red-600 hover:bg-red-50"
                             >
                               <Trash2 className="h-3.5 w-3.5" />
-                              Supprimer
+                              {t("adminBacs.supprimer")}
                             </button>
                           </div>
                         )}
@@ -1029,10 +1011,7 @@ export default function Utilisateurs() {
 
           <div className="flex items-center justify-between border-t border-slate-100 px-3 py-3 sm:px-5">
             <p className="text-[9px] text-slate-400 sm:text-[11px]">
-              {filteredUsers.length} compte
-              {filteredUsers.length > 1
-                ? "s"
-                : ""}
+              {t(filteredUsers.length > 1 ? "adminUtilisateurs.comptesFooterPluriel" : "adminUtilisateurs.comptesFooterSingulier", { n: filteredUsers.length })}
             </p>
 
             <div className="flex items-center gap-1">
@@ -1084,11 +1063,11 @@ export default function Utilisateurs() {
             <div className="flex items-center justify-between border-b border-slate-100 p-4 sm:p-5">
               <div>
                 <h2 className="text-sm font-bold text-slate-900">
-                  Compte utilisateur
+                  {t("adminUtilisateurs.compteUtilisateur")}
                 </h2>
 
                 <p className="mt-1 text-[9px] text-slate-400">
-                  Consultation
+                  {t("adminUtilisateurs.consultation")}
                 </p>
               </div>
 
@@ -1125,7 +1104,7 @@ export default function Utilisateurs() {
 
                   <div className="min-w-0">
                     <p className="text-[9px] uppercase text-slate-400">
-                      E-mail
+                      {t("adminUtilisateurs.email")}
                     </p>
 
                     <p className="mt-0.5 truncate text-xs text-slate-700">
@@ -1139,7 +1118,7 @@ export default function Utilisateurs() {
 
                   <div>
                     <p className="text-[9px] uppercase text-slate-400">
-                      Rôle
+                      {t("adminUtilisateurs.role")}
                     </p>
 
                     <p className="mt-0.5 text-xs text-slate-700">
@@ -1155,7 +1134,7 @@ export default function Utilisateurs() {
 
                   <div>
                     <p className="text-[9px] uppercase text-slate-400">
-                      Statut
+                      {t("adminUtilisateurs.statut")}
                     </p>
 
                     <p className="mt-0.5 text-xs text-slate-700">
@@ -1171,12 +1150,12 @@ export default function Utilisateurs() {
 
                   <div>
                     <p className="text-[9px] uppercase text-slate-400">
-                      Téléphone
+                      {t("adminUtilisateurs.telephone")}
                     </p>
 
                     <p className="mt-0.5 text-xs text-slate-700">
                       {selectedUser.telephone ||
-                        "Non renseigné"}
+                        t("adminUtilisateurs.nonRenseigne")}
                     </p>
                   </div>
                 </div>
@@ -1186,13 +1165,13 @@ export default function Utilisateurs() {
 
                   <div>
                     <p className="text-[9px] uppercase text-slate-400">
-                      Zone
+                      {t("adminUtilisateurs.colZone")}
                     </p>
 
                     <p className="mt-0.5 text-xs text-slate-700">
                       {selectedUser.zoneAffectation
                         ?.nomZone ||
-                        "Non affectée"}
+                        t("adminUtilisateurs.nonAffectee")}
                     </p>
                   </div>
                 </div>
@@ -1202,7 +1181,7 @@ export default function Utilisateurs() {
 
                   <div>
                     <p className="text-[9px] uppercase text-slate-400">
-                      Date de création
+                      {t("adminUtilisateurs.dateDeCreation")}
                     </p>
 
                     <p className="mt-0.5 text-xs text-slate-700">
@@ -1226,7 +1205,7 @@ export default function Utilisateurs() {
                   className="mt-5 flex h-10 w-full items-center justify-center gap-2 rounded-xl bg-blue-50 text-xs font-semibold text-blue-600"
                 >
                   <MapPin className="h-4 w-4" />
-                  Affecter une zone
+                  {t("adminUtilisateurs.affecterZone")}
                 </button>
               )}
 
@@ -1245,7 +1224,7 @@ export default function Utilisateurs() {
                     className="mt-2 flex h-10 w-full items-center justify-center gap-2 rounded-xl bg-orange-50 text-xs font-semibold text-orange-600 disabled:opacity-50"
                   >
                     <UserX className="h-4 w-4" />
-                    Désactiver le compte
+                    {t("adminUtilisateurs.desactiverLeCompte")}
                   </button>
                 )}
 
@@ -1258,7 +1237,7 @@ export default function Utilisateurs() {
                 className="mt-2 flex h-10 w-full items-center justify-center gap-2 rounded-xl bg-red-50 text-xs font-semibold text-red-600 disabled:opacity-50"
               >
                 <Trash2 className="h-4 w-4" />
-                Supprimer le compte
+                {t("adminUtilisateurs.supprimerLeCompte")}
               </button>
             </div>
           </div>
@@ -1271,7 +1250,7 @@ export default function Utilisateurs() {
             <div className="flex items-center justify-between border-b border-slate-100 p-4 sm:p-5">
               <div>
                 <h2 className="text-sm font-bold text-slate-900">
-                  Affecter une zone
+                  {t("adminUtilisateurs.affecterZone")}
                 </h2>
 
                 <p className="mt-1 text-[9px] text-slate-400">
@@ -1318,7 +1297,7 @@ export default function Utilisateurs() {
                   htmlFor="zone-selection"
                   className="mb-1.5 block text-[10px] font-semibold text-slate-600"
                 >
-                  Zone d'affectation
+                  {t("adminUtilisateurs.zoneAffectationLabel")}
                 </label>
 
                 <select
@@ -1336,7 +1315,7 @@ export default function Utilisateurs() {
                   className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-xs text-slate-700 outline-none transition focus:border-blue-400 focus:ring-2 focus:ring-blue-100 disabled:bg-slate-50 disabled:text-slate-400"
                 >
                   <option value="">
-                    Sélectionner une zone
+                    {t("adminUtilisateurs.selectionnerUneZone")}
                   </option>
 
                   {zones.map((zone) => (
@@ -1352,14 +1331,14 @@ export default function Utilisateurs() {
 
               {zoneLoading && (
                 <p className="mt-2 text-[10px] text-slate-400">
-                  Chargement...
+                  {t("adminUtilisateurs.chargement")}
                 </p>
               )}
 
               {zones.length === 0 &&
                 !zoneLoading && (
                   <p className="mt-2 text-[10px] text-orange-600">
-                    Aucune zone disponible.
+                    {t("adminUtilisateurs.aucuneZoneDisponible")}
                   </p>
                 )}
 
@@ -1379,7 +1358,7 @@ export default function Utilisateurs() {
                   disabled={zoneLoading}
                   className="flex h-10 flex-1 items-center justify-center rounded-xl border border-slate-200 bg-white text-xs font-semibold text-slate-600 hover:bg-slate-50 disabled:opacity-50"
                 >
-                  Annuler
+                  {t("adminUtilisateurs.annuler")}
                 </button>
 
                 <button
@@ -1395,7 +1374,7 @@ export default function Utilisateurs() {
                     <RefreshCw className="h-3.5 w-3.5 animate-spin" />
                   )}
 
-                  Affecter
+                  {t("adminZones.affecter")}
                 </button>
               </div>
             </div>

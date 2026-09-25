@@ -25,6 +25,7 @@ import { obtenirLocalisationBacsAgent } from "../../services/agentService";
 import { obtenirLocalisationBacs } from "../../services/superviseurService";
 import { obtenirCategorieNiveauBac, type BacLevelCategory } from "../../utils/bacLevel";
 import { distanceEntre, formaterDistance, type Coordonnees } from "../../utils/itineraire";
+import { useTranslation } from "../../i18n";
 
 interface BacCarte {
   id_bac: number;
@@ -65,6 +66,7 @@ function AjusterVue({ points, cible, declencheur }: { points: Coordonnees[]; cib
 
 /** Carte interactive des bacs de la zone, partagée par le superviseur et l'agent. */
 export default function CarteDesBacs({ role }: { role: "SUPERVISEUR" | "AGENT_COLLECTE" }) {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const estSuperviseur = role === "SUPERVISEUR";
   const [bacs, setBacs] = useState<BacCarte[]>([]);
@@ -85,11 +87,11 @@ export default function CarteDesBacs({ role }: { role: "SUPERVISEUR" | "AGENT_CO
       setBacs((reponse.bacs ?? []) as BacCarte[]);
       setZone(reponse.zone?.nomZone ?? "");
     } catch (err: any) {
-      setError(err?.response?.data?.message || "Impossible de charger la carte des bacs.");
+      setError(err?.response?.data?.message || t("carteDesBacs.erreurChargement"));
     } finally {
       setLoading(false);
     }
-  }, [estSuperviseur]);
+  }, [estSuperviseur, t]);
 
   useEffect(() => {
     charger();
@@ -125,7 +127,7 @@ export default function CarteDesBacs({ role }: { role: "SUPERVISEUR" | "AGENT_CO
   const bacChoisi = bacs.find((bac) => bac.id_bac === selection) ?? null;
   const cibleChoisie = bacChoisi ? versCoordonnees(bacChoisi) : null;
 
-  if (loading) return <Chargement texte="Chargement de la carte..." />;
+  if (loading) return <Chargement texte={t("agentMissionLocalisation.chargement")} />;
 
   const ouvrirNavigation = (bac: BacCarte) => {
     const cible = versCoordonnees(bac);
@@ -140,8 +142,8 @@ export default function CarteDesBacs({ role }: { role: "SUPERVISEUR" | "AGENT_CO
   return (
     <div className="space-y-4">
       <PageHeader
-        titre="Carte des bacs"
-        description={zone ? `Bacs de la zone ${zone}, mis à jour en direct.` : "Bacs de votre zone, mis à jour en direct."}
+        titre={t("shell.titreCarteBacs")}
+        description={zone ? t("carteDesBacs.descriptionZone", { zone }) : t("carteDesBacs.descriptionGenerique")}
       />
 
       {error && <BandeauErreur message={error} onReessayer={charger} />}
@@ -152,7 +154,7 @@ export default function CarteDesBacs({ role }: { role: "SUPERVISEUR" | "AGENT_CO
           type="search"
           value={recherche}
           onChange={(event) => setRecherche(event.target.value)}
-          placeholder="Rechercher un bac par référence"
+          placeholder={t("superviseurBacs.rechercherPlaceholder")}
           className="h-12 w-full rounded-2xl border border-slate-200 bg-white pl-11 pr-4 text-sm shadow-sm outline-none transition focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10"
         />
       </div>
@@ -161,19 +163,19 @@ export default function CarteDesBacs({ role }: { role: "SUPERVISEUR" | "AGENT_CO
         valeur={filtre}
         onChange={setFiltre}
         options={[
-          { valeur: "TOUS", libelle: "Tous", compteur: bacs.length },
-          { valeur: "PLEIN", libelle: "Critiques", compteur: compte("PLEIN"), couleur: etatMeta.PLEIN.couleur },
-          { valeur: "ALERTE", libelle: "Alertes", compteur: compte("ALERTE"), couleur: etatMeta.ALERTE.couleur },
-          { valeur: "NORMAL", libelle: "Normaux", compteur: compte("NORMAL"), couleur: etatMeta.NORMAL.couleur },
+          { valeur: "TOUS", libelle: t("adminUtilisateurs.filtreTous"), compteur: bacs.length },
+          { valeur: "PLEIN", libelle: t("superviseurBacs.filtreCritiques"), compteur: compte("PLEIN"), couleur: etatMeta.PLEIN.couleur },
+          { valeur: "ALERTE", libelle: t("superviseurBacs.filtreAlertes"), compteur: compte("ALERTE"), couleur: etatMeta.ALERTE.couleur },
+          { valeur: "NORMAL", libelle: t("superviseurBacs.filtreNormaux"), compteur: compte("NORMAL"), couleur: etatMeta.NORMAL.couleur },
         ]}
       />
 
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1.7fr)_minmax(0,1fr)]">
         <Card className="relative overflow-hidden">
           {bacs.length === 0 ? (
-            <EtatVide icone={MapPin} titre="Aucun bac dans votre zone" />
+            <EtatVide icone={MapPin} titre={t("superviseurHistoriques.aucunBacZone")} />
           ) : localises.length === 0 && !coordonneesAgent ? (
-            <EtatVide icone={MapPin} titre="Aucun bac à afficher" description="Modifiez la recherche ou le filtre, ou vérifiez les coordonnées GPS des bacs." />
+            <EtatVide icone={MapPin} titre={t("carteDesBacs.aucunBacAAfficher")} description={t("carteDesBacs.modifierRechercheFiltreGps")} />
           ) : (
             <div className="relative h-[52dvh] min-h-[340px] w-full xl:h-[600px]">
               <MapContainer center={pointsVue[0] ?? coordonneesAgent ?? [3.8667, 11.5167]} zoom={14} zoomControl={false} scrollWheelZoom className="z-0 h-full w-full">
@@ -194,14 +196,14 @@ export default function CarteDesBacs({ role }: { role: "SUPERVISEUR" | "AGENT_CO
                   >
                     <Popup>
                       <p className="text-sm font-bold">{bac.reference}</p>
-                      <p className="text-xs text-slate-500">{Math.round(Number(bac.niveau_remplissage))}% rempli</p>
+                      <p className="text-xs text-slate-500">{t("notifications.pourcentRempli", { n: Math.round(Number(bac.niveau_remplissage)) })}</p>
                     </Popup>
                   </Marker>
                 ))}
 
                 {coordonneesAgent && (
                   <Marker position={coordonneesAgent} icon={iconeAgent(position?.cap ?? null)} zIndexOffset={900}>
-                    <Popup>Vous êtes ici</Popup>
+                    <Popup>{t("carteDesBacs.vousEtesIci")}</Popup>
                   </Marker>
                 )}
               </MapContainer>
@@ -213,7 +215,7 @@ export default function CarteDesBacs({ role }: { role: "SUPERVISEUR" | "AGENT_CO
                     setSelection(null);
                     setVueEnsemble((v) => v + 1);
                   }}
-                  aria-label="Voir tous les bacs"
+                  aria-label={t("carteDesBacs.voirTousLesBacs")}
                   className="flex h-11 w-11 items-center justify-center rounded-full bg-white text-slate-700 shadow-lg ring-1 ring-slate-200 transition active:scale-95"
                 >
                   <MapPin size={19} />
@@ -225,7 +227,7 @@ export default function CarteDesBacs({ role }: { role: "SUPERVISEUR" | "AGENT_CO
                       setSelection(null);
                       setVueEnsemble((v) => v + 1);
                     }}
-                    aria-label="Me situer"
+                    aria-label={t("carteDesBacs.meSituer")}
                     className="flex h-11 w-11 items-center justify-center rounded-full bg-blue-600 text-white shadow-lg transition active:scale-95"
                   >
                     <LocateFixed size={19} />
@@ -235,7 +237,7 @@ export default function CarteDesBacs({ role }: { role: "SUPERVISEUR" | "AGENT_CO
 
               {erreurGps && !coordonneesAgent && (
                 <p className="absolute inset-x-3 bottom-3 z-[1000] rounded-xl bg-white/95 px-3 py-2 text-xs text-orange-700 shadow">
-                  Votre position n'est pas affichée : {erreurGps}
+                  {t("carteDesBacs.positionNonAffichee", { erreur: erreurGps })}
                 </p>
               )}
             </div>
@@ -255,7 +257,7 @@ export default function CarteDesBacs({ role }: { role: "SUPERVISEUR" | "AGENT_CO
                     </div>
                     {cibleChoisie && coordonneesAgent && (
                       <p className="mt-1.5 flex items-center gap-1.5 text-xs text-slate-500">
-                        <Navigation size={12} />À {formaterDistance(distanceEntre(coordonneesAgent, cibleChoisie))} de vous
+                        <Navigation size={12} />{t("carteDesBacs.aDistanceDeVous", { distance: formaterDistance(distanceEntre(coordonneesAgent, cibleChoisie)) })}
                       </p>
                     )}
                   </div>
@@ -263,7 +265,7 @@ export default function CarteDesBacs({ role }: { role: "SUPERVISEUR" | "AGENT_CO
                 <button
                   type="button"
                   onClick={() => setSelection(null)}
-                  aria-label="Fermer"
+                  aria-label={t("adminBacs.fermer")}
                   className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100"
                 >
                   <X size={16} />
@@ -277,19 +279,19 @@ export default function CarteDesBacs({ role }: { role: "SUPERVISEUR" | "AGENT_CO
                     className="col-span-2"
                     onClick={() => navigate(`/superviseur/interventions?ouvrir=1&bac=${bacChoisi.id_bac}`)}
                   >
-                    Créer une intervention
+                    {t("bacCard.creerIntervention")}
                   </PrimaryButton>
                 )}
                 <SecondaryButton icone={ExternalLink} onClick={() => ouvrirNavigation(bacChoisi)} disabled={!cibleChoisie}>
-                  Itinéraire
+                  {t("missionCard.itineraire")}
                 </SecondaryButton>
                 {estSuperviseur ? (
                   <SecondaryButton icone={History} onClick={() => navigate("/superviseur/historiques")}>
-                    Historique
+                    {t("bacCard.historique")}
                   </SecondaryButton>
                 ) : (
                   <SecondaryButton icone={Navigation} onClick={() => navigate("/agent/missions")}>
-                    Mes missions
+                    {t("shell.titreMesMissions")}
                   </SecondaryButton>
                 )}
               </div>
@@ -299,7 +301,7 @@ export default function CarteDesBacs({ role }: { role: "SUPERVISEUR" | "AGENT_CO
           <div className="max-h-[520px] space-y-2 overflow-y-auto pr-0.5 xl:max-h-[540px]">
             {visibles.length === 0 ? (
               <Card>
-                <EtatVide icone={MapPin} titre="Aucun bac ne correspond" />
+                <EtatVide icone={MapPin} titre={t("carteDesBacs.aucunBacCorrespond")} />
               </Card>
             ) : (
               visibles.map((bac) => {
@@ -321,9 +323,9 @@ export default function CarteDesBacs({ role }: { role: "SUPERVISEUR" | "AGENT_CO
                       <p className="mt-1 text-xs text-slate-500">
                         {cible
                           ? coordonneesAgent
-                            ? `À ${formaterDistance(distanceEntre(coordonneesAgent, cible))}`
+                            ? t("carteDesBacs.aDistance", { distance: formaterDistance(distanceEntre(coordonneesAgent, cible)) })
                             : `${cible[0].toFixed(4)}° N, ${cible[1].toFixed(4)}° E`
-                          : "Position GPS non renseignée"}
+                          : t("carteDesBacs.positionGpsNonRenseignee")}
                       </p>
                     </div>
                     <EtatBadge niveau={bac.niveau_remplissage} />

@@ -8,12 +8,7 @@ import AvatarPicker from "../../components/AvatarPicker";
 import { Card, PageHeader, PrimaryButton, SectionTitle, StatutBadge } from "../../components/ui/kit";
 import api from "../../services/api";
 import { memoriserUtilisateur, useAuthStore } from "../../stores/authStore";
-
-const LIBELLES_ROLE: Record<string, string> = {
-  ADMINISTRATEUR: "Administrateur",
-  SUPERVISEUR: "Superviseur",
-  AGENT_COLLECTE: "Agent de collecte",
-};
+import { LOCALE_INTL, useTranslation } from "../../i18n";
 
 interface SuperviseurZone {
   superviseur: {
@@ -52,6 +47,14 @@ function Champ({
 
 /** Profil de l'utilisateur connecté (agent, superviseur ou administrateur). */
 export default function MonProfil() {
+  const { t, langue } = useTranslation();
+
+  const LIBELLES_ROLE: Record<string, string> = {
+    ADMINISTRATEUR: t("shell.roleAdmin"),
+    SUPERVISEUR: t("shell.roleSuperviseur"),
+    AGENT_COLLECTE: t("shell.roleAgent"),
+  };
+
   const utilisateur = useAuthStore((state) => state.utilisateur);
   const [form, setForm] = useState({
     prenom: utilisateur?.prenom ?? "",
@@ -104,10 +107,10 @@ export default function MonProfil() {
         useAuthStore.setState({ utilisateur: misAJour });
         memoriserUtilisateur(misAJour);
       }
-      toast.success(photo ? "Photo de profil enregistrée." : "Photo de profil supprimée.");
+      toast.success(photo ? t("monProfil.photoEnregistree") : t("monProfil.photoSupprimee"));
     } catch (err: any) {
       setAvatar(precedente);
-      toast.error(err?.response?.data?.message || "Impossible d'enregistrer la photo.");
+      toast.error(err?.response?.data?.message || t("monProfil.erreurPhoto"));
     }
   };
 
@@ -115,11 +118,11 @@ export default function MonProfil() {
     event.preventDefault();
 
     const nouvellesErreurs: Record<string, string> = {};
-    if (!form.prenom.trim()) nouvellesErreurs.prenom = "Le prénom est obligatoire.";
-    if (!form.nom.trim()) nouvellesErreurs.nom = "Le nom est obligatoire.";
-    if (!EMAIL.test(form.email.trim())) nouvellesErreurs.email = "Adresse e-mail invalide.";
+    if (!form.prenom.trim()) nouvellesErreurs.prenom = t("monProfil.prenomObligatoire");
+    if (!form.nom.trim()) nouvellesErreurs.nom = t("monProfil.nomObligatoire");
+    if (!EMAIL.test(form.email.trim())) nouvellesErreurs.email = t("monProfil.emailInvalide");
     if (form.telephone.trim() && !/^[+\d][\d\s.-]{5,19}$/.test(form.telephone.trim())) {
-      nouvellesErreurs.telephone = "Numéro de téléphone invalide.";
+      nouvellesErreurs.telephone = t("monProfil.telephoneInvalide");
     }
 
     setErreurs(nouvellesErreurs);
@@ -140,9 +143,9 @@ export default function MonProfil() {
         useAuthStore.setState({ utilisateur: misAJour });
         memoriserUtilisateur(misAJour);
       }
-      toast.success(reponse.data?.message || "Profil mis à jour.");
+      toast.success(reponse.data?.message || t("monProfil.profilMisAJour"));
     } catch (err: any) {
-      toast.error(err?.response?.data?.message || "Impossible de mettre à jour le profil.");
+      toast.error(err?.response?.data?.message || t("monProfil.erreurProfil"));
     } finally {
       setEnvoi(false);
     }
@@ -152,10 +155,10 @@ export default function MonProfil() {
     event.preventDefault();
     setErreurMdp("");
 
-    if (!mdp.ancien || !mdp.nouveau) return setErreurMdp("Renseignez l'ancien et le nouveau mot de passe.");
-    if (mdp.nouveau.length < 8) return setErreurMdp("Le nouveau mot de passe doit contenir au moins 8 caractères.");
-    if (mdp.nouveau !== mdp.confirmation) return setErreurMdp("La confirmation ne correspond pas au nouveau mot de passe.");
-    if (mdp.nouveau === mdp.ancien) return setErreurMdp("Le nouveau mot de passe doit être différent de l'ancien.");
+    if (!mdp.ancien || !mdp.nouveau) return setErreurMdp(t("monProfil.mdpRenseigner"));
+    if (mdp.nouveau.length < 8) return setErreurMdp(t("monProfil.mdpCourt"));
+    if (mdp.nouveau !== mdp.confirmation) return setErreurMdp(t("monProfil.mdpConfirmationDifferente"));
+    if (mdp.nouveau === mdp.ancien) return setErreurMdp(t("monProfil.mdpIdentique"));
 
     try {
       setEnvoiMdp(true);
@@ -163,10 +166,10 @@ export default function MonProfil() {
         ancienMotDePasse: mdp.ancien,
         nouveauMotDePasse: mdp.nouveau,
       });
-      toast.success(reponse.data?.message || "Mot de passe modifié.");
+      toast.success(reponse.data?.message || t("monProfil.mdpModifie"));
       setMdp({ ancien: "", nouveau: "", confirmation: "" });
     } catch (err: any) {
-      setErreurMdp(err?.response?.data?.message || "Impossible de modifier le mot de passe.");
+      setErreurMdp(err?.response?.data?.message || t("monProfil.erreurMdp"));
     } finally {
       setEnvoiMdp(false);
     }
@@ -174,12 +177,12 @@ export default function MonProfil() {
 
   const nomComplet = `${utilisateur.prenom} ${utilisateur.nom}`;
   const depuis = utilisateur.dateCreation
-    ? new Intl.DateTimeFormat("fr-FR", { month: "long", year: "numeric" }).format(new Date(utilisateur.dateCreation))
+    ? new Intl.DateTimeFormat(LOCALE_INTL[langue], { month: "long", year: "numeric" }).format(new Date(utilisateur.dateCreation))
     : null;
 
   return (
     <div className="mx-auto max-w-4xl space-y-5">
-      <PageHeader titre="Mon profil" description="Vos informations personnelles et la sécurité de votre compte." />
+      <PageHeader titre={t("monProfil.titre")} description={t("monProfil.description")} />
 
       <Card className="p-5 sm:p-6">
         <div className="flex flex-col items-center gap-4 sm:flex-row sm:items-center">
@@ -189,7 +192,7 @@ export default function MonProfil() {
             <p className="truncate text-sm text-slate-500">{utilisateur.email}</p>
             <div className="mt-2 flex flex-wrap justify-center gap-2 sm:justify-start">
               <StatutBadge ton="vert">{LIBELLES_ROLE[utilisateur.role] ?? utilisateur.role}</StatutBadge>
-              {depuis && <StatutBadge ton="gris">Membre depuis {depuis}</StatutBadge>}
+              {depuis && <StatutBadge ton="gris">{t("monProfil.membreDepuis", { date: depuis })}</StatutBadge>}
             </div>
           </div>
         </div>
@@ -197,9 +200,13 @@ export default function MonProfil() {
 
       {estAgent && (
         <Card className="p-5 sm:p-6">
-          <SectionTitle icone={UserCog} titre="Mon superviseur" sousTitre={equipe?.zone ? `Zone ${equipe.zone.nomZone}` : undefined} />
+          <SectionTitle
+            icone={UserCog}
+            titre={t("monProfil.monSuperviseur")}
+            sousTitre={equipe?.zone ? t("monProfil.zone", { nom: equipe.zone.nomZone }) : undefined}
+          />
           {equipe === null ? (
-            <p className="mt-4 text-sm text-slate-500">Chargement…</p>
+            <p className="mt-4 text-sm text-slate-500">{t("monProfil.chargement")}</p>
           ) : equipe.superviseur ? (
             <div className="mt-4 flex flex-col items-center gap-4 sm:flex-row">
               <Avatar prenom={equipe.superviseur.prenom} nom={equipe.superviseur.nom} photo={equipe.superviseur.photoProfil} taille={72} />
@@ -223,42 +230,42 @@ export default function MonProfil() {
               </div>
             </div>
           ) : (
-            <p className="mt-4 text-sm text-slate-500">Aucun superviseur n'est encore affecté à votre zone.</p>
+            <p className="mt-4 text-sm text-slate-500">{t("monProfil.aucunSuperviseur")}</p>
           )}
         </Card>
       )}
 
       <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
         <Card className="p-5 sm:p-6">
-          <SectionTitle icone={User} titre="Informations personnelles" />
+          <SectionTitle icone={User} titre={t("monProfil.informationsPersonnelles")} />
           <form onSubmit={enregistrer} className="mt-5 space-y-4" noValidate>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <Champ libelle="Prénom" icone={User} value={form.prenom} erreur={erreurs.prenom} autoComplete="given-name"
+              <Champ libelle={t("monProfil.prenom")} icone={User} value={form.prenom} erreur={erreurs.prenom} autoComplete="given-name"
                 onChange={(e) => setForm({ ...form, prenom: e.target.value })} />
-              <Champ libelle="Nom" icone={User} value={form.nom} erreur={erreurs.nom} autoComplete="family-name"
+              <Champ libelle={t("monProfil.nom")} icone={User} value={form.nom} erreur={erreurs.nom} autoComplete="family-name"
                 onChange={(e) => setForm({ ...form, nom: e.target.value })} />
             </div>
-            <Champ libelle="Adresse e-mail" icone={Mail} type="email" value={form.email} erreur={erreurs.email} autoComplete="email"
+            <Champ libelle={t("monProfil.email")} icone={Mail} type="email" value={form.email} erreur={erreurs.email} autoComplete="email"
               onChange={(e) => setForm({ ...form, email: e.target.value })} />
-            <Champ libelle="Téléphone" icone={Phone} type="tel" value={form.telephone} erreur={erreurs.telephone} autoComplete="tel"
+            <Champ libelle={t("monProfil.telephone")} icone={Phone} type="tel" value={form.telephone} erreur={erreurs.telephone} autoComplete="tel"
               placeholder="+237 6XX XX XX XX" onChange={(e) => setForm({ ...form, telephone: e.target.value })} />
             <PrimaryButton type="submit" icone={Save} chargement={envoi} pleineLargeur>
-              Enregistrer les modifications
+              {t("monProfil.enregistrerModifications")}
             </PrimaryButton>
           </form>
         </Card>
 
         <Card className="p-5 sm:p-6">
-          <SectionTitle icone={ShieldCheck} titre="Mot de passe" sousTitre="Au moins 8 caractères" />
+          <SectionTitle icone={ShieldCheck} titre={t("monProfil.motDePasse")} sousTitre={t("monProfil.auMoins8")} />
           <form onSubmit={changerMotDePasse} className="mt-5 space-y-4" noValidate>
             {erreurMdp && (
               <p className="rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700">{erreurMdp}</p>
             )}
-            <Champ libelle="Mot de passe actuel" icone={KeyRound} type={voirMdp ? "text" : "password"} autoComplete="current-password"
+            <Champ libelle={t("monProfil.motDePasseActuel")} icone={KeyRound} type={voirMdp ? "text" : "password"} autoComplete="current-password"
               value={mdp.ancien} onChange={(e) => setMdp({ ...mdp, ancien: e.target.value })} />
-            <Champ libelle="Nouveau mot de passe" icone={KeyRound} type={voirMdp ? "text" : "password"} autoComplete="new-password"
+            <Champ libelle={t("monProfil.nouveauMotDePasse")} icone={KeyRound} type={voirMdp ? "text" : "password"} autoComplete="new-password"
               value={mdp.nouveau} onChange={(e) => setMdp({ ...mdp, nouveau: e.target.value })} />
-            <Champ libelle="Confirmer le nouveau mot de passe" icone={KeyRound} type={voirMdp ? "text" : "password"} autoComplete="new-password"
+            <Champ libelle={t("monProfil.confirmerNouveauMotDePasse")} icone={KeyRound} type={voirMdp ? "text" : "password"} autoComplete="new-password"
               value={mdp.confirmation} onChange={(e) => setMdp({ ...mdp, confirmation: e.target.value })} />
 
             <button
@@ -267,11 +274,11 @@ export default function MonProfil() {
               className="inline-flex items-center gap-2 text-xs font-semibold text-slate-500 hover:text-slate-800"
             >
               {voirMdp ? <EyeOff size={15} /> : <Eye size={15} />}
-              {voirMdp ? "Masquer" : "Afficher"} les mots de passe
+              {voirMdp ? t("monProfil.masquerMdp") : t("monProfil.afficherMdp")}
             </button>
 
             <PrimaryButton type="submit" icone={KeyRound} chargement={envoiMdp} pleineLargeur>
-              Changer le mot de passe
+              {t("monProfil.changerMotDePasse")}
             </PrimaryButton>
           </form>
         </Card>

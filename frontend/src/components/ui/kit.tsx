@@ -7,31 +7,34 @@ import {
   normaliserNiveauBac,
   type BacLevelCategory,
 } from "../../utils/bacLevel";
+import { LOCALE_INTL, useTranslation } from "../../i18n";
 
 /* ------------------------------------------------------------------ */
 /* Métadonnées d'état d'un bac (couleurs identiques dans toute l'app)  */
 /* ------------------------------------------------------------------ */
 
+// Les couleurs ne changent pas avec la langue ; le libellé est résolu à
+// l'affichage via useEtatMeta() ci-dessous.
 export const etatMeta: Record<
   BacLevelCategory,
-  { libelle: string; couleur: string; bordure: string; badge: string; fond: string }
+  { libelleCle: string; couleur: string; bordure: string; badge: string; fond: string }
 > = {
   NORMAL: {
-    libelle: "Normal",
+    libelleCle: "commun.etatNormal",
     couleur: "#16a34a",
     bordure: "border-l-green-500",
     badge: "bg-green-50 text-green-700 ring-green-600/20",
     fond: "bg-green-500",
   },
   ALERTE: {
-    libelle: "Alerte",
+    libelleCle: "commun.etatAlerte",
     couleur: "#f97316",
     bordure: "border-l-orange-500",
     badge: "bg-orange-50 text-orange-700 ring-orange-600/20",
     fond: "bg-orange-500",
   },
   PLEIN: {
-    libelle: "Critique",
+    libelleCle: "commun.etatCritique",
     couleur: "#dc2626",
     bordure: "border-l-red-500",
     badge: "bg-red-50 text-red-700 ring-red-600/20",
@@ -208,6 +211,7 @@ export function LevelBar({ niveau }: { niveau: number | string | null | undefine
 /* ------------------------------------------------------------------ */
 
 export function EtatBadge({ niveau, etat }: { niveau?: number | string | null; etat?: BacLevelCategory }) {
+  const { t } = useTranslation();
   const categorie = etat ?? obtenirCategorieNiveauBac(niveau);
   const meta = etatMeta[categorie];
 
@@ -216,7 +220,7 @@ export function EtatBadge({ niveau, etat }: { niveau?: number | string | null; e
       className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide ring-1 ring-inset ${meta.badge}`}
     >
       <span className={`h-1.5 w-1.5 rounded-full ${meta.fond}`} />
-      {meta.libelle}
+      {t(meta.libelleCle)}
     </span>
   );
 }
@@ -265,8 +269,31 @@ export const tonStatut = (statut?: string): keyof typeof tonsStatut => {
   }
 };
 
-export const libelleStatut = (statut?: string) =>
-  (statut ?? "").replace(/_/g, " ").toLowerCase().replace(/^./, (c) => c.toUpperCase());
+const CLES_STATUT: Record<string, string> = {
+  EN_ATTENTE: "commun.statutEnAttente",
+  APPROUVEE: "commun.statutApprouvee",
+  REFUSEE: "commun.statutRefusee",
+  PLANIFIEE: "commun.statutPlanifiee",
+  AFFECTEE: "commun.statutAffectee",
+  EN_COURS: "commun.statutEnCours",
+  TERMINEE: "commun.statutTerminee",
+  ANNULEE: "commun.statutAnnulee",
+  SUSPENDUE: "commun.statutSuspendue",
+  ACTIF: "commun.statutActif",
+  INACTIF: "commun.statutInactif",
+  OUVERT: "commun.statutOuvert",
+  TRAITE: "commun.statutTraite",
+};
+
+/** Traduit un code de statut technique (ex. "EN_ATTENTE") en libellé lisible dans la langue courante. */
+export function useLibelleStatut() {
+  const { t } = useTranslation();
+
+  return (statut?: string) => {
+    const cle = CLES_STATUT[statut ?? ""];
+    return cle ? t(cle) : (statut ?? "").replace(/_/g, " ").toLowerCase().replace(/^./, (c) => c.toUpperCase());
+  };
+}
 
 /* ------------------------------------------------------------------ */
 /* Filtres et boutons                                                  */
@@ -377,10 +404,12 @@ export function Squelette({ className = "" }: { className?: string }) {
 }
 
 /** Écran de chargement en squelette (titre, indicateurs, cartes) au lieu d'un simple spinner. */
-export function Chargement({ texte = "Chargement..." }: { texte?: string }) {
+export function Chargement({ texte }: { texte?: string }) {
+  const { t } = useTranslation();
+
   return (
     <div role="status" aria-live="polite" className="space-y-5">
-      <span className="sr-only">{texte}</span>
+      <span className="sr-only">{texte ?? t("commun.chargement")}</span>
       <div className="space-y-2">
         <Squelette className="h-7 w-56 max-w-full" />
         <Squelette className="h-4 w-80 max-w-full" />
@@ -400,13 +429,15 @@ export function Chargement({ texte = "Chargement..." }: { texte?: string }) {
 }
 
 export function BandeauErreur({ message, onReessayer }: { message: string; onReessayer?: () => void }) {
+  const { t } = useTranslation();
+
   return (
     <div className="flex items-start gap-3 rounded-2xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
       <AlertTriangle size={18} className="mt-0.5 shrink-0" />
       <p className="flex-1">{message}</p>
       {onReessayer && (
         <button type="button" onClick={onReessayer} className="font-bold underline">
-          Réessayer
+          {t("commun.reessayer")}
         </button>
       )}
     </div>
@@ -433,23 +464,27 @@ export function EtatVide({
   );
 }
 
-/** Date/heure relative en français (« il y a 5 min »). */
-export const dateRelative = (valeur?: string | null) => {
-  if (!valeur) {
-    return "—";
-  }
+/** Date/heure relative dans la langue courante (« il y a 5 min »). */
+export function useDateRelative() {
+  const { t, langue } = useTranslation();
 
-  const date = new Date(valeur);
+  return (valeur?: string | null) => {
+    if (!valeur) {
+      return "—";
+    }
 
-  if (Number.isNaN(date.getTime())) {
-    return "—";
-  }
+    const date = new Date(valeur);
 
-  const secondes = Math.round((Date.now() - date.getTime()) / 1000);
+    if (Number.isNaN(date.getTime())) {
+      return "—";
+    }
 
-  if (secondes < 60) return "à l'instant";
-  if (secondes < 3600) return `il y a ${Math.round(secondes / 60)} min`;
-  if (secondes < 86400) return `il y a ${Math.round(secondes / 3600)} h`;
+    const secondes = Math.round((Date.now() - date.getTime()) / 1000);
 
-  return new Intl.DateTimeFormat("fr-FR", { dateStyle: "medium", timeStyle: "short" }).format(date);
-};
+    if (secondes < 60) return t("commun.aLInstant");
+    if (secondes < 3600) return t("commun.ilYAMin", { n: Math.round(secondes / 60) });
+    if (secondes < 86400) return t("commun.ilYAH", { n: Math.round(secondes / 3600) });
+
+    return new Intl.DateTimeFormat(LOCALE_INTL[langue], { dateStyle: "medium", timeStyle: "short" }).format(date);
+  };
+}

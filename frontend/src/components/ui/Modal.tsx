@@ -2,6 +2,8 @@ import { useEffect, type ReactNode } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { AlertTriangle, Loader2, X } from "lucide-react";
 
+import { useTranslation } from "../../i18n";
+
 interface ModalProps {
   ouvert: boolean;
   onFermer: () => void;
@@ -19,6 +21,8 @@ const largeurs = { sm: "sm:max-w-sm", md: "sm:max-w-lg", lg: "sm:max-w-2xl" };
  * qui apparaît en fondu sur ordinateur. Se ferme avec Échap ou un clic à l'extérieur.
  */
 export default function Modal({ ouvert, onFermer, titre, description, children, largeur = "md" }: ModalProps) {
+  const { t } = useTranslation();
+
   useEffect(() => {
     if (!ouvert) return;
 
@@ -42,7 +46,7 @@ export default function Modal({ ouvert, onFermer, titre, description, children, 
         <div className="fixed inset-0 z-[2000] flex items-end justify-center sm:items-center sm:p-4">
           <motion.button
             type="button"
-            aria-label="Fermer"
+            aria-label={t("adminBacs.fermer")}
             onClick={onFermer}
             className="absolute inset-0 cursor-default bg-slate-950/55 backdrop-blur-[2px]"
             initial={{ opacity: 0 }}
@@ -70,7 +74,7 @@ export default function Modal({ ouvert, onFermer, titre, description, children, 
                 <button
                   type="button"
                   onClick={onFermer}
-                  aria-label="Fermer"
+                  aria-label={t("adminBacs.fermer")}
                   className="shrink-0 rounded-xl p-2 text-slate-500 transition hover:bg-slate-100 active:scale-95"
                 >
                   <X size={20} />
@@ -102,12 +106,15 @@ export function ConfirmDialog({
   ouvert,
   titre,
   message,
-  libelleConfirmer = "Confirmer",
+  libelleConfirmer,
   danger = false,
   enCours = false,
   onConfirmer,
   onAnnuler,
 }: ConfirmDialogProps) {
+  const { t } = useTranslation();
+  const libelle = libelleConfirmer ?? t("modal.confirmer");
+
   return (
     <Modal ouvert={ouvert} onFermer={enCours ? () => undefined : onAnnuler} largeur="sm">
       <div className="text-center">
@@ -129,7 +136,7 @@ export function ConfirmDialog({
           disabled={enCours}
           className="rounded-2xl bg-slate-100 px-4 py-3 text-sm font-bold text-slate-700 transition hover:bg-slate-200 active:scale-[0.98] disabled:opacity-50"
         >
-          Retour
+          {t("auth.login.retourCourt")}
         </button>
         <button
           type="button"
@@ -140,7 +147,7 @@ export function ConfirmDialog({
           }`}
         >
           {enCours && <Loader2 size={16} className="animate-spin" />}
-          {libelleConfirmer}
+          {libelle}
         </button>
       </div>
     </Modal>

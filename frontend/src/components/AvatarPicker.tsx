@@ -2,6 +2,7 @@ import { useRef, useState } from "react";
 import { Camera, Trash2 } from "lucide-react";
 
 import { preparerPhotoProfil } from "../utils/imageProfil";
+import { useTranslation } from "../i18n";
 
 interface AvatarPickerProps {
   name: string;
@@ -14,6 +15,7 @@ export default function AvatarPicker({
   value,
   onChange,
 }: AvatarPickerProps) {
+  const { t } = useTranslation();
   const inputRef = useRef<HTMLInputElement | null>(null);
   const [error, setError] = useState("");
   const initials = name
@@ -31,7 +33,7 @@ export default function AvatarPicker({
       setError("");
       onChange(await preparerPhotoProfil(file));
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Image invalide.");
+      setError(err instanceof Error ? err.message : t("avatarPicker.imageInvalide"));
     }
   };
 
@@ -40,7 +42,7 @@ export default function AvatarPicker({
       <div className="relative">
         <div className="flex h-24 w-24 items-center justify-center overflow-hidden rounded-full bg-emerald-100 text-2xl font-bold text-emerald-700 ring-4 ring-emerald-50">
           {value ? (
-            <img src={value} alt={`Photo de ${name}`} className="h-full w-full object-cover" />
+            <img src={value} alt={t("avatarPicker.photoDeAlt", { nom: name })} className="h-full w-full object-cover" />
           ) : (
             <span>{initials}</span>
           )}
@@ -49,8 +51,8 @@ export default function AvatarPicker({
           type="button"
           onClick={() => inputRef.current?.click()}
           className="absolute bottom-0 right-0 flex h-9 w-9 items-center justify-center rounded-full bg-emerald-600 text-white shadow-lg transition hover:bg-emerald-700"
-          aria-label="Modifier la photo de profil"
-          title="Modifier la photo"
+          aria-label={t("avatarPicker.modifierAria")}
+          title={t("avatarPicker.modifierTitre")}
         >
           <Camera size={16} />
         </button>
@@ -64,8 +66,8 @@ export default function AvatarPicker({
       </div>
 
       <div className="text-center sm:text-left">
-        <p className="text-sm font-semibold text-slate-800">Photo de profil</p>
-        <p className="mt-1 text-xs text-slate-500">JPG, PNG ou WEBP. Elle est recadrée automatiquement.</p>
+        <p className="text-sm font-semibold text-slate-800">{t("avatarPicker.photoLabel")}</p>
+        <p className="mt-1 text-xs text-slate-500">{t("avatarPicker.formatDesc")}</p>
         {value && (
           <button
             type="button"
@@ -73,7 +75,7 @@ export default function AvatarPicker({
             className="mt-2 inline-flex items-center gap-1.5 text-xs font-semibold text-red-600 hover:text-red-700"
           >
             <Trash2 size={13} />
-            Supprimer la photo
+            {t("avatarPicker.supprimerPhoto")}
           </button>
         )}
         {error && <p className="mt-2 text-xs font-medium text-red-600">{error}</p>}

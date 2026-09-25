@@ -14,6 +14,7 @@ import {
 import api from "../../services/api";
 import FiltreDates from "../../components/ui/FiltreDates";
 import { dansPlage, plageVide, type PlageDates } from "../../utils/plageDates";
+import { LOCALE_INTL, useTranslation } from "../../i18n";
 
 type Priority = "NORMALE" | "MOYENNE" | "HAUTE" | "CRITIQUE";
 type Status =
@@ -80,22 +81,8 @@ const statusClass: Record<Status, string> = {
   ANNULEE: "bg-slate-100 text-slate-600",
 };
 
-const statusLabel: Record<Status, string> = {
-  EN_ATTENTE: "En attente",
-  PLANIFIEE: "Planifiée",
-  EN_COURS: "En cours",
-  TERMINEE: "Terminée",
-  ANNULEE: "Annulée",
-};
-
-const priorityLabel: Record<Priority, string> = {
-  NORMALE: "Normale",
-  MOYENNE: "Moyenne",
-  HAUTE: "Haute",
-  CRITIQUE: "Critique",
-};
-
 export default function Interventions() {
+  const { t, langue } = useTranslation();
   const [interventions, setInterventions] = useState<Intervention[]>([]);
   const [bacs, setBacs] = useState<Bac[]>([]);
   const [loading, setLoading] = useState(true);
@@ -108,6 +95,24 @@ export default function Interventions() {
   const [form, setForm] = useState<FormData>(initialForm);
   const [submitting, setSubmitting] = useState(false);
   const [message, setMessage] = useState("");
+
+  const statusLabel: Record<Status, string> = {
+    EN_ATTENTE: t("commun.statutEnAttente"),
+    PLANIFIEE: t("commun.statutPlanifiee"),
+    EN_COURS: t("commun.statutEnCours"),
+    TERMINEE: t("commun.statutTerminee"),
+    ANNULEE: t("commun.statutAnnulee"),
+  };
+
+  const priorityLabel: Record<Priority, string> = {
+    NORMALE: t("commun.prioriteNormale"),
+    MOYENNE: t("commun.prioriteMoyenne"),
+    HAUTE: t("commun.prioriteHaute"),
+    CRITIQUE: t("commun.prioriteCritique"),
+  };
+
+  const formaterDate = (valeur?: string | null, options: Intl.DateTimeFormatOptions = { day: "2-digit", month: "short", year: "numeric" }) =>
+    valeur ? new Intl.DateTimeFormat(LOCALE_INTL[langue], options).format(new Date(valeur)) : t("adminInterventions.nonPlanifiee");
 
   const loadData = useCallback(async (manual = false) => {
     try {
@@ -130,12 +135,12 @@ export default function Interventions() {
           : bacsResponse.data?.bacs ?? []
       );
     } catch {
-      setMessage("Impossible de charger les interventions.");
+      setMessage(t("adminInterventions.erreurChargement"));
     } finally {
       setLoading(false);
       setRefreshing(false);
     }
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     loadData();
@@ -182,7 +187,7 @@ export default function Interventions() {
     } catch (error: any) {
       setMessage(
         error?.response?.data?.message ||
-          "Impossible de créer l'intervention."
+          t("adminInterventions.impossibleCreer")
       );
     } finally {
       setSubmitting(false);
@@ -199,13 +204,13 @@ export default function Interventions() {
           <div>
             <div className="mb-2 flex items-center gap-2 text-sm font-medium text-emerald-700">
               <CalendarDays size={16} />
-              Administration
+              {t("adminDashboard.administration")}
             </div>
             <h1 className="text-xl font-bold tracking-tight text-slate-900 sm:text-2xl">
-              Gestion des interventions
+              {t("adminInterventions.titre")}
             </h1>
             <p className="mt-1 text-sm text-slate-500">
-              Suivez les interventions nécessaires sur les bacs.
+              {t("adminInterventions.description")}
             </p>
           </div>
 
@@ -220,11 +225,11 @@ export default function Interventions() {
                 size={17}
                 className={refreshing ? "animate-spin" : ""}
               />
-              Actualiser
+              {t("adminDemandes.actualiser")}
             </button>
 
             <div className="hidden items-center rounded-xl border border-slate-200 bg-white px-4 text-xs font-semibold text-slate-500 sm:flex">
-              Création depuis l'espace superviseur
+              {t("adminInterventions.creationDepuisSuperviseur")}
             </div>
           </div>
         </div>
@@ -241,7 +246,7 @@ export default function Interventions() {
         <div className="mb-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
           <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
             <CalendarDays className="mb-3 text-blue-600" size={20} />
-            <p className="text-xs text-slate-500">Total</p>
+            <p className="text-xs text-slate-500">{t("adminInterventions.total")}</p>
             <p className="mt-1 text-2xl font-bold text-slate-900">
               {interventions.length}
             </p>
@@ -249,7 +254,7 @@ export default function Interventions() {
 
           <div className="rounded-2xl border border-orange-100 bg-white p-4 shadow-sm">
             <Clock3 className="mb-3 text-orange-600" size={20} />
-            <p className="text-xs text-slate-500">En attente</p>
+            <p className="text-xs text-slate-500">{t("commun.statutEnAttente")}</p>
             <p className="mt-1 text-2xl font-bold text-slate-900">
               {
                 interventions.filter(
@@ -263,7 +268,7 @@ export default function Interventions() {
 
           <div className="rounded-2xl border border-violet-100 bg-white p-4 shadow-sm">
             <AlertTriangle className="mb-3 text-violet-600" size={20} />
-            <p className="text-xs text-slate-500">En cours</p>
+            <p className="text-xs text-slate-500">{t("commun.statutEnCours")}</p>
             <p className="mt-1 text-2xl font-bold text-slate-900">
               {interventions.filter((item) => item.statut === "EN_COURS").length}
             </p>
@@ -271,7 +276,7 @@ export default function Interventions() {
 
           <div className="rounded-2xl border border-emerald-100 bg-white p-4 shadow-sm">
             <CheckCircle2 className="mb-3 text-emerald-600" size={20} />
-            <p className="text-xs text-slate-500">Terminées</p>
+            <p className="text-xs text-slate-500">{t("adminInterventions.kpiTerminees")}</p>
             <p className="mt-1 text-2xl font-bold text-slate-900">
               {interventions.filter((item) => item.statut === "TERMINEE").length}
             </p>
@@ -288,7 +293,7 @@ export default function Interventions() {
               <input
                 value={search}
                 onChange={(event) => setSearch(event.target.value)}
-                placeholder="Rechercher une intervention..."
+                placeholder={t("adminInterventions.rechercherPlaceholder")}
                 className="h-11 w-full rounded-xl border border-slate-200 bg-slate-50 pl-10 pr-4 text-sm outline-none focus:border-emerald-400 focus:bg-white focus:ring-4 focus:ring-emerald-50"
               />
             </div>
@@ -300,27 +305,27 @@ export default function Interventions() {
               }
               className="h-11 rounded-xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 outline-none focus:border-emerald-400"
             >
-              <option value="TOUS">Tous les statuts</option>
-              <option value="EN_ATTENTE">En attente</option>
-              <option value="PLANIFIEE">Planifiées</option>
-              <option value="EN_COURS">En cours</option>
-              <option value="TERMINEE">Terminées</option>
-              <option value="ANNULEE">Annulées</option>
+              <option value="TOUS">{t("adminInterventions.tousLesStatuts")}</option>
+              <option value="EN_ATTENTE">{t("commun.statutEnAttente")}</option>
+              <option value="PLANIFIEE">{t("adminInterventions.optPlanifiees")}</option>
+              <option value="EN_COURS">{t("commun.statutEnCours")}</option>
+              <option value="TERMINEE">{t("adminInterventions.optTerminees")}</option>
+              <option value="ANNULEE">{t("adminInterventions.optAnnulees")}</option>
             </select>
           </div>
         </div>
 
         <div className="mb-5">
-          <FiltreDates valeur={periode} onChange={setPeriode} libelle="Créées" />
+          <FiltreDates valeur={periode} onChange={setPeriode} libelle={t("adminInterventions.creees")} />
         </div>
 
         {loading ? (
           <div className="rounded-2xl border border-slate-200 bg-white p-12 text-center text-sm text-slate-500">
-            Chargement des interventions...
+            {t("adminInterventions.chargementInterventions")}
           </div>
         ) : filteredInterventions.length === 0 ? (
           <div className="rounded-2xl border border-slate-200 bg-white p-12 text-center text-sm text-slate-500">
-            Aucune intervention trouvée.
+            {t("adminInterventions.aucuneIntervention")}
           </div>
         ) : (
           <div className="hidden overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm md:block">
@@ -329,22 +334,22 @@ export default function Interventions() {
                 <thead>
                   <tr className="border-b border-slate-100 bg-slate-50/80 text-left">
                     <th className="px-5 py-4 text-xs font-bold uppercase tracking-wide text-slate-500">
-                      Bac
+                      {t("adminInterventions.colBac")}
                     </th>
                     <th className="px-5 py-4 text-xs font-bold uppercase tracking-wide text-slate-500">
-                      Motif
+                      {t("adminInterventions.colMotif")}
                     </th>
                     <th className="px-5 py-4 text-xs font-bold uppercase tracking-wide text-slate-500">
-                      Priorité
+                      {t("adminInterventions.colPriorite")}
                     </th>
                     <th className="px-5 py-4 text-xs font-bold uppercase tracking-wide text-slate-500">
-                      Prévue
+                      {t("adminInterventions.colPrevue")}
                     </th>
                     <th className="px-5 py-4 text-xs font-bold uppercase tracking-wide text-slate-500">
-                      Statut
+                      {t("adminInterventions.colStatut")}
                     </th>
                     <th className="px-5 py-4 text-right text-xs font-bold uppercase tracking-wide text-slate-500">
-                      Action
+                      {t("adminInterventions.colAction")}
                     </th>
                   </tr>
                 </thead>
@@ -378,13 +383,7 @@ export default function Interventions() {
                           </span>
                         </td>
                         <td className="px-5 py-4 text-sm text-slate-500">
-                          {item.datePrevue
-                            ? new Intl.DateTimeFormat("fr-FR", {
-                                day: "2-digit",
-                                month: "short",
-                                year: "numeric",
-                              }).format(new Date(item.datePrevue))
-                            : "Non planifiée"}
+                          {formaterDate(item.datePrevue)}
                         </td>
                         <td className="px-5 py-4">
                           <span
@@ -450,7 +449,7 @@ export default function Interventions() {
                       className="flex h-9 items-center gap-1.5 rounded-lg border border-slate-200 px-3 text-xs font-semibold text-slate-600"
                     >
                       <Eye size={15} />
-                      Détails
+                      {t("adminInterventions.detailsBtn")}
                     </button>
                   </div>
                 </div>
@@ -465,10 +464,10 @@ export default function Interventions() {
             <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
               <div>
                 <h2 className="text-lg font-bold text-slate-900">
-                  Nouvelle intervention
+                  {t("adminInterventions.nouvelleIntervention")}
                 </h2>
                 <p className="text-xs text-slate-500">
-                  Créer une intervention sur un bac.
+                  {t("adminInterventions.creerInterventionSurBac")}
                 </p>
               </div>
               <button
@@ -483,7 +482,7 @@ export default function Interventions() {
             <form onSubmit={createIntervention} className="space-y-4 p-5">
               <div>
                 <label className="mb-1.5 block text-sm font-semibold text-slate-700">
-                  Bac
+                  {t("adminInterventions.champBac")}
                 </label>
                 <select
                   required
@@ -493,7 +492,7 @@ export default function Interventions() {
                   }
                   className="h-11 w-full rounded-xl border border-slate-200 bg-white px-4 text-sm outline-none focus:border-emerald-400 focus:ring-4 focus:ring-emerald-50"
                 >
-                  <option value="">Sélectionner un bac</option>
+                  <option value="">{t("adminInterventions.selectionnerBac")}</option>
                   {bacs.map((bac) => (
                     <option key={bac.id_bac} value={bac.id_bac}>
                       {bac.reference} — {Number(bac.niveau_remplissage).toFixed(
@@ -508,7 +507,7 @@ export default function Interventions() {
               <div className="grid gap-4 sm:grid-cols-2">
                 <div>
                   <label className="mb-1.5 block text-sm font-semibold text-slate-700">
-                    Priorité
+                    {t("adminInterventions.colPriorite")}
                   </label>
                   <select
                     value={form.priorite}
@@ -520,16 +519,16 @@ export default function Interventions() {
                     }
                     className="h-11 w-full rounded-xl border border-slate-200 bg-white px-4 text-sm outline-none focus:border-emerald-400"
                   >
-                    <option value="NORMALE">Normale</option>
-                    <option value="MOYENNE">Moyenne</option>
-                    <option value="HAUTE">Haute</option>
-                    <option value="CRITIQUE">Critique</option>
+                    <option value="NORMALE">{t("commun.prioriteNormale")}</option>
+                    <option value="MOYENNE">{t("commun.prioriteMoyenne")}</option>
+                    <option value="HAUTE">{t("commun.prioriteHaute")}</option>
+                    <option value="CRITIQUE">{t("commun.prioriteCritique")}</option>
                   </select>
                 </div>
 
                 <div>
                   <label className="mb-1.5 block text-sm font-semibold text-slate-700">
-                    Date prévue
+                    {t("adminInterventions.champDatePrevue")}
                   </label>
                   <input
                     type="datetime-local"
@@ -544,7 +543,7 @@ export default function Interventions() {
 
               <div>
                 <label className="mb-1.5 block text-sm font-semibold text-slate-700">
-                  Motif
+                  {t("adminInterventions.champMotif")}
                 </label>
                 <textarea
                   required
@@ -553,7 +552,7 @@ export default function Interventions() {
                   onChange={(event) =>
                     setForm({ ...form, motif: event.target.value })
                   }
-                  placeholder="Décrire le motif de l'intervention..."
+                  placeholder={t("adminInterventions.motifPlaceholder")}
                   className="w-full resize-none rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-emerald-400 focus:ring-4 focus:ring-emerald-50"
                 />
               </div>
@@ -563,7 +562,7 @@ export default function Interventions() {
                 disabled={submitting}
                 className="h-11 w-full rounded-xl bg-emerald-600 text-sm font-bold text-white hover:bg-emerald-700 disabled:opacity-50"
               >
-                {submitting ? "Création..." : "Créer l'intervention"}
+                {submitting ? t("adminInterventions.creation") : t("adminInterventions.creerIntervention")}
               </button>
             </form>
           </div>
@@ -576,10 +575,10 @@ export default function Interventions() {
             <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
               <div>
                 <h2 className="text-lg font-bold text-slate-900">
-                  Intervention #{selected.idIntervention}
+                  {t("adminInterventions.interventionNumero", { n: selected.idIntervention })}
                 </h2>
                 <p className="text-xs text-slate-500">
-                  Détails de l'intervention
+                  {t("adminInterventions.detailsIntervention")}
                 </p>
               </div>
               <button
@@ -593,7 +592,7 @@ export default function Interventions() {
 
             <div className="space-y-4 p-5">
               <div className="rounded-2xl bg-slate-50 p-4">
-                <p className="text-xs text-slate-400">Bac concerné</p>
+                <p className="text-xs text-slate-400">{t("adminInterventions.bacConcerne")}</p>
                 <p className="mt-1 font-bold text-slate-800">
                   {getBac(selected.id_bac)?.reference ||
                     `Bac #${selected.id_bac}`}
@@ -602,7 +601,7 @@ export default function Interventions() {
 
               <div className="grid grid-cols-2 gap-3">
                 <div className="rounded-xl bg-slate-50 p-4">
-                  <p className="text-xs text-slate-400">Priorité</p>
+                  <p className="text-xs text-slate-400">{t("adminInterventions.colPriorite")}</p>
                   <span
                     className={`mt-2 inline-flex rounded-full px-2.5 py-1 text-xs font-bold ${priorityClass[selected.priorite]}`}
                   >
@@ -611,7 +610,7 @@ export default function Interventions() {
                 </div>
 
                 <div className="rounded-xl bg-slate-50 p-4">
-                  <p className="text-xs text-slate-400">Statut</p>
+                  <p className="text-xs text-slate-400">{t("adminInterventions.colStatut")}</p>
                   <span
                     className={`mt-2 inline-flex rounded-full px-2.5 py-1 text-xs font-bold ${statusClass[selected.statut]}`}
                   >
@@ -621,21 +620,16 @@ export default function Interventions() {
               </div>
 
               <div className="rounded-xl border border-slate-100 p-4">
-                <p className="text-xs text-slate-400">Motif</p>
+                <p className="text-xs text-slate-400">{t("adminInterventions.colMotif")}</p>
                 <p className="mt-1 text-sm leading-6 text-slate-700">
                   {selected.motif}
                 </p>
               </div>
 
               <div className="rounded-xl border border-slate-100 p-4">
-                <p className="text-xs text-slate-400">Date prévue</p>
+                <p className="text-xs text-slate-400">{t("adminInterventions.champDatePrevue")}</p>
                 <p className="mt-1 text-sm font-semibold text-slate-700">
-                  {selected.datePrevue
-                    ? new Intl.DateTimeFormat("fr-FR", {
-                        dateStyle: "medium",
-                        timeStyle: "short",
-                      }).format(new Date(selected.datePrevue))
-                    : "Non planifiée"}
+                  {formaterDate(selected.datePrevue, { dateStyle: "medium", timeStyle: "short" })}
                 </p>
               </div>
             </div>

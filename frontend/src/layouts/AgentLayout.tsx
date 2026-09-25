@@ -1,6 +1,8 @@
 import AppShell from "./AppShell";
-import { agentShell } from "./shellConfigs";
+import { buildAgentShell } from "./shellConfigs";
+import { useTranslation } from "../i18n";
 
 export default function AgentLayout() {
-  return <AppShell config={agentShell} />;
+  const { t } = useTranslation();
+  return <AppShell config={buildAgentShell(t)} />;
 }

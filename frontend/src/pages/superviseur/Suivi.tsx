@@ -19,8 +19,8 @@ import {
   SecondaryButton,
   SectionTitle,
   StatutBadge,
-  dateRelative,
-  libelleStatut,
+  useDateRelative,
+  useLibelleStatut,
   tonStatut,
 } from "../../components/ui/kit";
 import {
@@ -30,6 +30,7 @@ import {
 import { obtenirCategorieNiveauBac } from "../../utils/bacLevel";
 import { distanceEntre, formaterDistance, type Coordonnees } from "../../utils/itineraire";
 import { useTempsReel } from "../../hooks/useTempsReel";
+import { useTranslation } from "../../i18n";
 
 type Filtre = "TOUTES" | "EN_COURS" | "PLANIFIEE" | "EN_ATTENTE";
 
@@ -42,6 +43,9 @@ const versCoordonnees = (lat: unknown, lng: unknown): Coordonnees | null => {
 };
 
 const Suivi = () => {
+  const { t } = useTranslation();
+  const dateRelative = useDateRelative();
+  const libelleStatut = useLibelleStatut();
   const [interventions, setInterventions] = useState<Intervention[]>([]);
   const [filtre, setFiltre] = useState<Filtre>("TOUTES");
   const [selection, setSelection] = useState<number | null>(null);
@@ -57,12 +61,12 @@ const Suivi = () => {
       const reponse = await suivreInterventionsSuperviseur();
       setInterventions(reponse.interventions);
     } catch (err: any) {
-      setError(err?.response?.data?.message || "Impossible de charger le suivi des interventions.");
+      setError(err?.response?.data?.message || t("superviseurSuivi.erreurChargement"));
     } finally {
       setLoading(false);
       setRefreshing(false);
     }
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     charger();
@@ -99,16 +103,16 @@ const Suivi = () => {
     return cible.flatMap((ligne) => [ligne.bac, ligne.agent]).filter((p): p is Coordonnees => p !== null);
   }, [lignes, selection]);
 
-  if (loading) return <Chargement texte="Chargement du suivi..." />;
+  if (loading) return <Chargement texte={t("superviseurSuivi.chargement")} />;
 
   return (
     <div className="space-y-5">
       <PageHeader
-        titre="Suivi des interventions"
-        description="Bacs à traiter et position des agents en mission, actualisés toutes les 10 secondes."
+        titre={t("shell.titreSuiviInterventions")}
+        description={t("superviseurSuivi.description")}
         actions={
           <SecondaryButton icone={RefreshCw} chargement={refreshing} onClick={() => charger(true)}>
-            Actualiser
+            {t("adminDemandes.actualiser")}
           </SecondaryButton>
         }
       />
@@ -116,10 +120,10 @@ const Suivi = () => {
       {error && <BandeauErreur message={error} onReessayer={() => charger()} />}
 
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4 lg:gap-4">
-        <KpiCard libelle="Actives" valeur={interventions.length} icone={ClipboardList} teinte="gris" />
-        <KpiCard libelle="En cours" valeur={compte("EN_COURS")} icone={Truck} teinte="bleu" />
-        <KpiCard libelle="Planifiées" valeur={compte("PLANIFIEE")} icone={CheckCircle2} teinte="vert" />
-        <KpiCard libelle="En attente" valeur={compte("EN_ATTENTE")} icone={Clock} teinte="orange" />
+        <KpiCard libelle={t("adminDashboard.kpiActives")} valeur={interventions.length} icone={ClipboardList} teinte="gris" />
+        <KpiCard libelle={t("commun.statutEnCours")} valeur={compte("EN_COURS")} icone={Truck} teinte="bleu" />
+        <KpiCard libelle={t("adminInterventions.optPlanifiees")} valeur={compte("PLANIFIEE")} icone={CheckCircle2} teinte="vert" />
+        <KpiCard libelle={t("commun.statutEnAttente")} valeur={compte("EN_ATTENTE")} icone={Clock} teinte="orange" />
       </div>
 
       <FilterChips
@@ -129,10 +133,10 @@ const Suivi = () => {
           setSelection(null);
         }}
         options={[
-          { valeur: "TOUTES", libelle: "Toutes", compteur: interventions.length },
-          { valeur: "EN_COURS", libelle: "En cours", compteur: compte("EN_COURS"), couleur: "#0ea5e9" },
-          { valeur: "PLANIFIEE", libelle: "Planifiées", compteur: compte("PLANIFIEE"), couleur: "#16a34a" },
-          { valeur: "EN_ATTENTE", libelle: "En attente", compteur: compte("EN_ATTENTE"), couleur: "#f97316" },
+          { valeur: "TOUTES", libelle: t("adminDemandes.filtreToutes"), compteur: interventions.length },
+          { valeur: "EN_COURS", libelle: t("commun.statutEnCours"), compteur: compte("EN_COURS"), couleur: "#0ea5e9" },
+          { valeur: "PLANIFIEE", libelle: t("adminInterventions.optPlanifiees"), compteur: compte("PLANIFIEE"), couleur: "#16a34a" },
+          { valeur: "EN_ATTENTE", libelle: t("commun.statutEnAttente"), compteur: compte("EN_ATTENTE"), couleur: "#f97316" },
         ]}
       />
 
@@ -140,8 +144,8 @@ const Suivi = () => {
         <Card>
           <EtatVide
             icone={ClipboardList}
-            titre="Aucune intervention active"
-            description="Les interventions planifiées apparaîtront ici avec leur suivi sur la carte."
+            titre={t("superviseurSuivi.aucuneInterventionActive")}
+            description={t("superviseurSuivi.lesInterventionsApparaitront")}
           />
         </Card>
       ) : (
@@ -150,8 +154,8 @@ const Suivi = () => {
             <div className="border-b border-slate-100 p-4">
               <SectionTitle
                 icone={MapPin}
-                titre="Carte de suivi"
-                sousTitre="Point coloré : bac • Point bleu : agent en mission"
+                titre={t("superviseurSuivi.carteDeSuivi")}
+                sousTitre={t("superviseurSuivi.legendeCarte")}
                 droite={
                   <button
                     type="button"
@@ -161,7 +165,7 @@ const Suivi = () => {
                     }}
                     className="rounded-xl bg-slate-100 px-3 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-200"
                   >
-                    Tout voir
+                    {t("adminDashboard.toutVoir")}
                   </button>
                 }
               />
@@ -192,9 +196,9 @@ const Suivi = () => {
                           <Popup>
                             <p className="text-sm font-bold">{intervention.bac?.reference}</p>
                             <p className="text-xs text-slate-500">
-                              Remplissage : {Math.round(Number(intervention.bac?.niveau_remplissage) || 0)}%
+                              {t("superviseurSuivi.remplissageLabel", { n: Math.round(Number(intervention.bac?.niveau_remplissage) || 0) })}
                             </p>
-                            <p className="text-xs text-slate-500">Statut : {libelleStatut(intervention.statut)}</p>
+                            <p className="text-xs text-slate-500">{t("superviseurSuivi.statutLabel", { statut: libelleStatut(intervention.statut) })}</p>
                           </Popup>
                         </Marker>
                       )}
@@ -205,7 +209,7 @@ const Suivi = () => {
                               {intervention.mission?.agent?.prenom} {intervention.mission?.agent?.nom}
                             </p>
                             <p className="text-xs text-slate-500">
-                              Position {dateRelative(intervention.mission?.datePositionAgent)}
+                              {t("superviseurSuivi.positionLabel", { temps: dateRelative(intervention.mission?.datePositionAgent) })}
                             </p>
                           </Popup>
                         </Marker>
@@ -220,7 +224,7 @@ const Suivi = () => {
           <div className="space-y-3">
             {lignes.length === 0 && (
               <Card>
-                <EtatVide icone={ClipboardList} titre="Aucune intervention pour ce filtre" />
+                <EtatVide icone={ClipboardList} titre={t("superviseurSuivi.aucuneInterventionFiltre")} />
               </Card>
             )}
 
@@ -244,7 +248,7 @@ const Suivi = () => {
                       <div className="min-w-0">
                         <RefPill>#{intervention.bac?.reference}</RefPill>
                         <p className="mt-1.5 text-sm font-bold text-slate-900">
-                          Intervention n°{intervention.idIntervention}
+                          {t("superviseurInterventions.interventionNumero", { n: intervention.idIntervention })}
                         </p>
                       </div>
                       <div className="flex flex-col items-end gap-1.5">
@@ -274,7 +278,7 @@ const Suivi = () => {
                               className="inline-flex items-center gap-1 text-xs font-semibold text-emerald-700"
                             >
                               <Phone size={13} />
-                              Appeler
+                              {t("superviseurInterventions.appeler")}
                             </a>
                           )}
                         </div>
@@ -282,17 +286,17 @@ const Suivi = () => {
                           <Navigation size={13} />
                           {intervention.mission?.statut === "EN_COURS"
                             ? agent
-                              ? `À ${formaterDistance(distance ?? 0)} du bac • ${dateRelative(intervention.mission?.datePositionAgent)}`
-                              : "Mission démarrée, position en attente…"
-                            : `Mission ${libelleStatut(intervention.mission?.statut).toLowerCase()}`}
+                              ? t("superviseurSuivi.aDistanceDuBac", { distance: formaterDistance(distance ?? 0), temps: dateRelative(intervention.mission?.datePositionAgent) })
+                              : t("superviseurSuivi.missionDemarreeAttente")
+                            : t("superviseurSuivi.missionStatutLabel", { statut: libelleStatut(intervention.mission?.statut).toLowerCase() })}
                         </p>
                       </>
                     ) : (
-                      <p className="text-xs font-medium text-orange-600">Aucun agent affecté</p>
+                      <p className="text-xs font-medium text-orange-600">{t("superviseurDashboard.aucunAgentAffecte")}</p>
                     )}
                   </div>
 
-                  {intervention.motif && <p className="mt-2 text-xs text-slate-500">Motif : {intervention.motif}</p>}
+                  {intervention.motif && <p className="mt-2 text-xs text-slate-500">{t("superviseurSuivi.motifLabel", { motif: intervention.motif })}</p>}
                 </Card>
               );
             })}

@@ -12,7 +12,7 @@ import {
   EtatVide,
   LevelRing,
   SectionTitle,
-  dateRelative,
+  useDateRelative,
 } from "../../components/ui/kit";
 import FiltreDates from "../../components/ui/FiltreDates";
 import { useAuthStore } from "../../stores/authStore";
@@ -24,16 +24,13 @@ import {
   type AgentMission,
 } from "../../services/agentService";
 import { dansPlage, plageVide, type PlageDates } from "../../utils/plageDates";
+import { useTranslation } from "../../i18n";
 
 const POIDS_PRIORITE: Record<string, number> = { CRITIQUE: 0, HAUTE: 1, MOYENNE: 2, NORMALE: 3 };
 
-const salutation = () => {
-  const heure = new Date().getHours();
-  return heure < 12 ? "Bonjour" : heure < 18 ? "Bon après-midi" : "Bonsoir";
-};
-
 /** Carte principale : la mission à traiter maintenant, avec son action. */
 function MissionPrioritaire({ mission, onChange }: { mission: AgentMission; onChange: () => void }) {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [action, setAction] = useState(false);
   const bac = mission.intervention?.bac;
@@ -44,11 +41,11 @@ function MissionPrioritaire({ mission, onChange }: { mission: AgentMission; onCh
     try {
       setAction(true);
       await demarrerMission(mission.idMission);
-      toast.success("Mission démarrée. Bonne route !");
+      toast.success(t("agentDashboard.missionDemarreeBonneRoute"));
       onChange();
       navigate(`/agent/missions/${mission.idMission}/localisation`);
     } catch (err: any) {
-      toast.error(err?.response?.data?.message || "Impossible de démarrer la mission.");
+      toast.error(err?.response?.data?.message || t("agentDashboard.impossibleDemarrer"));
     } finally {
       setAction(false);
     }
@@ -58,11 +55,11 @@ function MissionPrioritaire({ mission, onChange }: { mission: AgentMission; onCh
     <section className="anim-carte overflow-hidden rounded-3xl bg-gradient-to-br from-emerald-700 to-emerald-950 p-5 text-white shadow-lg">
       <div className="flex items-center justify-between gap-2">
         <span className="rounded-full bg-white/15 px-3 py-1 text-[11px] font-bold uppercase tracking-wide">
-          {enCours ? "Mission en cours" : suspendue ? "Mission suspendue" : "À faire maintenant"}
+          {enCours ? t("agentDashboard.missionEnCours") : suspendue ? t("agentDashboard.missionSuspendue") : t("agentDashboard.aFaireMaintenant")}
         </span>
         {mission.intervention?.priorite && ["CRITIQUE", "HAUTE"].includes(mission.intervention.priorite) && (
           <span className="rounded-full bg-red-500 px-3 py-1 text-[11px] font-bold uppercase">
-            {mission.intervention.priorite === "CRITIQUE" ? "Urgent" : "Prioritaire"}
+            {mission.intervention.priorite === "CRITIQUE" ? t("agentDashboard.urgent") : t("agentDashboard.prioritaire")}
           </span>
         )}
       </div>
@@ -75,7 +72,7 @@ function MissionPrioritaire({ mission, onChange }: { mission: AgentMission; onCh
         )}
         <div className="min-w-0">
           <p className="font-mono text-xs font-bold text-emerald-200">#{bac?.reference ?? `MS-${mission.idMission}`}</p>
-          <p className="mt-0.5 truncate text-lg font-bold leading-tight">{bac?.zone?.nomZone ?? "Point de collecte"}</p>
+          <p className="mt-0.5 truncate text-lg font-bold leading-tight">{bac?.zone?.nomZone ?? t("agentDashboard.pointDeCollecte")}</p>
           {mission.intervention?.motif && (
             <p className="mt-1 line-clamp-2 text-xs text-white/70">{mission.intervention.motif}</p>
           )}
@@ -91,7 +88,7 @@ function MissionPrioritaire({ mission, onChange }: { mission: AgentMission; onCh
             className="inline-flex items-center justify-center gap-2 rounded-2xl bg-white px-4 py-3.5 text-sm font-bold text-emerald-900 shadow transition active:scale-[0.98] disabled:opacity-60"
           >
             <Play size={18} />
-            {action ? "Démarrage…" : "Démarrer la mission"}
+            {action ? t("agentDashboard.demarrage") : t("agentDashboard.demarrerLaMission")}
           </button>
         ) : (
           <Link
@@ -99,7 +96,7 @@ function MissionPrioritaire({ mission, onChange }: { mission: AgentMission; onCh
             className="inline-flex items-center justify-center gap-2 rounded-2xl bg-white px-4 py-3.5 text-sm font-bold text-emerald-900 shadow transition active:scale-[0.98]"
           >
             <Navigation size={18} />
-            Suivre l'itinéraire
+            {t("missionCard.suivreItineraire")}
           </Link>
         )}
         <Link
@@ -107,14 +104,14 @@ function MissionPrioritaire({ mission, onChange }: { mission: AgentMission; onCh
           className="inline-flex items-center justify-center gap-2 rounded-2xl bg-white/15 px-4 py-3.5 text-sm font-bold text-white transition hover:bg-white/25 active:scale-[0.98]"
         >
           {mission.statut === "AFFECTEE" ? <MapPin size={18} /> : <FileText size={18} />}
-          {mission.statut === "AFFECTEE" ? "Voir l'itinéraire" : "Détails / terminer"}
+          {mission.statut === "AFFECTEE" ? t("agentDashboard.voirItineraire") : t("agentDashboard.detailsTerminer")}
         </Link>
       </div>
 
       {bac && (
         <div className="mt-3 flex items-center gap-2 text-[11px] text-white/70">
           <EtatBadge niveau={bac.niveau_remplissage} />
-          <span>{Math.round(Number(bac.niveau_remplissage))}% rempli · mise à jour en direct</span>
+          <span>{t("agentDashboard.remplitMiseAJour", { n: Math.round(Number(bac.niveau_remplissage)) })}</span>
         </div>
       )}
     </section>
@@ -122,7 +119,14 @@ function MissionPrioritaire({ mission, onChange }: { mission: AgentMission; onCh
 }
 
 const Dashboard = () => {
+  const { t } = useTranslation();
+  const dateRelative = useDateRelative();
   const utilisateur = useAuthStore((state) => state.utilisateur);
+
+  const salutation = () => {
+    const heure = new Date().getHours();
+    return heure < 12 ? t("agentDashboard.salutationMatin") : heure < 18 ? t("agentDashboard.salutationApresMidi") : t("agentDashboard.salutationSoir");
+  };
   const [data, setData] = useState<AgentDashboard | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -135,11 +139,11 @@ const Dashboard = () => {
       setData(await obtenirDashboardAgent());
       setMajLe(new Date().toISOString());
     } catch (err: any) {
-      setError(err?.response?.data?.message || "Impossible de charger votre tableau de bord.");
+      setError(err?.response?.data?.message || t("agentDashboard.erreurChargement"));
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     charger();
@@ -171,9 +175,9 @@ const Dashboard = () => {
     return { total: missions.length, enCours: n("EN_COURS"), aDemarrer: n("AFFECTEE"), terminees: n("TERMINEE") };
   }, [data, periode]);
 
-  if (loading) return <Chargement texte="Chargement du tableau de bord..." />;
+  if (loading) return <Chargement texte={t("adminDashboard.chargement")} />;
 
-  if (!data) return <BandeauErreur message={error || "Tableau de bord indisponible."} onReessayer={charger} />;
+  if (!data) return <BandeauErreur message={error || t("superviseurDashboard.tableauDeBordIndisponible")} onReessayer={charger} />;
 
   const [prioritaire, ...suivantes] = aTraiter;
 
@@ -188,13 +192,13 @@ const Dashboard = () => {
           </p>
           <p className="text-xs text-slate-400">
             {aTraiter.length > 0
-              ? `${aTraiter.length} mission${aTraiter.length > 1 ? "s" : ""} à traiter`
-              : "Aucune mission à traiter"}
+              ? t(aTraiter.length > 1 ? "agentDashboard.missionATraiterPluriel" : "agentDashboard.missionATraiterSingulier", { n: aTraiter.length })
+              : t("agentDashboard.aucuneMissionATraiter")}
           </p>
         </div>
         <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1 text-[11px] font-semibold text-emerald-700">
           <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-500" />
-          En direct · {dateRelative(majLe)}
+          {t("adminDashboard.enDirect", { temps: dateRelative(majLe) })}
         </span>
       </div>
 
@@ -204,20 +208,20 @@ const Dashboard = () => {
         <Card>
           <EtatVide
             icone={Coffee}
-            titre="Rien à faire pour le moment"
-            description="Vous serez notifié dès qu'un superviseur vous affectera une intervention."
+            titre={t("agentDashboard.rienAFaire")}
+            description={t("agentDashboard.seraNotifie")}
           />
         </Card>
       )}
 
       <section className="space-y-3">
-        <FiltreDates valeur={periode} onChange={setPeriode} libelle="Mon activité" />
+        <FiltreDates valeur={periode} onChange={setPeriode} libelle={t("agentDashboard.monActivite")} />
         <div className="grid grid-cols-4 gap-2">
           {[
-            { libelle: "Missions", valeur: compte.total, icone: ClipboardList, classe: "text-slate-600 bg-slate-100" },
-            { libelle: "En cours", valeur: compte.enCours, icone: Truck, classe: "text-sky-700 bg-sky-50" },
-            { libelle: "À démarrer", valeur: compte.aDemarrer, icone: Hourglass, classe: "text-orange-600 bg-orange-50" },
-            { libelle: "Terminées", valeur: compte.terminees, icone: CheckCircle2, classe: "text-emerald-700 bg-emerald-50" },
+            { libelle: t("shell.navMissions"), valeur: compte.total, icone: ClipboardList, classe: "text-slate-600 bg-slate-100" },
+            { libelle: t("commun.statutEnCours"), valeur: compte.enCours, icone: Truck, classe: "text-sky-700 bg-sky-50" },
+            { libelle: t("agentDashboard.kpiADemarrer"), valeur: compte.aDemarrer, icone: Hourglass, classe: "text-orange-600 bg-orange-50" },
+            { libelle: t("adminInterventions.optTerminees"), valeur: compte.terminees, icone: CheckCircle2, classe: "text-emerald-700 bg-emerald-50" },
           ].map(({ libelle, valeur, icone: Icone, classe }) => (
             <div key={libelle} className="anim-carte rounded-2xl border border-slate-100 bg-white p-2.5 text-center shadow-sm">
               <span className={`mx-auto flex h-7 w-7 items-center justify-center rounded-lg ${classe}`}>
@@ -234,11 +238,11 @@ const Dashboard = () => {
         <section className="space-y-3">
           <SectionTitle
             icone={Truck}
-            titre="Ensuite"
-            sousTitre={`${suivantes.length} autre${suivantes.length > 1 ? "s" : ""} mission${suivantes.length > 1 ? "s" : ""}`}
+            titre={t("agentDashboard.ensuite")}
+            sousTitre={t(suivantes.length > 1 ? "agentDashboard.autreMissionPluriel" : "agentDashboard.autreMissionSingulier", { n: suivantes.length })}
             droite={
               <Link to="/agent/missions" className="text-sm font-semibold text-emerald-700 hover:underline">
-                Tout voir
+                {t("adminDashboard.toutVoir")}
               </Link>
             }
           />

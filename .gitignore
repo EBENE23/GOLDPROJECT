@@ -1,0 +1,4 @@
+# Outil de tunnel local (ngrok) — ne doit jamais être commité, c'est un binaire
+# téléchargé, pas du code du projet. Chacun peut le retélécharger sur ngrok.com.
+ngrok.exe
+ngrok

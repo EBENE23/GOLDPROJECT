@@ -21,12 +21,14 @@ import {
 } from "../../services/superviseurService";
 import { obtenirCategorieNiveauBac } from "../../utils/bacLevel";
 import { useTempsReel } from "../../hooks/useTempsReel";
+import { useTranslation } from "../../i18n";
 
 type Filtre = "TOUTES" | "PLEIN" | "ALERTE";
 
 const STATUTS_ACTIFS = ["EN_ATTENTE", "PLANIFIEE", "EN_COURS"];
 
 const Alertes = () => {
+  const { t } = useTranslation();
   const [alertes, setAlertes] = useState<Bac[]>([]);
   const [interventions, setInterventions] = useState<Intervention[]>([]);
   const [filtre, setFiltre] = useState<Filtre>("TOUTES");
@@ -45,12 +47,12 @@ const Alertes = () => {
       setAlertes(reponseAlertes.alertes ?? []);
       setInterventions(reponseInterventions.interventions ?? []);
     } catch (err: any) {
-      setError(err?.response?.data?.message || "Impossible de charger les alertes.");
+      setError(err?.response?.data?.message || t("superviseurAlertes.erreurChargement"));
     } finally {
       setLoading(false);
       setRefreshing(false);
     }
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     charger();
@@ -79,16 +81,16 @@ const Alertes = () => {
     [alertes, filtre]
   );
 
-  if (loading) return <Chargement texte="Chargement des alertes..." />;
+  if (loading) return <Chargement texte={t("superviseurAlertes.chargement")} />;
 
   return (
     <div className="space-y-5">
       <PageHeader
-        titre="Alertes"
-        description="Bacs ayant dépassé le seuil d'alerte (50 %) ou le seuil critique (80 %)."
+        titre={t("shell.navAlertes")}
+        description={t("superviseurAlertes.description")}
         actions={
           <SecondaryButton icone={RefreshCw} chargement={refreshing} onClick={() => charger(true)}>
-            Actualiser
+            {t("adminDemandes.actualiser")}
           </SecondaryButton>
         }
       />
@@ -96,18 +98,18 @@ const Alertes = () => {
       {error && <BandeauErreur message={error} onReessayer={() => charger()} />}
 
       <div className="grid grid-cols-3 gap-3 lg:gap-4">
-        <KpiCard libelle="Alertes" valeur={alertes.length} icone={BellRing} teinte="gris" />
-        <KpiCard libelle="Critiques" valeur={critiques} icone={Siren} teinte="rouge" />
-        <KpiCard libelle="En alerte" valeur={enAlerte} icone={AlertTriangle} teinte="orange" />
+        <KpiCard libelle={t("shell.navAlertes")} valeur={alertes.length} icone={BellRing} teinte="gris" />
+        <KpiCard libelle={t("superviseurDashboard.kpiCritiques")} valeur={critiques} icone={Siren} teinte="rouge" />
+        <KpiCard libelle={t("adminBacs.kpiAlerte")} valeur={enAlerte} icone={AlertTriangle} teinte="orange" />
       </div>
 
       <FilterChips
         valeur={filtre}
         onChange={setFiltre}
         options={[
-          { valeur: "TOUTES", libelle: "Toutes", compteur: alertes.length },
-          { valeur: "PLEIN", libelle: "Critiques", compteur: critiques, couleur: etatMeta.PLEIN.couleur },
-          { valeur: "ALERTE", libelle: "En alerte", compteur: enAlerte, couleur: etatMeta.ALERTE.couleur },
+          { valeur: "TOUTES", libelle: t("adminDemandes.filtreToutes"), compteur: alertes.length },
+          { valeur: "PLEIN", libelle: t("superviseurDashboard.kpiCritiques"), compteur: critiques, couleur: etatMeta.PLEIN.couleur },
+          { valeur: "ALERTE", libelle: t("adminBacs.kpiAlerte"), compteur: enAlerte, couleur: etatMeta.ALERTE.couleur },
         ]}
       />
 
@@ -115,8 +117,8 @@ const Alertes = () => {
         <Card>
           <EtatVide
             icone={BellRing}
-            titre="Aucune alerte active"
-            description="Tous les bacs de votre zone sont sous le seuil d'alerte."
+            titre={t("superviseurAlertes.aucuneAlerteActive")}
+            description={t("superviseurAlertes.tousLesBacsSousLeSeuil")}
           />
         </Card>
       ) : (

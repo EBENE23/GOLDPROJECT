@@ -14,30 +14,20 @@ import {
     useLocation,
 } from "react-router-dom";
 
-const navigation = [
-    {
-        label: "Accueil",
-        href: "#accueil",
-    },
-    {
-        label: "Fonctionnalités",
-        href: "#fonctionnalites",
-    },
-    {
-        label: "Rôles",
-        href: "#roles",
-    },
-    {
-        label: "Fonctionnement",
-        href: "#fonctionnement",
-    },
-    {
-        label: "Technologies",
-        href: "#technologies",
-    },
-];
+import { useTranslation } from "../i18n";
+import SelecteurLangue from "./SelecteurLangue";
 
 export default function Navbar() {
+    const { t } = useTranslation();
+
+    const navigation = [
+        { label: t("nav.accueil"), href: "#accueil" },
+        { label: t("nav.fonctionnalites"), href: "#fonctionnalites" },
+        { label: t("nav.roles"), href: "#roles" },
+        { label: t("nav.fonctionnement"), href: "#fonctionnement" },
+        { label: t("nav.technologies"), href: "#technologies" },
+    ];
+
     const [mobileMenuOpen, setMobileMenuOpen] =
         useState(false);
 
@@ -136,11 +126,11 @@ export default function Navbar() {
                     <Link
                         to="/"
                         className="group flex shrink-0 items-center gap-2.5"
-                        aria-label="SmartCityWaste - Accueil"
+                        aria-label={t("nav.logoAria")}
                     >
                         <img
                             src="/images/logo.png"
-                            alt="Logo SmartCityWaste"
+                            alt={t("commun.logoAlt")}
                             className="h-10 w-auto object-contain transition-transform duration-300 group-hover:scale-105 sm:h-11"
                         />
 
@@ -153,7 +143,7 @@ export default function Navbar() {
                             </span>
 
                             <span className="mt-1 hidden text-[9px] font-medium uppercase tracking-[0.16em] text-slate-400 sm:block">
-                                Gestion intelligente
+                                {t("nav.tagline")}
                             </span>
                         </div>
                     </Link>
@@ -201,47 +191,53 @@ export default function Navbar() {
                     {/* =================================================
                         ACTIONS DESKTOP
                     ================================================== */}
-                    <div className="hidden items-center gap-2 lg:gap-3 md:flex">
+                    <div className="hidden items-center gap-1 lg:gap-2 md:flex">
+                        <SelecteurLangue />
+
                         <Link
                             to="/login"
                             className="rounded-xl px-3 py-2.5 text-sm font-semibold text-slate-600 transition-colors hover:text-green-600 lg:px-4"
                         >
-                            Connexion
+                            {t("nav.connexion")}
                         </Link>
 
                         <Link
                             to="/register"
                             className="hidden rounded-xl px-3 py-2.5 text-sm font-semibold text-slate-600 transition-colors hover:bg-green-50 hover:text-green-700 xl:inline-flex"
                         >
-                            Créer un compte
+                            {t("nav.creerCompte")}
                         </Link>
 
                     </div>
 
                     {/* =================================================
-                        BOUTON MENU MOBILE
+                        ACTIONS MOBILE (langue + menu)
                     ================================================== */}
-                    <button
-                        type="button"
-                        onClick={() =>
-                            setMobileMenuOpen(
-                                (value) =>
-                                    !value
-                            )
-                        }
-                        className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100 text-slate-700 transition-all hover:bg-green-50 hover:text-green-700 md:hidden"
-                        aria-label={
-                            mobileMenuOpen
-                                ? "Fermer le menu"
-                                : "Ouvrir le menu"
-                        }
-                    >
-                        {mobileMenuOpen ? (
-                            <X size={21} />
-                        ) : (
-                            <Menu size={21} />
-                        )}
-                    </button>
+                    <div className="flex items-center gap-1.5 md:hidden">
+                        <SelecteurLangue />
+
+                        <button
+                            type="button"
+                            onClick={() =>
+                                setMobileMenuOpen(
+                                    (value) =>
+                                        !value
+                                )
+                            }
+                            className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100 text-slate-700 transition-all hover:bg-green-50 hover:text-green-700"
+                            aria-label={
+                                mobileMenuOpen
+                                    ? t("nav.fermerMenu")
+                                    : t("nav.ouvrirMenu")
+                            }
+                        >
+                            {mobileMenuOpen ? (
+                                <X size={21} />
+                            ) : (
+                                <Menu size={21} />
+                            )}
+                        </button>
+                    </div>
 
                     {/* =================================================
                         MENU MOBILE
@@ -288,14 +284,14 @@ export default function Navbar() {
                                     to="/login"
                                     className="rounded-xl px-4 py-3 text-sm font-semibold text-slate-600 transition-colors hover:bg-slate-50"
                                 >
-                                    Connexion
+                                    {t("nav.connexion")}
                                 </Link>
 
                                 <Link
                                     to="/register"
                                     className="mt-1 flex items-center justify-center gap-2 rounded-xl bg-green-600 px-4 py-3 text-sm font-semibold text-white transition-colors hover:bg-green-700"
                                 >
-                                    S'inscrire
+                                    {t("nav.sinscrire")}
 
                                     <ArrowRight
                                         size={16}

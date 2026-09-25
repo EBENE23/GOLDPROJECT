@@ -23,8 +23,8 @@ import {
   RefPill,
   SectionTitle,
   StatutBadge,
-  dateRelative,
-  libelleStatut,
+  useDateRelative,
+  useLibelleStatut,
   tonStatut,
 } from "../../components/ui/kit";
 import FiltreDates from "../../components/ui/FiltreDates";
@@ -33,6 +33,7 @@ import { useTempsReel } from "../../hooks/useTempsReel";
 import api from "../../services/api";
 import { obtenirCategorieNiveauBac } from "../../utils/bacLevel";
 import { dansPlage, plageVide, type PlageDates } from "../../utils/plageDates";
+import { useTranslation } from "../../i18n";
 
 interface Bac {
   id_bac: number;
@@ -81,6 +82,9 @@ const liste = <T,>(donnees: unknown, cle: string): T[] =>
 const STATUTS_ACTIFS = ["EN_ATTENTE", "PLANIFIEE", "EN_COURS"];
 
 export default function Dashboard() {
+  const { t } = useTranslation();
+  const dateRelative = useDateRelative();
+  const libelleStatut = useLibelleStatut();
   const utilisateur = useAuthStore((state) => state.utilisateur);
   const [bacs, setBacs] = useState<Bac[]>([]);
   const [zones, setZones] = useState<Zone[]>([]);
@@ -110,11 +114,11 @@ export default function Dashboard() {
       setInterventions(liste<Intervention>(i.data, "interventions"));
       setMajLe(new Date().toISOString());
     } catch (err: any) {
-      setError(err?.response?.data?.message || "Impossible de charger toutes les données du tableau de bord.");
+      setError(err?.response?.data?.message || t("adminDashboard.erreurChargement"));
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     charger();
@@ -151,47 +155,61 @@ export default function Dashboard() {
   const utilisateursActifs = users.filter((u) => u.statutCompte === "ACTIF").length;
   const interventionsActives = interventions.filter((i) => STATUTS_ACTIFS.includes(i.statut)).length;
 
-  if (loading) return <Chargement texte="Chargement du tableau de bord..." />;
+  if (loading) return <Chargement texte={t("adminDashboard.chargement")} />;
+
+  const libelleRoleDemande = (role: string) =>
+    role === "SUPERVISEUR" ? t("shell.roleSuperviseur") : role === "AGENT_COLLECTE" ? t("shell.roleAgent") : role;
 
   // Priorité du moment : demandes à valider, puis bacs critiques, puis zones sans superviseur.
   const hero = demandesEnAttente.length > 0
     ? {
         theme: "from-emerald-700 to-emerald-950",
-        badge: "Action requise",
+        badge: t("adminDashboard.actionRequise"),
         icone: UserPlus,
-        titre: `${demandesEnAttente.length} demande${demandesEnAttente.length > 1 ? "s" : ""} d'inscription à valider`,
+        titre: t(
+          demandesEnAttente.length > 1 ? "adminDashboard.demandePluriel" : "adminDashboard.demandeSingulier",
+          { n: demandesEnAttente.length }
+        ),
         detail: demandesEnAttente
           .slice(0, 3)
-          .map((d) => `${d.prenom} ${d.nom} (${libelleStatut(d.roleDemande).toLowerCase()})`)
+          .map((d) => `${d.prenom} ${d.nom} (${libelleRoleDemande(d.roleDemande).toLowerCase()})`)
           .join(" · "),
         lien: "/admin/demandes",
-        action: "Examiner les demandes",
+        action: t("adminDashboard.examinerDemandes"),
       }
     : bacsCritiques.length > 0
       ? {
           theme: "from-red-600 to-red-900",
-          badge: "Urgent",
+          badge: t("adminDashboard.urgent"),
           icone: Siren,
-          titre: `${bacsCritiques.length} bac${bacsCritiques.length > 1 ? "s" : ""} critique${bacsCritiques.length > 1 ? "s" : ""}`,
+          titre: t(
+            bacsCritiques.length > 1 ? "adminDashboard.bacCritiquePluriel" : "adminDashboard.bacCritiqueSingulier",
+            { n: bacsCritiques.length }
+          ),
           detail: bacsCritiques
             .slice(0, 3)
             .map((b) => b.reference)
             .join(" · "),
           lien: "/admin/bacs",
-          action: "Voir les bacs",
+          action: t("adminDashboard.voirBacs"),
         }
       : zonesSansSuperviseur.length > 0
         ? {
             theme: "from-orange-500 to-orange-700",
-            badge: "À organiser",
+            badge: t("adminDashboard.aOrganiser"),
             icone: ShieldAlert,
-            titre: `${zonesSansSuperviseur.length} zone${zonesSansSuperviseur.length > 1 ? "s" : ""} sans superviseur`,
+            titre: t(
+              zonesSansSuperviseur.length > 1
+                ? "adminDashboard.zoneSansSuperviseurPluriel"
+                : "adminDashboard.zoneSansSuperviseurSingulier",
+              { n: zonesSansSuperviseur.length }
+            ),
             detail: zonesSansSuperviseur
               .slice(0, 4)
               .map((z) => z.nomZone)
               .join(" · "),
             lien: "/admin/zones",
-            action: "Affecter un superviseur",
+            action: t("adminDashboard.affecterSuperviseur"),
           }
         : null;
 
@@ -201,14 +219,14 @@ export default function Dashboard() {
 
       <div className="flex items-end justify-between gap-3">
         <div className="min-w-0">
-          <p className="text-sm text-slate-500">Administration</p>
+          <p className="text-sm text-slate-500">{t("adminDashboard.administration")}</p>
           <p className="truncate text-lg font-bold text-slate-900">
             {utilisateur?.prenom} {utilisateur?.nom}
           </p>
         </div>
         <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1 text-[11px] font-semibold text-emerald-700">
           <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-500" />
-          En direct · {dateRelative(majLe)}
+          {t("adminDashboard.enDirect", { temps: dateRelative(majLe) })}
         </span>
       </div>
 
@@ -231,34 +249,46 @@ export default function Dashboard() {
         <section className="anim-carte overflow-hidden rounded-3xl bg-gradient-to-br from-emerald-600 to-emerald-900 p-5 text-white shadow-lg">
           <span className="inline-flex items-center gap-1.5 rounded-full bg-white/20 px-3 py-1 text-[11px] font-bold uppercase tracking-wide">
             <CheckCircle2 size={13} />
-            Tout est en ordre
+            {t("adminDashboard.toutEnOrdre")}
           </span>
-          <p className="mt-4 text-xl font-bold">Aucune action requise</p>
-          <p className="mt-1 text-sm text-white/75">Pas de demande en attente, de bac critique ni de zone sans superviseur.</p>
+          <p className="mt-4 text-xl font-bold">{t("adminDashboard.aucuneActionTitre")}</p>
+          <p className="mt-1 text-sm text-white/75">{t("adminDashboard.aucuneActionDetail")}</p>
         </section>
       )}
 
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4 lg:gap-4">
-        <KpiCard libelle="Utilisateurs actifs" valeur={utilisateursActifs} detail={`${users.length} comptes`} icone={Users} teinte="bleu" />
-        <KpiCard libelle="Bacs" valeur={bacs.length} detail={`${bacsCritiques.length} critique${bacsCritiques.length > 1 ? "s" : ""}`} icone={Boxes} teinte={bacsCritiques.length > 0 ? "rouge" : "vert"} />
-        <KpiCard libelle="Zones" valeur={zones.length} detail={`${zonesSansSuperviseur.length} sans superviseur`} icone={MapPinned} teinte={zonesSansSuperviseur.length > 0 ? "orange" : "vert"} />
-        <KpiCard libelle="Interventions" valeur={interventionsActives} detail="Actives" icone={ClipboardList} teinte="gris" />
+        <KpiCard libelle={t("adminDashboard.kpiUtilisateursActifs")} valeur={utilisateursActifs} detail={t("adminDashboard.kpiComptes", { n: users.length })} icone={Users} teinte="bleu" />
+        <KpiCard
+          libelle={t("adminDashboard.kpiBacs")}
+          valeur={bacs.length}
+          detail={t(bacsCritiques.length > 1 ? "adminDashboard.kpiCritiquePluriel" : "adminDashboard.kpiCritiqueSingulier", { n: bacsCritiques.length })}
+          icone={Boxes}
+          teinte={bacsCritiques.length > 0 ? "rouge" : "vert"}
+        />
+        <KpiCard
+          libelle={t("adminDashboard.kpiZones")}
+          valeur={zones.length}
+          detail={t("adminDashboard.kpiSansSuperviseur", { n: zonesSansSuperviseur.length })}
+          icone={MapPinned}
+          teinte={zonesSansSuperviseur.length > 0 ? "orange" : "vert"}
+        />
+        <KpiCard libelle={t("adminDashboard.kpiInterventions")} valeur={interventionsActives} detail={t("adminDashboard.kpiActives")} icone={ClipboardList} teinte="gris" />
       </div>
 
       <div className="grid grid-cols-1 gap-5 xl:grid-cols-2">
         <section className="space-y-3">
           <SectionTitle
             icone={AlertTriangle}
-            titre="Bacs à surveiller"
+            titre={t("adminDashboard.bacsASurveiller")}
             droite={
               <Link to="/admin/bacs" className="text-sm font-semibold text-emerald-700 hover:underline">
-                Tout voir
+                {t("adminDashboard.toutVoir")}
               </Link>
             }
           />
           {bacsATraiter.length === 0 ? (
             <Card>
-              <EtatVide icone={CheckCircle2} titre="Tous les bacs sont en état normal" />
+              <EtatVide icone={CheckCircle2} titre={t("adminDashboard.tousBacsNormaux")} />
             </Card>
           ) : (
             bacsATraiter.slice(0, 4).map((bac) => (
@@ -276,17 +306,17 @@ export default function Dashboard() {
         </section>
 
         <section className="space-y-3">
-          <SectionTitle icone={ClipboardList} titre="Interventions" sousTitre="Créées sur la période choisie" />
+          <SectionTitle icone={ClipboardList} titre={t("adminDashboard.interventionsTitre")} sousTitre={t("adminDashboard.interventionsSousTitre")} />
           <FiltreDates valeur={periode} onChange={setPeriode} />
           <Card className="divide-y divide-slate-100">
             {interventionsPeriode.length === 0 ? (
-              <EtatVide icone={ClipboardList} titre="Aucune intervention sur cette période" />
+              <EtatVide icone={ClipboardList} titre={t("adminDashboard.aucuneInterventionPeriode")} />
             ) : (
               interventionsPeriode.slice(0, 6).map((item) => (
                 <div key={item.idIntervention} className="flex items-center justify-between gap-3 p-4">
                   <div className="min-w-0">
                     <RefPill>#{item.bac?.reference ?? item.id_bac}</RefPill>
-                    <p className="mt-1 truncate text-sm text-slate-600">{item.motif || "Sans motif"}</p>
+                    <p className="mt-1 truncate text-sm text-slate-600">{item.motif || t("commun.sansMotif")}</p>
                   </div>
                   <StatutBadge ton={tonStatut(item.statut)}>{libelleStatut(item.statut)}</StatutBadge>
                 </div>

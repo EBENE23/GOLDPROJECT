@@ -1,9 +1,10 @@
 import { useNavigate } from "react-router-dom";
 import { ClipboardPlus, Map as MapIcon, MapPin, Ruler } from "lucide-react";
 
-import { Card, EtatBadge, LevelRing, PrimaryButton, RefPill, SecondaryButton, StatutBadge, libelleStatut, tonStatut } from "./ui/kit";
+import { Card, EtatBadge, LevelRing, PrimaryButton, RefPill, SecondaryButton, StatutBadge, useLibelleStatut, tonStatut } from "./ui/kit";
 import type { Bac } from "../services/superviseurService";
 import { obtenirCategorieNiveauBac } from "../utils/bacLevel";
+import { useTranslation } from "../i18n";
 
 interface BacCardProps {
   bac: Bac;
@@ -13,6 +14,8 @@ interface BacCardProps {
 
 /** Carte d'un bac : niveau, état, position et actions du superviseur. */
 export default function BacCard({ bac, interventionActive }: BacCardProps) {
+  const { t } = useTranslation();
+  const libelleStatut = useLibelleStatut();
   const navigate = useNavigate();
   const categorie = obtenirCategorieNiveauBac(bac.niveau_remplissage);
   const aTraiter = categorie !== "NORMAL";
@@ -38,7 +41,7 @@ export default function BacCard({ bac, interventionActive }: BacCardProps) {
               <Ruler size={13} className="shrink-0" />
               {bac.capacite ? `${Number(bac.capacite)} L` : ""}
               {bac.capacite && bac.hauteur ? " · " : ""}
-              {bac.hauteur ? `hauteur ${Number(bac.hauteur)} cm` : ""}
+              {bac.hauteur ? t("bacCard.hauteur", { n: Number(bac.hauteur) }) : ""}
             </p>
           )}
         </div>
@@ -47,7 +50,7 @@ export default function BacCard({ bac, interventionActive }: BacCardProps) {
       {interventionActive && (
         <div className="mt-3">
           <StatutBadge ton={tonStatut(interventionActive)}>
-            Intervention {libelleStatut(interventionActive).toLowerCase()}
+            {t("bacCard.intervention", { statut: libelleStatut(interventionActive).toLowerCase() })}
           </StatutBadge>
         </div>
       )}
@@ -59,13 +62,13 @@ export default function BacCard({ bac, interventionActive }: BacCardProps) {
             className="col-span-2"
             onClick={() => navigate(`/superviseur/interventions?ouvrir=1&bac=${bac.id_bac}`)}
           >
-            Créer une intervention
+            {t("bacCard.creerIntervention")}
           </PrimaryButton>
         ) : null}
         <SecondaryButton icone={MapIcon} onClick={() => navigate("/superviseur/localisation")} disabled={!aPosition}>
-          Localiser
+          {t("bacCard.localiser")}
         </SecondaryButton>
-        <SecondaryButton onClick={() => navigate("/superviseur/historiques")}>Historique</SecondaryButton>
+        <SecondaryButton onClick={() => navigate("/superviseur/historiques")}>{t("bacCard.historique")}</SecondaryButton>
       </div>
     </Card>
   );

@@ -1,6 +1,8 @@
 import AppShell from "./AppShell";
-import { superviseurShell } from "./shellConfigs";
+import { buildSuperviseurShell } from "./shellConfigs";
+import { useTranslation } from "../i18n";
 
 export default function SuperviseurLayout() {
-  return <AppShell config={superviseurShell} />;
+  const { t } = useTranslation();
+  return <AppShell config={buildSuperviseurShell(t)} />;
 }

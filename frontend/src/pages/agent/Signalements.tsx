@@ -14,19 +14,22 @@ import {
   RefPill,
   SectionTitle,
   StatutBadge,
-  dateRelative,
+  useDateRelative,
 } from "../../components/ui/kit";
 import FiltreDates from "../../components/ui/FiltreDates";
 import { useTempsReel } from "../../hooks/useTempsReel";
 import { creerIncidentAgent, listerIncidentsAgent, type IncidentAgent } from "../../services/incidentService";
 import { listerMissionsAgent, type AgentMission } from "../../services/agentService";
 import { dansPlage, plageVide, type PlageDates } from "../../utils/plageDates";
+import { useTranslation } from "../../i18n";
 
 type Filtre = "TOUS" | "OUVERT" | "TRAITE";
 
 const MAX_DESCRIPTION = 2000;
 
 const Signalements = () => {
+  const { t } = useTranslation();
+  const dateRelative = useDateRelative();
   const [searchParams] = useSearchParams();
   const [missions, setMissions] = useState<AgentMission[]>([]);
   const [incidents, setIncidents] = useState<IncidentAgent[]>([]);
@@ -48,11 +51,11 @@ const Signalements = () => {
       setMissions(reponseMissions.missions);
       setIncidents(reponseIncidents);
     } catch (err: any) {
-      setError(err?.response?.data?.message || "Impossible de charger les signalements.");
+      setError(err?.response?.data?.message || t("agentSignalements.erreurChargement"));
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     charger();
@@ -75,12 +78,14 @@ const Signalements = () => {
 
   const libelleMission = (id: number) => {
     const mission = missions.find((m) => m.idMission === id);
-    return mission?.intervention?.bac?.reference ? `Bac ${mission.intervention.bac.reference}` : `Mission n°${id}`;
+    return mission?.intervention?.bac?.reference
+      ? t("agentSignalements.bacLabel", { ref: mission.intervention.bac.reference })
+      : t("missionCard.missionNumero", { n: id });
   };
 
   const localiser = () => {
     if (!("geolocation" in navigator) || !window.isSecureContext) {
-      toast.warning("La localisation n'est pas disponible sur cette connexion.");
+      toast.warning(t("adminBacs.localisationIndisponible"));
       return;
     }
 
@@ -89,11 +94,11 @@ const Signalements = () => {
       (resultat) => {
         setPosition({ lat: resultat.coords.latitude, lng: resultat.coords.longitude });
         setRecherchePosition(false);
-        toast.success("Position ajoutée au signalement.", { autoClose: 2000 });
+        toast.success(t("agentSignalements.positionAjoutee"), { autoClose: 2000 });
       },
       () => {
         setRecherchePosition(false);
-        toast.error("Impossible d'obtenir votre position. Vérifiez l'autorisation de localisation.");
+        toast.error(t("adminBacs.erreurPosition"));
       },
       { enableHighAccuracy: true, timeout: 15000 }
     );
@@ -103,8 +108,8 @@ const Signalements = () => {
     event.preventDefault();
     setErreurForm("");
 
-    if (!idMission) return setErreurForm("Choisissez la mission concernée.");
-    if (description.trim().length < 5) return setErreurForm("Décrivez le problème en quelques mots (5 caractères minimum).");
+    if (!idMission) return setErreurForm(t("agentSignalements.choisirMission"));
+    if (description.trim().length < 5) return setErreurForm(t("agentSignalements.decrireProbleme"));
 
     try {
       setEnvoi(true);
@@ -113,12 +118,12 @@ const Signalements = () => {
         latitude: position?.lat ?? null,
         longitude: position?.lng ?? null,
       });
-      toast.success("Problème signalé. Votre superviseur a été prévenu.");
+      toast.success(t("agentSignalements.problemeSignale"));
       setDescription("");
       setPosition(null);
       await charger();
     } catch (err: any) {
-      setErreurForm(err?.response?.data?.message || "Impossible d'envoyer le signalement.");
+      setErreurForm(err?.response?.data?.message || t("agentSignalements.impossibleEnvoyer"));
     } finally {
       setEnvoi(false);
     }
@@ -133,26 +138,26 @@ const Signalements = () => {
     [incidents, filtre, periode]
   );
 
-  if (loading) return <Chargement texte="Chargement des signalements..." />;
+  if (loading) return <Chargement texte={t("agentSignalements.chargement")} />;
 
   const champ =
     "w-full rounded-xl border border-slate-200 bg-white px-3 text-sm outline-none transition focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10";
 
   return (
     <div className="space-y-5">
-      <PageHeader titre="Signaler un problème" description="Prévenez votre superviseur d'une difficulté rencontrée pendant une mission." />
+      <PageHeader titre={t("agentSignalements.titre")} description={t("agentSignalements.description")} />
 
       {error && <BandeauErreur message={error} onReessayer={charger} />}
 
       <div className="grid grid-cols-1 gap-5 xl:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)]">
         <Card className="p-5 sm:p-6">
-          <SectionTitle icone={AlertTriangle} titre="Nouveau signalement" sousTitre="Transmis immédiatement au superviseur" />
+          <SectionTitle icone={AlertTriangle} titre={t("agentSignalements.nouveauSignalement")} sousTitre={t("agentSignalements.transmisImmediatement")} />
 
           {missionsActives.length === 0 ? (
             <EtatVide
               icone={CheckCircle2}
-              titre="Aucune mission en cours"
-              description="Un problème se signale sur une mission qui vous est affectée."
+              titre={t("agentSignalements.aucuneMissionEnCours")}
+              description={t("agentSignalements.unProblemeSeSignale")}
             />
           ) : (
             <form onSubmit={envoyer} className="mt-5 space-y-4" noValidate>
@@ -161,9 +166,9 @@ const Signalements = () => {
               )}
 
               <label className="block text-sm font-semibold text-slate-700">
-                Mission concernée
+                {t("agentSignalements.missionConcernee")}
                 <select className={`${champ} mt-1.5 h-11`} value={idMission} onChange={(e) => setIdMission(e.target.value)}>
-                  <option value="">Sélectionner une mission</option>
+                  <option value="">{t("agentSignalements.selectionnerUneMission")}</option>
                   {missionsActives.map((m) => (
                     <option key={m.idMission} value={m.idMission}>
                       {libelleMission(m.idMission)}
@@ -173,12 +178,12 @@ const Signalements = () => {
               </label>
 
               <label className="block text-sm font-semibold text-slate-700">
-                Description du problème
+                {t("agentSignalements.descriptionProbleme")}
                 <textarea
                   rows={4}
                   maxLength={MAX_DESCRIPTION}
                   className={`${champ} mt-1.5 py-2.5`}
-                  placeholder="Ex. : accès bloqué par un véhicule, bac endommagé…"
+                  placeholder={t("agentSignalements.descriptionPlaceholder")}
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                 />
@@ -195,7 +200,7 @@ const Signalements = () => {
                   className="inline-flex items-center gap-2 rounded-xl bg-indigo-50 px-3.5 py-2 text-xs font-bold text-indigo-700 transition hover:bg-indigo-100 active:scale-95 disabled:opacity-60"
                 >
                   <LocateFixed size={15} className={recherchePosition ? "animate-pulse" : ""} />
-                  {recherchePosition ? "Localisation…" : "Ajouter ma position"}
+                  {recherchePosition ? t("adminBacs.localisationEnCours") : t("agentSignalements.ajouterMaPosition")}
                 </button>
                 {position ? (
                   <span className="flex items-center gap-1.5 text-xs font-medium text-emerald-700">
@@ -203,33 +208,33 @@ const Signalements = () => {
                     {position.lat.toFixed(5)}, {position.lng.toFixed(5)}
                   </span>
                 ) : (
-                  <span className="text-xs text-slate-400">Facultatif</span>
+                  <span className="text-xs text-slate-400">{t("agentSignalements.facultatif")}</span>
                 )}
               </div>
 
               <PrimaryButton type="submit" icone={Send} chargement={envoi} pleineLargeur>
-                Envoyer le signalement
+                {t("agentSignalements.envoyerLeSignalement")}
               </PrimaryButton>
             </form>
           )}
         </Card>
 
         <section className="space-y-3">
-          <SectionTitle icone={Clock} titre="Mes signalements" sousTitre={`${incidents.length} au total`} />
+          <SectionTitle icone={Clock} titre={t("agentSignalements.mesSignalements")} sousTitre={t("agentSignalements.auTotal", { n: incidents.length })} />
           <FilterChips
             valeur={filtre}
             onChange={setFiltre}
             options={[
-              { valeur: "TOUS", libelle: "Tous", compteur: incidents.length },
-              { valeur: "OUVERT", libelle: "Ouverts", compteur: incidents.filter((i) => i.statut === "OUVERT").length, couleur: "#f97316" },
-              { valeur: "TRAITE", libelle: "Traités", compteur: incidents.filter((i) => i.statut === "TRAITE").length, couleur: "#16a34a" },
+              { valeur: "TOUS", libelle: t("adminUtilisateurs.filtreTous"), compteur: incidents.length },
+              { valeur: "OUVERT", libelle: t("agentSignalements.filtreOuverts"), compteur: incidents.filter((i) => i.statut === "OUVERT").length, couleur: "#f97316" },
+              { valeur: "TRAITE", libelle: t("agentSignalements.filtreTraites"), compteur: incidents.filter((i) => i.statut === "TRAITE").length, couleur: "#16a34a" },
             ]}
           />
           <FiltreDates valeur={periode} onChange={setPeriode} />
 
           {visibles.length === 0 ? (
             <Card>
-              <EtatVide icone={AlertTriangle} titre="Aucun signalement" description="Vos signalements apparaîtront ici." />
+              <EtatVide icone={AlertTriangle} titre={t("agentSignalements.aucunSignalement")} description={t("agentSignalements.signalementsApparaitront")} />
             </Card>
           ) : (
             visibles.map((incident) => (
@@ -237,7 +242,7 @@ const Signalements = () => {
                 <div className="flex items-center justify-between gap-2">
                   <RefPill>{libelleMission(incident.id_mission)}</RefPill>
                   <StatutBadge ton={incident.statut === "TRAITE" ? "vert" : "orange"}>
-                    {incident.statut === "TRAITE" ? "Traité" : "Ouvert"}
+                    {incident.statut === "TRAITE" ? t("commun.statutTraite") : t("commun.statutOuvert")}
                   </StatutBadge>
                 </div>
                 <p className="mt-2 text-sm text-slate-700">{incident.description}</p>

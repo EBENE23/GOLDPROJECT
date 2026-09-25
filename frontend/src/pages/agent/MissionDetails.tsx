@@ -23,8 +23,9 @@ import {
 } from "../../services/agentService";
 import { obtenirCategorieNiveauBac, obtenirClasseFondNiveauBac } from "../../utils/bacLevel";
 import { useTempsReel } from "../../hooks/useTempsReel";
-import { Chargement } from "../../components/ui/kit";
+import { Chargement, useLibelleStatut } from "../../components/ui/kit";
 import { ConfirmDialog } from "../../components/ui/Modal";
+import { LOCALE_INTL, useTranslation } from "../../i18n";
 
 
 const MissionStartIcon = ({
@@ -124,31 +125,9 @@ const obtenirClasseStatut = (
   }
 };
 
-const obtenirLibelleStatut = (
-  statut: AgentMission["statut"]
-) => {
-  switch (statut) {
-    case "AFFECTEE":
-      return "Affectée";
-
-    case "EN_COURS":
-      return "En cours";
-
-    case "SUSPENDUE":
-      return "Suspendue";
-
-    case "TERMINEE":
-      return "Terminée";
-
-    case "ANNULEE":
-      return "Annulée";
-
-    default:
-      return statut;
-  }
-};
-
 const MissionDetails = () => {
+  const { t, langue } = useTranslation();
+  const libelleStatut = useLibelleStatut();
   const navigate = useNavigate();
 
   const { id } = useParams<{
@@ -175,7 +154,7 @@ const MissionDetails = () => {
 
   const chargerMission = useCallback(async (silencieux = false) => {
     if (!id) {
-      setError("Identifiant de mission invalide.");
+      setError(t("agentMissionDetails.identifiantInvalide"));
       setLoading(false);
       return;
     }
@@ -203,12 +182,12 @@ const MissionDetails = () => {
 
       setError(
         err?.response?.data?.message ||
-          "Impossible de charger les détails de la mission."
+          t("agentMissionDetails.erreurChargement")
       );
     } finally {
       setLoading(false);
     }
-  }, [id]);
+  }, [id, t]);
 
   // Le niveau du bac change quand le capteur transmet une mesure : mise à jour en direct.
   useTempsReel(() => chargerMission(true));
@@ -262,10 +241,10 @@ const MissionDetails = () => {
 
       toast.success(
         {
-          demarrer: "Mission démarrée. Bonne route !",
-          suspendre: "Mission suspendue.",
-          reprendre: "Mission reprise.",
-          terminer: "Mission terminée. Bravo !",
+          demarrer: t("agentDashboard.missionDemarreeBonneRoute"),
+          suspendre: t("agentMissionDetails.missionSuspendueMsg"),
+          reprendre: t("missionCard.missionReprise"),
+          terminer: t("agentMissionDetails.missionTermineeMsg"),
         }[action]
       );
     } catch (err: any) {
@@ -273,7 +252,7 @@ const MissionDetails = () => {
 
       const message =
         err?.response?.data?.message ||
-        "Impossible de mettre à jour la mission.";
+        t("agentMissionDetails.impossibleMAJ");
 
       setError(message);
       toast.error(message);
@@ -297,7 +276,7 @@ const MissionDetails = () => {
   };
 
   if (loading) {
-    return <Chargement texte="Chargement de la mission..." />;
+    return <Chargement texte={t("agentMissionDetails.chargement")} />;
   }
 
   if (error && !mission) {
@@ -312,7 +291,7 @@ const MissionDetails = () => {
         >
           <ArrowLeft size={17} />
 
-          Retour aux missions
+          {t("agentMissionLocalisation.retourAuxMissions")}
         </button>
 
         <div className="rounded-2xl border border-red-200 bg-red-50 p-6 text-sm text-red-700">
@@ -351,10 +330,10 @@ const MissionDetails = () => {
     obtenirCategorieNiveauBac(bac.niveau_remplissage) === "NORMAL";
 
   const dialogues = {
-    demarrer: { titre: "Démarrer la mission ?", texte: "Votre superviseur pourra suivre votre trajet.", libelle: "Démarrer" },
-    suspendre: { titre: "Suspendre la mission ?", texte: "Vous pourrez la reprendre plus tard.", libelle: "Suspendre" },
-    reprendre: { titre: "Reprendre la mission ?", texte: "La mission repasse en cours.", libelle: "Reprendre" },
-    terminer: { titre: "Terminer la mission ?", texte: "Le bac a été vidé et la collecte est terminée.", libelle: "Terminer" },
+    demarrer: { titre: t("agentMissionDetails.demarrerTitre"), texte: t("agentMissionDetails.demarrerTexte"), libelle: t("agentMissionDetails.demarrerLibelle") },
+    suspendre: { titre: t("agentMissionDetails.suspendreTitre"), texte: t("agentMissionDetails.suspendreTexte"), libelle: t("agentMissionDetails.suspendreLibelle") },
+    reprendre: { titre: t("agentMissionDetails.reprendreTitre"), texte: t("agentMissionDetails.reprendreTexte"), libelle: t("missionCard.reprendre") },
+    terminer: { titre: t("agentMissionDetails.terminerTitre"), texte: t("agentMissionDetails.terminerTexte"), libelle: t("agentMissionDetails.terminerLibelle") },
   } as const;
   const dialogue = actionEnAttente ? dialogues[actionEnAttente] : null;
 
@@ -385,15 +364,15 @@ const MissionDetails = () => {
           >
             <ArrowLeft size={17} />
 
-            Retour aux missions
+            {t("agentMissionLocalisation.retourAuxMissions")}
           </button>
 
           <h1 className="text-2xl font-bold text-gray-900">
-            Mission #{mission.idMission}
+            {t("agentMissionDetails.titreMissionNum", { n: mission.idMission })}
           </h1>
 
           <p className="mt-1 text-sm text-gray-500">
-            Détails et suivi de votre mission de collecte.
+            {t("agentMissionDetails.detailsEtSuivi")}
           </p>
         </div>
 
@@ -415,7 +394,7 @@ const MissionDetails = () => {
             }
           />
 
-          Actualiser
+          {t("adminDemandes.actualiser")}
         </button>
       </div>
 
@@ -437,7 +416,7 @@ const MissionDetails = () => {
 
             <div>
               <p className="text-sm text-gray-500">
-                Mission
+                {t("agentMissionDetails.missionSingulier")}
               </p>
 
               <h2 className="text-xl font-bold text-gray-900">
@@ -451,7 +430,7 @@ const MissionDetails = () => {
               mission.statut
             )}`}
           >
-            {obtenirLibelleStatut(
+            {libelleStatut(
               mission.statut
             )}
           </span>
@@ -460,43 +439,43 @@ const MissionDetails = () => {
         <div className="mt-6 grid grid-cols-1 gap-4 md:grid-cols-3">
           <div className="rounded-xl bg-gray-50 p-4">
             <p className="text-xs text-gray-500">
-              Date d'affectation
+              {t("agentMissionDetails.dateAffectation")}
             </p>
 
             <p className="mt-2 font-semibold text-gray-800">
               {mission.dateAffectation
                 ? new Date(
                     mission.dateAffectation
-                  ).toLocaleString("fr-FR")
-                : "Non renseignée"}
+                  ).toLocaleString(LOCALE_INTL[langue])
+                : t("agentMissionDetails.nonRenseignee")}
             </p>
           </div>
 
           <div className="rounded-xl bg-gray-50 p-4">
             <p className="text-xs text-gray-500">
-              Début de mission
+              {t("agentMissionDetails.debutDeMission")}
             </p>
 
             <p className="mt-2 font-semibold text-gray-800">
               {mission.dateDebut
                 ? new Date(
                     mission.dateDebut
-                  ).toLocaleString("fr-FR")
-                : "Non démarrée"}
+                  ).toLocaleString(LOCALE_INTL[langue])
+                : t("agentMissionDetails.nonDemarree")}
             </p>
           </div>
 
           <div className="rounded-xl bg-gray-50 p-4">
             <p className="text-xs text-gray-500">
-              Fin de mission
+              {t("agentMissionDetails.finDeMission")}
             </p>
 
             <p className="mt-2 font-semibold text-gray-800">
               {mission.dateFin
                 ? new Date(
                     mission.dateFin
-                  ).toLocaleString("fr-FR")
-                : "Non terminée"}
+                  ).toLocaleString(LOCALE_INTL[langue])
+                : t("agentMissionDetails.nonTerminee")}
             </p>
           </div>
         </div>
@@ -514,11 +493,11 @@ const MissionDetails = () => {
 
             <div>
               <h2 className="font-semibold text-gray-900">
-                Point de collecte
+                {t("agentDashboard.pointDeCollecte")}
               </h2>
 
               <p className="text-sm text-gray-500">
-                Informations sur le bac concerné.
+                {t("agentMissionDetails.infosBacConcerne")}
               </p>
             </div>
           </div>
@@ -526,29 +505,29 @@ const MissionDetails = () => {
           <div className="mt-6 space-y-4">
             <div>
               <p className="text-xs text-gray-500">
-                Référence du bac
+                {t("agentMissionDetails.referenceDuBac")}
               </p>
 
               <p className="mt-1 font-semibold text-gray-900">
                 {bac?.reference ||
-                  "Non renseignée"}
+                  t("agentMissionDetails.nonRenseignee")}
               </p>
             </div>
 
             <div>
               <p className="text-xs text-gray-500">
-                Zone
+                {t("adminBacs.zone")}
               </p>
 
               <p className="mt-1 font-semibold text-gray-900">
                 {bac?.zone?.nomZone ||
-                  "Zone non renseignée"}
+                  t("agentMissionLocalisation.zoneNonRenseignee")}
               </p>
             </div>
 
             <div>
               <p className="text-xs text-gray-500">
-                Niveau de remplissage
+                {t("adminBacs.niveauDeRemplissage")}
               </p>
 
               <div className="mt-2">
@@ -561,9 +540,7 @@ const MissionDetails = () => {
                   </span>
 
                   <span className="text-xs text-gray-500">
-                    État :{" "}
-                    {bac?.etat ||
-                      "Inconnu"}
+                    {t("agentMissionDetails.etatLabel", { etat: bac?.etat || t("agentMissionDetails.inconnu") })}
                   </span>
                 </div>
 
@@ -582,7 +559,7 @@ const MissionDetails = () => {
 
             <div>
               <p className="text-xs text-gray-500">
-                Coordonnées GPS
+                {t("agentMissionDetails.coordonneesGps")}
               </p>
 
               <p className="mt-1 font-medium text-gray-800">
@@ -595,7 +572,7 @@ const MissionDetails = () => {
                 bac?.longitude !==
                     undefined
                   ? `${bac.latitude}, ${bac.longitude}`
-                  : "Position indisponible"}
+                  : t("agentMissionDetails.positionIndisponible")}
               </p>
             </div>
 
@@ -610,7 +587,7 @@ const MissionDetails = () => {
             >
               <MapPin size={18} />
 
-              Voir la localisation
+              {t("agentMissionDetails.voirLaLocalisation")}
             </button>
           </div>
         </div>
@@ -626,11 +603,11 @@ const MissionDetails = () => {
 
             <div>
               <h2 className="font-semibold text-gray-900">
-                Intervention associée
+                {t("agentMissionDetails.interventionAssociee")}
               </h2>
 
               <p className="text-sm text-gray-500">
-                Informations transmises lors de l'affectation.
+                {t("agentMissionDetails.infosTransmises")}
               </p>
             </div>
           </div>
@@ -638,44 +615,49 @@ const MissionDetails = () => {
           <div className="mt-6 space-y-4">
             <div>
               <p className="text-xs text-gray-500">
-                Intervention
+                {t("agentMissionDetails.interventionSingulier")}
               </p>
 
               <p className="mt-1 font-semibold text-gray-900">
                 #
                 {intervention
                   ?.idIntervention ||
-                  "Non renseignée"}
+                  t("agentMissionDetails.nonRenseignee")}
               </p>
             </div>
 
             <div>
               <p className="text-xs text-gray-500">
-                Priorité
+                {t("adminInterventions.colPriorite")}
               </p>
 
               <p className="mt-1 font-semibold text-gray-900">
-                {intervention
-                  ?.priorite ||
-                  "NORMALE"}
+                {
+                  {
+                    NORMALE: t("commun.prioriteNormale"),
+                    MOYENNE: t("commun.prioriteMoyenne"),
+                    HAUTE: t("commun.prioriteHaute"),
+                    CRITIQUE: t("commun.prioriteCritique"),
+                  }[intervention?.priorite ?? "NORMALE"]
+                }
               </p>
             </div>
 
             <div>
               <p className="text-xs text-gray-500">
-                Motif
+                {t("adminInterventions.champMotif")}
               </p>
 
               <p className="mt-1 text-sm leading-6 text-gray-700">
                 {intervention
                   ?.motif ||
-                  "Aucun motif renseigné."}
+                  t("agentMissionDetails.aucunMotifRenseigne")}
               </p>
             </div>
 
             <div>
               <p className="text-xs text-gray-500">
-                Statut de l'intervention
+                {t("agentMissionDetails.statutIntervention")}
               </p>
 
               <p className="mt-1 font-semibold text-gray-900">
@@ -686,15 +668,16 @@ const MissionDetails = () => {
                       color="#4249a9"
                     />
                   )}
-                  {intervention?.statut ||
-                    "Non renseigné"}
+                  {intervention?.statut
+                    ? libelleStatut(intervention.statut)
+                    : t("agentMissionDetails.nonRenseigne")}
                 </span>
               </p>
             </div>
 
             <div>
               <p className="text-xs text-gray-500">
-                Superviseur
+                {t("shell.roleSuperviseur")}
               </p>
 
               <div className="mt-1 flex items-center gap-2">
@@ -706,7 +689,7 @@ const MissionDetails = () => {
                 <span className="font-medium text-gray-800">
                   {supervisor
                     ? `${supervisor.prenom} ${supervisor.nom}`
-                    : "Non renseigné"}
+                    : t("agentMissionDetails.nonRenseigne")}
                 </span>
               </div>
             </div>
@@ -725,11 +708,11 @@ const MissionDetails = () => {
 
           <div>
             <h2 className="font-semibold text-gray-900">
-              Actions sur la mission
+              {t("agentMissionDetails.actionsSurMission")}
             </h2>
 
             <p className="text-sm text-gray-500">
-              Faites évoluer le statut selon l'avancement réel de la collecte.
+              {t("agentMissionDetails.faitesEvoluer")}
             </p>
           </div>
         </div>
@@ -743,7 +726,7 @@ const MissionDetails = () => {
               htmlFor="mission-observation"
               className="mb-2 block text-xs font-semibold text-gray-600"
             >
-              Observation
+              {t("agentMissionDetails.observationLabel")}
             </label>
 
             <textarea
@@ -755,7 +738,7 @@ const MissionDetails = () => {
                 )
               }
               rows={3}
-              placeholder="Ajouter une observation sur la mission..."
+              placeholder={t("agentMissionDetails.ajouterObservation")}
               disabled={actionLoading}
               className="w-full resize-none rounded-xl border border-gray-200 bg-gray-50 px-3 py-2.5 text-sm text-gray-700 outline-none transition focus:border-green-500 focus:bg-white focus:ring-2 focus:ring-green-100 disabled:opacity-50"
             />
@@ -784,7 +767,7 @@ const MissionDetails = () => {
                 <MissionStartIcon size={18} />
               )}
 
-              Démarrer la mission
+              {t("agentDashboard.demarrerLaMission")}
             </button>
           )}
 
@@ -792,10 +775,7 @@ const MissionDetails = () => {
             (mission.statut === "EN_COURS" ||
               mission.statut === "SUSPENDUE") && (
               <p className="w-full rounded-xl border border-orange-200 bg-orange-50 px-4 py-3 text-sm text-orange-800">
-                Le bac {bac?.reference} est encore rempli à{" "}
-                <strong>{Math.round(niveauRemplissage)} %</strong>. Videz-le : la
-                mission pourra être terminée dès que le capteur indiquera que le bac
-                est revenu à l'état normal (mise à jour automatique).
+                {t("agentMissionDetails.bacEncoreRempli", { ref: bac?.reference ?? "", n: Math.round(niveauRemplissage) })}
               </p>
             )}
 
@@ -821,7 +801,7 @@ const MissionDetails = () => {
                   <PauseCircle size={18} />
                 )}
 
-                Suspendre
+                {t("agentMissionDetails.suspendreLibelle")}
               </button>
 
               <button
@@ -830,7 +810,7 @@ const MissionDetails = () => {
                 title={
                   bacVide
                     ? undefined
-                    : "Le bac n'est pas encore revenu à l'état normal."
+                    : t("agentMissionDetails.bacPasEncoreNormalTitle")
                 }
                 onClick={() =>
                   confirmerAction(
@@ -848,7 +828,7 @@ const MissionDetails = () => {
                   <MissionCompleteIcon size={18} />
                 )}
 
-                Terminer la mission
+                {t("agentMissionDetails.terminerLaMissionBtn")}
               </button>
             </>
           )}
@@ -875,7 +855,7 @@ const MissionDetails = () => {
                   <PlayCircle size={18} />
                 )}
 
-                Reprendre
+                {t("missionCard.reprendre")}
               </button>
 
               <button
@@ -884,7 +864,7 @@ const MissionDetails = () => {
                 title={
                   bacVide
                     ? undefined
-                    : "Le bac n'est pas encore revenu à l'état normal."
+                    : t("agentMissionDetails.bacPasEncoreNormalTitle")
                 }
                 onClick={() =>
                   confirmerAction(
@@ -902,7 +882,7 @@ const MissionDetails = () => {
                   <MissionCompleteIcon size={18} />
                 )}
 
-                Terminer la mission
+                {t("agentMissionDetails.terminerLaMissionBtn")}
               </button>
             </>
           )}
@@ -912,7 +892,7 @@ const MissionDetails = () => {
       {mission.observation && (
         <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
           <h2 className="font-semibold text-gray-900">
-            Dernière observation
+            {t("agentMissionDetails.derniereObservation")}
           </h2>
 
           <p className="mt-3 text-sm leading-6 text-gray-600">

@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import Avatar from "../../components/Avatar";
 import api from "../../services/api";
+import { useTranslation } from "../../i18n";
 
 interface Zone {
   idZone: number;
@@ -61,6 +62,7 @@ const getErrorMessage = (error: unknown, fallback: string) => {
 };
 
 export default function Zones() {
+  const { t } = useTranslation();
   const [zones, setZones] = useState<Zone[]>([]);
   const [utilisateurs, setUtilisateurs] =
     useState<Utilisateur[]>([]);
@@ -130,7 +132,7 @@ export default function Zones() {
       );
     } catch (err: unknown) {
       setError(
-        getErrorMessage(err, "Impossible de charger les zones.")
+        getErrorMessage(err, t("adminZones.erreurChargement"))
       );
     } finally {
       setLoading(false);
@@ -211,7 +213,7 @@ export default function Zones() {
 
     if (!superviseurSelectionne) {
       setAffectationMessage(
-        "Veuillez sélectionner un superviseur."
+        t("adminZones.veuillezSelectionnerSuperviseur")
       );
       return;
     }
@@ -231,7 +233,7 @@ export default function Zones() {
       );
 
       setAffectationMessage(
-        "Superviseur affecté avec succès."
+        t("adminZones.superviseurAffecteSucces")
       );
 
       await chargerDonnees(true);
@@ -249,7 +251,7 @@ export default function Zones() {
       );
     } catch (err: unknown) {
       setAffectationMessage(
-        getErrorMessage(err, "Impossible d'affecter le superviseur.")
+        getErrorMessage(err, t("adminZones.impossibleAffecter"))
       );
     } finally {
       setAffectationLoading(false);
@@ -268,7 +270,7 @@ export default function Zones() {
       );
 
       setAffectationMessage(
-        "Superviseur retiré de la zone."
+        t("adminZones.superviseurRetireZone")
       );
 
       await chargerDonnees(true);
@@ -288,7 +290,7 @@ export default function Zones() {
       setSuperviseurSelectionne("");
     } catch (err: unknown) {
       setAffectationMessage(
-        getErrorMessage(err, "Impossible de retirer le superviseur.")
+        getErrorMessage(err, t("adminZones.impossibleRetirer"))
       );
     } finally {
       setAffectationLoading(false);
@@ -301,16 +303,15 @@ export default function Zones() {
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <p className="text-sm font-medium text-emerald-600">
-              Administration
+              {t("adminDashboard.administration")}
             </p>
 
             <h1 className="mt-1 text-xl font-bold text-slate-900 sm:text-2xl">
-              Gestion des zones
+              {t("adminZones.titre")}
             </h1>
 
             <p className="mt-1 text-sm text-slate-500">
-              Consultez les zones et affectez leur
-              superviseur.
+              {t("adminZones.description")}
             </p>
           </div>
 
@@ -331,7 +332,7 @@ export default function Zones() {
               }
             />
 
-            Actualiser
+            {t("adminDemandes.actualiser")}
           </button>
         </div>
 
@@ -344,7 +345,7 @@ export default function Zones() {
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
           <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
             <p className="text-xs text-slate-500">
-              Zones
+              {t("shell.navZones")}
             </p>
 
             <p className="mt-2 text-2xl font-bold text-slate-900">
@@ -354,7 +355,7 @@ export default function Zones() {
 
           <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-4">
             <p className="text-xs text-emerald-700">
-              Superviseurs actifs
+              {t("adminZones.kpiSuperviseursActifs")}
             </p>
 
             <p className="mt-2 text-2xl font-bold text-emerald-700">
@@ -364,7 +365,7 @@ export default function Zones() {
 
           <div className="col-span-2 rounded-2xl border border-blue-200 bg-blue-50 p-4 sm:col-span-1">
             <p className="text-xs text-blue-700">
-              Bacs
+              {t("shell.navBacs")}
             </p>
 
             <p className="mt-2 text-2xl font-bold text-blue-700">
@@ -387,7 +388,7 @@ export default function Zones() {
                   event.target.value
                 )
               }
-              placeholder="Rechercher une zone..."
+              placeholder={t("adminZones.rechercherPlaceholder")}
               className="w-full rounded-xl border border-slate-200 bg-slate-50 py-2.5 pl-10 pr-4 text-sm outline-none transition focus:border-emerald-500 focus:bg-white focus:ring-2 focus:ring-emerald-100"
             />
           </div>
@@ -412,12 +413,11 @@ export default function Zones() {
             />
 
             <h2 className="mt-4 font-semibold text-slate-900">
-              Aucune zone trouvée
+              {t("adminZones.aucuneZoneTrouvee")}
             </h2>
 
             <p className="mt-1 text-sm text-slate-500">
-              Aucune zone ne correspond à votre
-              recherche.
+              {t("adminZones.aucuneZoneRecherche")}
             </p>
           </div>
         ) : (
@@ -450,7 +450,7 @@ export default function Zones() {
                         </h2>
 
                         <p className="text-xs text-slate-400">
-                          Zone #{zone.idZone}
+                          {t("adminZones.zoneNumero", { n: zone.idZone })}
                         </p>
                       </div>
                     </div>
@@ -470,14 +470,14 @@ export default function Zones() {
 
                   <p className="mt-4 min-h-10 text-sm text-slate-500">
                     {zone.description ||
-                      "Aucune description disponible."}
+                      t("adminZones.aucuneDescription")}
                   </p>
 
                   <div className="mt-5 space-y-3">
                     <div className="rounded-xl bg-slate-50 p-3">
                       <div className="flex items-center gap-2 text-xs font-medium text-slate-400">
                         <UserRound size={14} />
-                        Superviseur
+                        {t("shell.roleSuperviseur")}
                       </div>
 
                       {superviseur ? (
@@ -490,7 +490,7 @@ export default function Zones() {
                         </div>
                       ) : (
                         <p className="mt-1 text-sm font-medium text-amber-600">
-                          Aucun superviseur
+                          {t("adminZones.aucunSuperviseur")}
                         </p>
                       )}
                     </div>
@@ -498,14 +498,11 @@ export default function Zones() {
                     <div className="rounded-xl bg-slate-50 p-3">
                       <div className="flex items-center gap-2 text-xs font-medium text-slate-400">
                         <Trash2 size={14} />
-                        Bacs
+                        {t("shell.navBacs")}
                       </div>
 
                       <p className="mt-1 text-sm font-semibold text-slate-800">
-                        {bacsZone.length} bac
-                        {bacsZone.length > 1
-                          ? "s"
-                          : ""}
+                        {t(bacsZone.length > 1 ? "adminZones.bacPluriel" : "adminZones.bacSingulier", { n: bacsZone.length })}
                       </p>
                     </div>
                   </div>
@@ -518,7 +515,7 @@ export default function Zones() {
                     className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
                   >
                     <Eye size={17} />
-                    Consulter
+                    {t("adminDemandes.consulter")}
                   </button>
                 </article>
               );
@@ -533,7 +530,7 @@ export default function Zones() {
             <div className="sticky top-0 z-10 flex items-center justify-between border-b border-slate-100 bg-white p-5">
               <div>
                 <p className="text-xs font-medium text-emerald-600">
-                  Gestion de la zone
+                  {t("adminZones.gestionZone")}
                 </p>
 
                 <h2 className="mt-1 text-xl font-bold text-slate-900">
@@ -561,13 +558,13 @@ export default function Zones() {
                   />
 
                   <h3 className="font-semibold text-slate-900">
-                    Informations
+                    {t("adminZones.informations")}
                   </h3>
                 </div>
 
                 <p className="mt-3 text-sm text-slate-600">
                   {selectedZone.description ||
-                    "Aucune description disponible."}
+                    t("adminZones.aucuneDescription")}
                 </p>
               </div>
 
@@ -579,7 +576,7 @@ export default function Zones() {
                   />
 
                   <h3 className="font-semibold text-slate-900">
-                    Superviseur de la zone
+                    {t("adminZones.superviseurDeZone")}
                   </h3>
                 </div>
 
@@ -595,7 +592,7 @@ export default function Zones() {
                   className="mt-4 w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
                 >
                   <option value="">
-                    Aucun superviseur
+                    {t("adminZones.aucunSuperviseur")}
                   </option>
 
                   {superviseurs.map(
@@ -634,8 +631,8 @@ export default function Zones() {
                   >
                     <CheckCircle2 size={17} />
                     {affectationLoading
-                      ? "Enregistrement..."
-                      : "Affecter"}
+                      ? t("adminZones.enregistrement")
+                      : t("adminZones.affecter")}
                   </button>
 
                   {selectedZone.id_superviseur && (
@@ -648,7 +645,7 @@ export default function Zones() {
                       className="inline-flex items-center justify-center gap-2 rounded-xl border border-red-200 px-4 py-2.5 text-sm font-semibold text-red-600 transition hover:bg-red-50 disabled:opacity-50"
                     >
                       <X size={17} />
-                      Retirer
+                      {t("adminZones.retirer")}
                     </button>
                   )}
                 </div>
@@ -662,13 +659,12 @@ export default function Zones() {
                   />
 
                   <h3 className="font-semibold text-slate-900">
-                    Agents de collecte
+                    {t("adminDemandes.agentsDeCollecte")}
                   </h3>
                 </div>
 
                 <p className="mt-2 text-sm text-slate-500">
-                  Les agents seront gérés selon leur
-                  affectation à cette zone.
+                  {t("adminZones.agentsGeresSelonZone")}
                 </p>
               </div>
             </div>

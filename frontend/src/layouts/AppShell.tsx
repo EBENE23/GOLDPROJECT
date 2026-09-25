@@ -9,6 +9,7 @@ import api from "../services/api";
 import { logout, useAuthStore } from "../stores/authStore";
 import { ecouterTempsReel } from "../services/tempsReel";
 import { applyAppearance, loadUserPreferences } from "../utils/userPreferences";
+import { useTranslation } from "../i18n";
 
 export interface NavItem {
   label: string;
@@ -78,6 +79,7 @@ const estActif = (chemin: string, item: NavItem, base: string) =>
   item.path === base ? chemin === base : chemin === item.path || chemin.startsWith(`${item.path}/`);
 
 export default function AppShell({ config }: { config: ShellConfig }) {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { pathname } = useLocation();
   const utilisateur = useAuthStore((state) => state.utilisateur);
@@ -86,8 +88,8 @@ export default function AppShell({ config }: { config: ShellConfig }) {
   const compteur = useCompteurCloche(config.cloche.source, utilisateur?.idUtilisateur);
 
   useEffect(() => {
-    const { theme, accent } = loadUserPreferences(utilisateur);
-    applyAppearance(theme, accent);
+    const { theme, accent, tailleTexte } = loadUserPreferences(utilisateur);
+    applyAppearance(theme, accent, tailleTexte);
   }, [utilisateur]);
 
   // Récupère le profil à jour (photo comprise) : elle n'est pas conservée dans le navigateur.
@@ -152,10 +154,10 @@ export default function AppShell({ config }: { config: ShellConfig }) {
 
   // Prévient l'utilisateur (surtout l'agent sur le terrain) quand la connexion internet tombe.
   useEffect(() => {
-    const perdue = () => toast.warning("Connexion internet perdue. Les données ne se mettent plus à jour.", { toastId: "hors-ligne", autoClose: false });
+    const perdue = () => toast.warning(t("shell.connexionPerdue"), { toastId: "hors-ligne", autoClose: false });
     const retablie = () => {
       toast.dismiss("hors-ligne");
-      toast.success("Connexion rétablie.", { toastId: "en-ligne" });
+      toast.success(t("shell.connexionRetablie"), { toastId: "en-ligne" });
     };
 
     window.addEventListener("offline", perdue);
@@ -165,7 +167,7 @@ export default function AppShell({ config }: { config: ShellConfig }) {
       window.removeEventListener("offline", perdue);
       window.removeEventListener("online", retablie);
     };
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     // Ferme la feuille « Plus » à chaque changement de page.
@@ -199,14 +201,14 @@ export default function AppShell({ config }: { config: ShellConfig }) {
     <span
       className={`relative flex ${taille} shrink-0 items-center justify-center rounded-full bg-emerald-100 text-xs font-bold text-emerald-800`}
     >
-      {avatar ? <img src={avatar} alt="Photo de profil" className="h-full w-full rounded-full object-cover" /> : initiales}
+      {avatar ? <img src={avatar} alt={t("shell.photoProfilAlt")} className="h-full w-full rounded-full object-cover" /> : initiales}
     </span>
   );
 
   const Cloche = () => (
     <Link
       to={config.cloche.path}
-      aria-label="Notifications"
+      aria-label={t("shell.notificationsAria")}
       className="relative flex h-10 w-10 items-center justify-center rounded-xl text-slate-600 transition hover:bg-slate-100"
     >
       <Bell size={20} />
@@ -253,7 +255,7 @@ export default function AppShell({ config }: { config: ShellConfig }) {
         <div className="min-h-0 flex-1 space-y-6 overflow-y-auto px-3 py-5">
           <nav className="space-y-1">{config.navigation.map(lienLateral)}</nav>
           <div>
-            <p className="mb-2 px-3 text-[10px] font-semibold uppercase tracking-wider text-white/35">Compte</p>
+            <p className="mb-2 px-3 text-[10px] font-semibold uppercase tracking-wider text-white/35">{t("shell.compteSection")}</p>
             <nav className="space-y-1">{config.compte.map(lienLateral)}</nav>
           </div>
         </div>
@@ -272,7 +274,7 @@ export default function AppShell({ config }: { config: ShellConfig }) {
             className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-[13px] text-white/60 transition hover:bg-red-500/10 hover:text-red-300"
           >
             <LogOut size={17} />
-            Déconnexion
+            {t("shell.deconnexion")}
           </button>
         </div>
       </aside>
@@ -298,7 +300,7 @@ export default function AppShell({ config }: { config: ShellConfig }) {
 
             <div className="flex shrink-0 items-center gap-1.5">
               <Cloche />
-              <Link to={config.compte[0]?.path ?? config.basePath} aria-label="Mon profil" className="relative">
+              <Link to={config.compte[0]?.path ?? config.basePath} aria-label={t("shell.monProfilAria")} className="relative">
                 <Avatar />
                 <span className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-white bg-emerald-500" />
               </Link>
@@ -321,7 +323,7 @@ export default function AppShell({ config }: { config: ShellConfig }) {
 
       {/* ---------- Navigation inférieure (mobile / tablette) ---------- */}
       <nav
-        aria-label="Navigation principale"
+        aria-label={t("shell.navigationPrincipale")}
         className="fixed inset-x-0 bottom-0 z-40 border-t border-slate-100 bg-white/95 pb-[env(safe-area-inset-bottom)] backdrop-blur lg:hidden"
       >
         <ul className="mx-auto flex max-w-xl items-stretch justify-around">
@@ -352,7 +354,7 @@ export default function AppShell({ config }: { config: ShellConfig }) {
               }`}
             >
               <MoreHorizontal size={22} strokeWidth={plusActif ? 2.4 : 1.8} />
-              Plus
+              {t("shell.plus")}
             </button>
           </li>
         </ul>
@@ -394,7 +396,7 @@ export default function AppShell({ config }: { config: ShellConfig }) {
           className="mt-4 flex w-full items-center justify-center gap-2 rounded-2xl bg-red-50 px-4 py-3 text-sm font-bold text-red-600 transition active:scale-[0.98]"
         >
           <LogOut size={17} />
-          Déconnexion
+          {t("shell.deconnexion")}
         </button>
       </Modal>
     </div>

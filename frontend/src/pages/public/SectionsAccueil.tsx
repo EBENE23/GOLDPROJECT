@@ -19,6 +19,7 @@ import { Link } from "react-router-dom";
 import Badge from "../../components/ui/Badge";
 import ScrollReveal from "../../components/ScrollReveal";
 import SectionTitle from "../../components/SectionTitle";
+import { useTranslation } from "../../i18n";
 
 /** Slogan dont les mots apparaissent un par un au défilement (fondu + léger flou). */
 function SloganAnime({ texte, className = "" }: { texte: string; className?: string }) {
@@ -64,105 +65,52 @@ interface Role {
     couleur: string;
 }
 
-const roles: Role[] = [
-    {
-        icone: ShieldCheck,
-        titre: "Administrateur",
-        resume: "Pilote toute la plateforme.",
-        actions: [
-            "Valide les demandes d'inscription et affecte chaque personne à une zone",
-            "Gère les utilisateurs, les zones et les bacs",
-            "Consulte les rapports et les statistiques",
-        ],
-        couleur: "bg-indigo-50 text-indigo-600",
-    },
-    {
-        icone: UserCog,
-        titre: "Superviseur",
-        resume: "Responsable d'une zone.",
-        actions: [
-            "Suit en direct le niveau de ses bacs sur le tableau de bord et la carte",
-            "Crée les interventions et les confie à ses agents",
-            "Suit la position des agents pendant la collecte",
-        ],
-        couleur: "bg-green-50 text-green-600",
-    },
-    {
-        icone: Users,
-        titre: "Agent de collecte",
-        resume: "Sur le terrain, depuis son téléphone.",
-        actions: [
-            "Reçoit ses missions par notification",
-            "Suit l'itinéraire jusqu'au bac sur la carte",
-            "Signale un problème et termine la mission une fois le bac vidé",
-        ],
-        couleur: "bg-orange-50 text-orange-600",
-    },
-];
-
-const etats = [
-    {
-        nom: "Normal",
-        seuil: "jusqu'à 50 %",
-        texte: "Aucune action nécessaire.",
-        pastille: "bg-green-500",
-        carte: "border-green-100 bg-green-50/60",
-        titre: "text-green-700",
-    },
-    {
-        nom: "Alerte",
-        seuil: "de 51 % à 80 %",
-        texte: "Le superviseur est prévenu.",
-        pastille: "bg-orange-500",
-        carte: "border-orange-100 bg-orange-50/60",
-        titre: "text-orange-700",
-    },
-    {
-        nom: "Plein",
-        seuil: "au-delà de 80 %",
-        texte: "Une collecte doit être organisée.",
-        pastille: "bg-red-500",
-        carte: "border-red-100 bg-red-50/60",
-        titre: "text-red-700",
-    },
-];
-
-const cycle: { icone: LucideIcon; titre: string; texte: string }[] = [
-    {
-        icone: BellRing,
-        titre: "Alerte",
-        texte: "Le bac dépasse un seuil, le superviseur est notifié.",
-    },
-    {
-        icone: ClipboardList,
-        titre: "Intervention",
-        texte: "Le superviseur la crée et choisit un agent disponible.",
-    },
-    {
-        icone: Navigation,
-        titre: "Mission",
-        texte: "L'agent démarre et suit l'itinéraire, sa position est visible.",
-    },
-    {
-        icone: Trash2,
-        titre: "Collecte",
-        texte: "Le bac est vidé, la mesure repasse à l'état normal.",
-    },
-    {
-        icone: CheckCircle2,
-        titre: "Clôture",
-        texte: "La mission ne se termine que si le bac est bien vide.",
-    },
-];
-
 export function SectionRoles() {
+    const { t } = useTranslation();
+
+    const roles: Role[] = [
+        {
+            icone: ShieldCheck,
+            titre: t("home.roles.adminTitre"),
+            resume: t("home.roles.adminResume"),
+            actions: [
+                t("home.roles.adminAction1"),
+                t("home.roles.adminAction2"),
+                t("home.roles.adminAction3"),
+            ],
+            couleur: "bg-indigo-50 text-indigo-600",
+        },
+        {
+            icone: UserCog,
+            titre: t("home.roles.superviseurTitre"),
+            resume: t("home.roles.superviseurResume"),
+            actions: [
+                t("home.roles.superviseurAction1"),
+                t("home.roles.superviseurAction2"),
+                t("home.roles.superviseurAction3"),
+            ],
+            couleur: "bg-green-50 text-green-600",
+        },
+        {
+            icone: Users,
+            titre: t("home.roles.agentTitre"),
+            resume: t("home.roles.agentResume"),
+            actions: [
+                t("home.roles.agentAction1"),
+                t("home.roles.agentAction2"),
+                t("home.roles.agentAction3"),
+            ],
+            couleur: "bg-orange-50 text-orange-600",
+        },
+    ];
+
     return (
         <section id="roles" className="section-padding bg-white">
             <div className="container-app">
                 <SectionTitle
-                    eyebrow="Rôles"
-                    title="Trois rôles, un même système"
-                    description="Chaque utilisateur retrouve uniquement les outils utiles à son travail, sur ordinateur comme sur téléphone."
+                    eyebrow={t("home.roles.eyebrow")}
+                    title={t("home.roles.titre")}
+                    description={t("home.roles.description")}
                 />
 
                 <div className="grid gap-5 lg:grid-cols-3">
@@ -197,13 +145,70 @@ export function SectionRoles() {
 }
 
 export function SectionCycle() {
+    const { t } = useTranslation();
+
+    const etats = [
+        {
+            nom: t("home.cycle.etatNormalNom"),
+            seuil: t("home.cycle.etatNormalSeuil"),
+            texte: t("home.cycle.etatNormalTexte"),
+            pastille: "bg-green-500",
+            carte: "border-green-100 bg-green-50/60",
+            titre: "text-green-700",
+        },
+        {
+            nom: t("home.cycle.etatAlerteNom"),
+            seuil: t("home.cycle.etatAlerteSeuil"),
+            texte: t("home.cycle.etatAlerteTexte"),
+            pastille: "bg-orange-500",
+            carte: "border-orange-100 bg-orange-50/60",
+            titre: "text-orange-700",
+        },
+        {
+            nom: t("home.cycle.etatPleinNom"),
+            seuil: t("home.cycle.etatPleinSeuil"),
+            texte: t("home.cycle.etatPleinTexte"),
+            pastille: "bg-red-500",
+            carte: "border-red-100 bg-red-50/60",
+            titre: "text-red-700",
+        },
+    ];
+
+    const cycle: { icone: LucideIcon; titre: string; texte: string }[] = [
+        {
+            icone: BellRing,
+            titre: t("home.cycle.etape1Titre"),
+            texte: t("home.cycle.etape1Texte"),
+        },
+        {
+            icone: ClipboardList,
+            titre: t("home.cycle.etape2Titre"),
+            texte: t("home.cycle.etape2Texte"),
+        },
+        {
+            icone: Navigation,
+            titre: t("home.cycle.etape3Titre"),
+            texte: t("home.cycle.etape3Texte"),
+        },
+        {
+            icone: Trash2,
+            titre: t("home.cycle.etape4Titre"),
+            texte: t("home.cycle.etape4Texte"),
+        },
+        {
+            icone: CheckCircle2,
+            titre: t("home.cycle.etape5Titre"),
+            texte: t("home.cycle.etape5Texte"),
+        },
+    ];
+
     return (
         <section id="cycle" className="section-padding bg-slate-50">
             <div className="container-app">
                 <SectionTitle
-                    eyebrow="Collecte"
-                    title="De l'alerte au bac vidé"
-                    description="Le niveau de remplissage déclenche automatiquement chaque étape, sans appel ni papier."
+                    eyebrow={t("home.cycle.eyebrow")}
+                    title={t("home.cycle.titre")}
+                    description={t("home.cycle.description")}
                 />
 
                 <ScrollReveal direction="up">
@@ -259,7 +264,7 @@ export function SectionCycle() {
                         to="/register"
                         className="inline-flex items-center gap-2 rounded-2xl bg-green-600 px-6 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-green-700"
                     >
-                        Demander un accès
+                        {t("home.cycle.bouton")}
                     </Link>
                 </div>
             </div>
@@ -267,14 +272,16 @@ export function SectionCycle() {
     );
 }
 
-const capacites = [
-    { icone: Radio, texte: "Suivi en temps réel" },
-    { icone: MapPin, texte: "Position GPS des bacs" },
-    { icone: Compass, texte: "Priorité aux bacs pleins" },
-];
-
 /** Bandeau cinématique plein format : l'équipe de collecte, avec un slogan animé en surimpression. */
 export function BandeauEquipe() {
+    const { t } = useTranslation();
+
+    const capacites = [
+        { icone: Radio, texte: t("home.bandeauEquipe.capacite1") },
+        { icone: MapPin, texte: t("home.bandeauEquipe.capacite2") },
+        { icone: Compass, texte: t("home.bandeauEquipe.capacite3") },
+    ];
+
     return (
         <section className="section-padding bg-white">
             <div className="container-app">
@@ -282,7 +289,7 @@ export function BandeauEquipe() {
                     <div className="relative overflow-hidden rounded-[2rem] shadow-xl shadow-slate-900/10">
                         <motion.img
                             src="/images/equipe-collecte.png"
-                            alt="Équipe de collecte vidant un bac connecté sur une route de Yaoundé"
+                            alt={t("home.bandeauEquipe.alt")}
                             className="h-[420px] w-full object-cover sm:h-[480px] lg:h-[560px]"
                             loading="lazy"
                             initial={{ scale: 1.08, opacity: 0 }}
@@ -297,19 +304,18 @@ export function BandeauEquipe() {
                             <ScrollReveal direction="up">
                                 <span className="inline-flex w-fit items-center gap-1.5 rounded-full border border-white/20 bg-white/10 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-white backdrop-blur-md">
                                     <Radio size={12} />
-                                    Sur le terrain
+                                    {t("home.bandeauEquipe.badge")}
                                 </span>
                             </ScrollReveal>
 
                             <SloganAnime
-                                texte="La donnée guide chaque collecte."
+                                texte={t("home.bandeauEquipe.slogan")}
                                 className="mt-4 max-w-2xl text-3xl font-bold leading-tight text-white sm:text-4xl lg:text-5xl"
                             />
 
                             <ScrollReveal direction="up" delay={0.3}>
                                 <p className="mt-4 max-w-xl text-sm leading-7 text-white/80 sm:text-base">
-                                    Grâce aux capteurs connectés, les équipes interviennent là où c'est
-                                    vraiment nécessaire, dès qu'un bac atteint son seuil d'alerte.
+                                    {t("home.bandeauEquipe.texte")}
                                 </p>
                             </ScrollReveal>
 
@@ -333,6 +339,8 @@ export function BandeauEquipe() {
 
 /** Bandeau « fierté du métier » : portrait de l'agent, même gabarit que la section « Notre approche ». */
 export function BandeauAgent() {
+    const { t } = useTranslation();
+
     return (
         <section className="section-padding bg-white">
             <div className="container-app">
@@ -343,7 +351,7 @@ export function BandeauAgent() {
                             <div className="overflow-hidden rounded-[2rem] border border-slate-900/5 shadow-xl shadow-slate-900/10">
                                 <img
                                     src="/images/agent-portrait.png"
-                                    alt="Agent de collecte souriant, fier de son métier"
+                                    alt={t("home.bandeauAgent.alt")}
                                     className="h-[420px] w-full object-cover object-top sm:h-[480px]"
                                     loading="lazy"
                                 />
@@ -355,20 +363,18 @@ export function BandeauAgent() {
                         <ScrollReveal direction="left">
                             <Badge variant="green">
                                 <Heart size={13} className="mr-1.5 inline -mt-0.5" />
-                                Fierté du métier
+                                {t("home.bandeauAgent.badge")}
                             </Badge>
                         </ScrollReveal>
 
                         <SloganAnime
-                            texte="Ils protègent une ville, jour après jour."
+                            texte={t("home.bandeauAgent.slogan")}
                             className="mt-5 text-3xl font-bold leading-tight tracking-tight text-slate-900 sm:text-4xl"
                         />
 
                         <ScrollReveal direction="left" delay={0.25}>
                             <p className="mt-5 max-w-lg text-base leading-7 text-slate-500">
-                                Sur le terrain, chaque agent utilise l'application pour suivre ses
-                                missions et savoir exactement où intervenir en priorité — un métier
-                                essentiel, désormais mieux organisé.
+                                {t("home.bandeauAgent.texte")}
                             </p>
                         </ScrollReveal>
 
@@ -377,7 +383,7 @@ export function BandeauAgent() {
                                 to="/register"
                                 className="mt-8 inline-flex items-center gap-2 rounded-2xl bg-green-600 px-6 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-green-700"
                             >
-                                Rejoindre l'équipe
+                                {t("home.bandeauAgent.bouton")}
                             </Link>
                         </ScrollReveal>
                     </div>

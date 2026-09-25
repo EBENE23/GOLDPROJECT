@@ -27,7 +27,7 @@ import {
   PrimaryButton,
   RefPill,
   StatutBadge,
-  libelleStatut,
+  useLibelleStatut,
   tonStatut,
 } from "../../components/ui/kit";
 import { useEcranAllume, useGeolocalisation } from "../../hooks/useGeolocalisation";
@@ -48,6 +48,7 @@ import {
   type Coordonnees,
   type Itineraire,
 } from "../../utils/itineraire";
+import { useTranslation } from "../../i18n";
 
 // Déplacement minimal (m) avant de recalculer l'itinéraire, et délai minimal (ms) entre deux calculs.
 const SEUIL_RECALCUL_M = 40;
@@ -105,6 +106,8 @@ function SuiviCarte({
 }
 
 const MissionLocalisation = () => {
+  const { t } = useTranslation();
+  const libelleStatut = useLibelleStatut();
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
   const idMission = Number(id);
@@ -126,7 +129,7 @@ const MissionLocalisation = () => {
 
   const charger = useCallback(async () => {
     if (!Number.isInteger(idMission) || idMission <= 0) {
-      setError("Identifiant de mission invalide.");
+      setError(t("agentMissionLocalisation.identifiantInvalide"));
       setLoading(false);
       return;
     }
@@ -135,11 +138,11 @@ const MissionLocalisation = () => {
       setError("");
       setData(await obtenirLocalisationMission(idMission));
     } catch (err: any) {
-      setError(err?.response?.data?.message || "Impossible de récupérer la localisation de la mission.");
+      setError(err?.response?.data?.message || t("agentMissionLocalisation.erreurChargement"));
     } finally {
       setLoading(false);
     }
-  }, [idMission]);
+  }, [idMission, t]);
 
   useEffect(() => {
     charger();
@@ -218,7 +221,7 @@ const MissionLocalisation = () => {
     if (arrive && !arriveeSignalee.current) {
       arriveeSignalee.current = true;
       navigator.vibrate?.([200, 100, 200]);
-      toast.success(`Vous êtes arrivé au bac ${data?.pointCollecte.reference ?? ""}.`, { toastId: "arrivee-bac" });
+      toast.success(t("agentMissionLocalisation.vousEtesArriveAuBac", { ref: data?.pointCollecte.reference ?? "" }), { toastId: "arrivee-bac" });
     } else if (distanceBac > RAYON_ARRIVEE_M * 3) {
       arriveeSignalee.current = false;
     }
@@ -227,15 +230,15 @@ const MissionLocalisation = () => {
   const capArrondi = position?.cap == null ? null : Math.round(position.cap / 10) * 10;
   const iconeDeLAgent = useMemo(() => iconeAgent(capArrondi), [capArrondi]);
 
-  if (loading) return <Chargement texte="Chargement de la carte..." />;
+  if (loading) return <Chargement texte={t("agentMissionLocalisation.chargement")} />;
 
   if (!data) {
     return (
       <div className="space-y-4">
         <Link to="/agent/missions" className="inline-flex items-center gap-2 text-sm font-medium text-slate-600">
-          <ArrowLeft size={17} /> Retour aux missions
+          <ArrowLeft size={17} /> {t("agentMissionLocalisation.retourAuxMissions")}
         </Link>
-        <BandeauErreur message={error || "Localisation indisponible."} onReessayer={charger} />
+        <BandeauErreur message={error || t("agentMissionLocalisation.localisationIndisponible")} onReessayer={charger} />
       </div>
     );
   }
@@ -260,7 +263,7 @@ const MissionLocalisation = () => {
           to={`/agent/missions/${data.mission.idMission}`}
           className="inline-flex items-center gap-2 text-sm font-medium text-slate-500 hover:text-slate-900"
         >
-          <ArrowLeft size={17} /> Mission n°{data.mission.idMission}
+          <ArrowLeft size={17} /> {t("missionCard.missionNumero", { n: data.mission.idMission })}
         </Link>
         <StatutBadge ton={tonStatut(data.mission.statut)}>{libelleStatut(data.mission.statut)}</StatutBadge>
       </div>
@@ -269,12 +272,12 @@ const MissionLocalisation = () => {
 
       {data.mission.statut === "AFFECTEE" && (
         <div className="flex flex-col gap-3 rounded-2xl border border-sky-200 bg-sky-50 p-4 text-sm text-sky-800 sm:flex-row sm:items-center sm:justify-between">
-          <p>Démarrez la mission pour que votre superviseur puisse suivre votre trajet.</p>
+          <p>{t("agentMissionLocalisation.demarrezMission")}</p>
           <Link
             to={`/agent/missions/${data.mission.idMission}`}
             className="inline-flex shrink-0 items-center justify-center rounded-xl bg-sky-600 px-4 py-2 font-bold text-white"
           >
-            Aller à la mission
+            {t("agentMissionLocalisation.allerALaMission")}
           </Link>
         </div>
       )}
@@ -317,7 +320,7 @@ const MissionLocalisation = () => {
                     pathOptions={{ color: "#2563eb", weight: 1, fillOpacity: 0.1 }}
                   />
                   <Marker position={position.coordonnees} icon={iconeDeLAgent} zIndexOffset={900}>
-                    <Popup>Votre position (± {Math.round(position.precision)} m)</Popup>
+                    <Popup>{t("agentMissionLocalisation.votrePosition", { n: Math.round(position.precision) })}</Popup>
                   </Marker>
                 </>
               )}
@@ -325,7 +328,7 @@ const MissionLocalisation = () => {
               <Marker position={destination} icon={iconeBac(bac.niveau_remplissage, true)} zIndexOffset={1000}>
                 <Popup>
                   <p className="text-sm font-bold">{bac.reference}</p>
-                  <p className="text-xs text-slate-500">{Math.round(Number(bac.niveau_remplissage) || 0)}% rempli</p>
+                  <p className="text-xs text-slate-500">{t("notifications.pourcentRempli", { n: Math.round(Number(bac.niveau_remplissage) || 0) })}</p>
                 </Popup>
               </Marker>
             </MapContainer>
@@ -339,18 +342,18 @@ const MissionLocalisation = () => {
               >
                 {arrive ? (
                   <p className="flex items-center gap-2 text-sm font-bold">
-                    <CheckCircle2 size={18} /> Vous êtes arrivé au bac
+                    <CheckCircle2 size={18} /> {t("agentMissionLocalisation.vousEtesArrive")}
                   </p>
                 ) : restant ? (
                   <>
                     <p className="text-2xl font-bold leading-none">{formaterDistance(restant.distanceM)}</p>
                     <p className="mt-1 flex items-center gap-1.5 text-xs text-white/70">
                       <Clock size={12} /> {formaterDuree(restant.dureeS)}
-                      {itineraire?.approximatif && " · estimé"}
+                      {itineraire?.approximatif && t("agentMissionLocalisation.estime")}
                     </p>
                   </>
                 ) : (
-                  <p className="text-sm font-semibold">{erreurGps ? "GPS indisponible" : "Recherche du GPS…"}</p>
+                  <p className="text-sm font-semibold">{erreurGps ? t("agentMissionLocalisation.gpsIndisponible") : t("agentMissionLocalisation.rechercheGps")}</p>
                 )}
                 <p className="mt-1.5 font-mono text-[11px] text-white/60">#{bac.reference}</p>
               </div>
@@ -367,7 +370,7 @@ const MissionLocalisation = () => {
                 }`}
               >
                 {erreurGps ? <WifiOff size={13} /> : <Satellite size={13} />}
-                {erreurGps ? "GPS coupé" : position ? `GPS ± ${Math.round(position.precision)} m` : "GPS…"}
+                {erreurGps ? t("agentMissionLocalisation.gpsCoupe") : position ? t("agentMissionLocalisation.gpsPrecision", { n: Math.round(position.precision) }) : t("agentMissionLocalisation.gpsPoints")}
               </span>
             </div>
 
@@ -379,7 +382,7 @@ const MissionLocalisation = () => {
                   setSuivi(false);
                   setVueEnsemble((valeur) => valeur + 1);
                 }}
-                aria-label="Vue d'ensemble"
+                aria-label={t("agentMissionLocalisation.vueEnsembleAria")}
                 className="flex h-12 w-12 items-center justify-center rounded-full bg-white text-slate-700 shadow-lg ring-1 ring-slate-200 transition active:scale-95"
               >
                 <Maximize2 size={20} />
@@ -387,7 +390,7 @@ const MissionLocalisation = () => {
               <button
                 type="button"
                 onClick={() => setSuivi((valeur) => !valeur)}
-                aria-label={suivi ? "Arrêter le suivi" : "Me suivre"}
+                aria-label={suivi ? t("agentMissionLocalisation.arreterSuivi") : t("agentMissionLocalisation.meSuivre")}
                 aria-pressed={suivi}
                 className={`flex h-14 w-14 items-center justify-center rounded-full shadow-lg transition active:scale-95 ${
                   suivi ? "bg-emerald-600 text-white" : "bg-white text-emerald-700 ring-1 ring-slate-200"
@@ -400,8 +403,8 @@ const MissionLocalisation = () => {
         ) : (
           <div className="flex min-h-[320px] flex-col items-center justify-center p-6 text-center">
             <MapPin size={40} className="text-slate-300" />
-            <p className="mt-3 font-semibold text-slate-800">Position du bac indisponible</p>
-            <p className="mt-1 max-w-sm text-sm text-slate-500">Les coordonnées GPS de ce bac ne sont pas renseignées.</p>
+            <p className="mt-3 font-semibold text-slate-800">{t("agentMissionLocalisation.positionBacIndisponible")}</p>
+            <p className="mt-1 max-w-sm text-sm text-slate-500">{t("agentMissionLocalisation.coordonneesNonRenseignees")}</p>
           </div>
         )}
       </Card>
@@ -421,16 +424,16 @@ const MissionLocalisation = () => {
               <RefPill>#{bac.reference}</RefPill>
               <EtatBadge niveau={bac.niveau_remplissage} />
             </div>
-            <p className="mt-1.5 truncate text-sm font-bold text-slate-900">{bac.zone?.nomZone ?? "Zone non renseignée"}</p>
+            <p className="mt-1.5 truncate text-sm font-bold text-slate-900">{bac.zone?.nomZone ?? t("agentMissionLocalisation.zoneNonRenseignee")}</p>
             {categorie !== "NORMAL" && missionEnCours && (
-              <p className="mt-1 text-xs text-orange-600">Videz le bac : la mission se termine quand le capteur le confirme.</p>
+              <p className="mt-1 text-xs text-orange-600">{t("agentMissionLocalisation.videzLeBac")}</p>
             )}
           </div>
         </div>
 
         <div className="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-2">
           <PrimaryButton icone={ClipboardCheck} onClick={() => navigate(`/agent/missions/${data.mission.idMission}`)}>
-            {arrive ? "Traiter la mission" : "Détails de la mission"}
+            {arrive ? t("agentMissionLocalisation.traiterLaMission") : t("agentMissionLocalisation.detailsDeLaMission")}
           </PrimaryButton>
           <button
             type="button"
@@ -439,7 +442,7 @@ const MissionLocalisation = () => {
             className="inline-flex items-center justify-center gap-2 rounded-2xl bg-indigo-50 px-4 py-3 text-sm font-bold text-indigo-700 transition hover:bg-indigo-100 disabled:opacity-50"
           >
             <Navigation size={17} />
-            Ouvrir dans Maps <ExternalLink size={14} />
+            {t("agentMissionLocalisation.ouvrirDansMaps")} <ExternalLink size={14} />
           </button>
         </div>
       </Card>

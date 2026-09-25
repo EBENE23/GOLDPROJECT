@@ -19,6 +19,10 @@ import type { FormEvent } from "react";
 import { Link } from "react-router-dom";
 import api from "../../services/api";
 import { preparerPhotoProfil } from "../../utils/imageProfil";
+import { useTranslation } from "../../i18n";
+import SelecteurLangue from "../../components/SelecteurLangue";
+
+type T = (chemin: string, variables?: Record<string, string | number>) => string;
 
 type FormData = {
   nom: string;
@@ -72,33 +76,33 @@ function normalizeName(value: string) {
     .trimStart();
 }
 
-function validateName(value: string, label: string) {
+function validateName(value: string, label: string, t: T) {
   const cleanValue = value.trim();
 
   if (!cleanValue) {
-    return `${label} est obligatoire.`;
+    return t("auth.register.champObligatoire", { label });
   }
 
   if (cleanValue.length < 2) {
-    return `${label} doit contenir au moins 2 caractères.`;
+    return t("auth.register.champMinCaracteres", { label });
   }
 
   if (cleanValue.length > 50) {
-    return `${label} ne doit pas dépasser 50 caractères.`;
+    return t("auth.register.champMaxCaracteres", { label });
   }
 
   if (!nameRegex.test(cleanValue)) {
-    return `${label} contient des caractères invalides.`;
+    return t("auth.register.champCaracteresInvalides", { label });
   }
 
   return "";
 }
 
-function validateStepOne(form: FormData): FormErrors {
+function validateStepOne(form: FormData, t: T): FormErrors {
   const errors: FormErrors = {};
 
-  const nomError = validateName(form.nom, "Le nom");
-  const prenomError = validateName(form.prenom, "Le prénom");
+  const nomError = validateName(form.nom, t("auth.register.labelNomValidation"), t);
+  const prenomError = validateName(form.prenom, t("auth.register.labelPrenomValidation"), t);
 
   if (nomError) {
     errors.nom = nomError;
@@ -111,47 +115,43 @@ function validateStepOne(form: FormData): FormErrors {
   const telephone = form.telephone.replace(/\s/g, "");
 
   if (!telephone) {
-    errors.telephone = "Le numéro de téléphone est obligatoire.";
+    errors.telephone = t("auth.register.telephoneObligatoire");
   } else if (!phoneRegex.test(telephone)) {
-    errors.telephone =
-      "Entrez un numéro camerounais valide, par exemple 6XXXXXXXX ou +237 6XXXXXXXX.";
+    errors.telephone = t("auth.register.telephoneInvalide");
   }
 
   return errors;
 }
 
-function validateStepTwo(form: FormData): FormErrors {
+function validateStepTwo(form: FormData, t: T): FormErrors {
   const errors: FormErrors = {};
 
   if (!form.email.trim()) {
-    errors.email = "L'adresse e-mail est obligatoire.";
+    errors.email = t("auth.register.emailObligatoire");
   } else if (!emailRegex.test(form.email.trim())) {
-    errors.email = "Veuillez saisir une adresse e-mail valide.";
+    errors.email = t("auth.register.emailInvalide");
   }
 
   if (!form.motDePasse) {
-    errors.motDePasse = "Le mot de passe est obligatoire.";
+    errors.motDePasse = t("auth.register.motDePasseObligatoire");
   } else if (form.motDePasse.length < 8) {
-    errors.motDePasse =
-      "Le mot de passe doit contenir au moins 8 caractères.";
+    errors.motDePasse = t("auth.register.motDePasseCourt");
   }
 
   if (!form.confirmationMotDePasse) {
-    errors.confirmationMotDePasse =
-      "Veuillez confirmer votre mot de passe.";
+    errors.confirmationMotDePasse = t("auth.register.confirmationObligatoire");
   } else if (form.motDePasse !== form.confirmationMotDePasse) {
-    errors.confirmationMotDePasse =
-      "Les deux mots de passe ne correspondent pas.";
+    errors.confirmationMotDePasse = t("auth.register.confirmationDifferente");
   }
 
   return errors;
 }
 
-function validateStepThree(form: FormData): FormErrors {
+function validateStepThree(form: FormData, t: T): FormErrors {
   const errors: FormErrors = {};
 
   if (!form.roleDemande) {
-    errors.roleDemande = "Veuillez sélectionner un type de compte.";
+    errors.roleDemande = t("auth.register.roleObligatoire");
   }
 
   return errors;
@@ -173,6 +173,7 @@ const slideVariants = {
 };
 
 export default function Register() {
+  const { t } = useTranslation();
   const [step, setStep] = useState(1);
   const [form, setForm] = useState<FormData>(initialForm);
   const [errors, setErrors] = useState<FormErrors>({});
@@ -226,11 +227,11 @@ export default function Register() {
     let validationErrors: FormErrors = {};
 
     if (step === 1) {
-      validationErrors = validateStepOne(form);
+      validationErrors = validateStepOne(form, t);
     }
 
     if (step === 2) {
-      validationErrors = validateStepTwo(form);
+      validationErrors = validateStepTwo(form, t);
     }
 
     setErrors(validationErrors);
@@ -251,7 +252,7 @@ export default function Register() {
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
-    const validationErrors = validateStepThree(form);
+    const validationErrors = validateStepThree(form, t);
 
     setErrors(validationErrors);
 
@@ -278,12 +279,12 @@ export default function Register() {
       const message =
         error?.response?.data?.message ||
         (error?.code === "ERR_NETWORK"
-          ? "Le serveur est inaccessible. Vérifiez que l'API backend est démarrée."
+          ? t("auth.register.erreurReseau")
           : error?.response?.status === 413
-            ? "La photo ou les données envoyées sont trop volumineuses."
+            ? t("auth.register.erreur413")
             : error?.response?.status === 500
-              ? "Le serveur n'a pas pu créer la demande. Vérifiez la configuration de la base de données."
-              : "Impossible d'envoyer votre demande pour le moment.");
+              ? t("auth.register.erreur500")
+              : t("auth.register.erreurGenerique"));
 
       setServerError(message);
     } finally {
@@ -315,19 +316,16 @@ export default function Register() {
               </div>
 
               <h1 className="font-poppins text-2xl font-bold text-white sm:text-3xl">
-                Demande envoyée
+                {t("auth.register.successTitre")}
               </h1>
 
               <p className="mx-auto mt-4 max-w-md font-poppins text-sm leading-6 text-slate-300 sm:text-base">
-                Votre demande de création de compte a bien été enregistrée.
-                Elle doit maintenant être examinée et approuvée par un
-                administrateur.
+                {t("auth.register.successTexte")}
               </p>
 
               <div className="mt-7 rounded-2xl border border-emerald-400/10 bg-emerald-500/5 p-4 text-left">
                 <p className="font-poppins text-xs leading-5 text-slate-300 sm:text-sm">
-                  Vous pourrez accéder à la plateforme une fois votre compte
-                  approuvé et activé.
+                  {t("auth.register.successNote")}
                 </p>
               </div>
 
@@ -335,7 +333,7 @@ export default function Register() {
                 to="/login"
                 className="mt-7 flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-emerald-500 px-5 font-poppins text-sm font-semibold text-white shadow-lg shadow-emerald-500/20 transition hover:bg-emerald-400"
               >
-                Retour à la connexion
+                {t("auth.register.successBouton")}
                 <ArrowRight className="h-4 w-4" />
               </Link>
             </div>
@@ -359,13 +357,13 @@ export default function Register() {
         <header className="flex shrink-0 items-center justify-between">
           <Link
             to="/login"
-            aria-label="Retour à la connexion"
+            aria-label={t("auth.register.retourAria")}
             className="group flex h-10 items-center gap-0 overflow-hidden rounded-xl border border-white/10 bg-white/[0.05] px-2.5 text-slate-300 backdrop-blur-xl transition-all duration-300 hover:w-[105px] hover:border-emerald-400/20 hover:bg-emerald-500/10 hover:text-white sm:h-11 sm:px-3"
           >
             <ArrowLeft className="h-[18px] w-[18px] shrink-0 transition-transform duration-300 group-hover:-translate-x-0.5" />
 
             <span className="ml-0 max-w-0 overflow-hidden whitespace-nowrap font-poppins text-sm font-medium opacity-0 transition-all duration-300 group-hover:ml-2 group-hover:max-w-[60px] group-hover:opacity-100">
-              Retour
+              {t("auth.register.retour")}
             </span>
           </Link>
 
@@ -385,10 +383,14 @@ export default function Register() {
                 SmartCity<span className="text-emerald-400">Waste</span>
               </p>
               <p className="text-[9px] text-slate-400">
-                Gestion intelligente
+                {t("nav.tagline")}
               </p>
             </div>
           </Link>
+
+          <div className="rounded-xl border border-white/10 bg-white/[0.05] backdrop-blur-xl">
+            <SelecteurLangue sombre />
+          </div>
         </header>
 
         {/* Main */}
@@ -404,21 +406,19 @@ export default function Register() {
                 <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-emerald-400/10 bg-emerald-500/5 px-3 py-1.5">
                   <UserRoundPlus className="h-3.5 w-3.5 text-emerald-400" />
                   <span className="text-xs font-medium text-emerald-300">
-                    Création de compte
+                    {t("auth.register.badgeCreation")}
                   </span>
                 </div>
 
                 <h1 className="max-w-xl text-3xl font-bold leading-tight text-white xl:text-4xl">
-                  Rejoignez la plateforme{" "}
+                  {t("auth.register.heading1")}{" "}
                   <span className="text-emerald-400">
                     SmartCityWaste
                   </span>
                 </h1>
 
                 <p className="mt-4 max-w-lg text-sm leading-6 text-slate-400">
-                  Créez votre demande de compte pour participer à la
-                  supervision intelligente des bacs à déchets et au suivi des
-                  interventions.
+                  {t("auth.register.paragraphe")}
                 </p>
 
                 <div className="mt-7 space-y-3">
@@ -428,10 +428,10 @@ export default function Register() {
                     </div>
                     <div>
                       <p className="text-sm font-semibold text-white">
-                        Accès sécurisé
+                        {t("auth.register.avantage1Titre")}
                       </p>
                       <p className="text-xs text-slate-500">
-                        Votre compte est validé par un administrateur.
+                        {t("auth.register.avantage1Texte")}
                       </p>
                     </div>
                   </div>
@@ -442,10 +442,10 @@ export default function Register() {
                     </div>
                     <div>
                       <p className="text-sm font-semibold text-white">
-                        Un rôle adapté
+                        {t("auth.register.avantage2Titre")}
                       </p>
                       <p className="text-xs text-slate-500">
-                        Superviseur ou agent de collecte.
+                        {t("auth.register.avantage2Texte")}
                       </p>
                     </div>
                   </div>
@@ -464,29 +464,26 @@ export default function Register() {
                 {/* Title */}
                 <div className="mb-4 sm:mb-5">
                   <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-emerald-400 sm:text-xs">
-                    Étape {step} sur 3
+                    {t("auth.register.etapePrefix")} {step} {t("auth.register.etapeSuffix")}
                   </p>
 
                   <h2 className="mt-1 text-xl font-bold text-white sm:text-2xl">
-                    {step === 1 && "Vos informations"}
-                    {step === 2 && "Sécurisez votre compte"}
-                    {step === 3 && "Choisissez votre rôle"}
+                    {step === 1 && t("auth.register.step1Titre")}
+                    {step === 2 && t("auth.register.step2Titre")}
+                    {step === 3 && t("auth.register.step3Titre")}
                   </h2>
 
                   <p className="mt-1 text-xs leading-5 text-slate-400 sm:text-sm">
-                    {step === 1 &&
-                      "Renseignez vos informations personnelles."}
-                    {step === 2 &&
-                      "Utilisez une adresse e-mail et un mot de passe sécurisés."}
-                    {step === 3 &&
-                      "Sélectionnez le type de compte correspondant à votre fonction."}
+                    {step === 1 && t("auth.register.step1Desc")}
+                    {step === 2 && t("auth.register.step2Desc")}
+                    {step === 3 && t("auth.register.step3Desc")}
                   </p>
                 </div>
 
                 {/* Progress */}
                 <div className="mb-5">
                   <div className="mb-2 flex items-center justify-between text-[10px] text-slate-500 sm:text-xs">
-                    <span>Progression</span>
+                    <span>{t("auth.register.progression")}</span>
                     <span>{Math.round(progress)}%</span>
                   </div>
 
@@ -529,9 +526,9 @@ export default function Register() {
                         </div>
 
                         <span className="hidden sm:inline">
-                          {item === 1 && "Identité"}
-                          {item === 2 && "Sécurité"}
-                          {item === 3 && "Rôle"}
+                          {item === 1 && t("auth.register.stepIdentite")}
+                          {item === 2 && t("auth.register.stepSecurite")}
+                          {item === 3 && t("auth.register.stepRole")}
                         </span>
                       </div>
                     ))}
@@ -579,8 +576,8 @@ export default function Register() {
                           className="space-y-3"
                         >
                           <InputField
-                            label="Nom"
-                            placeholder="Votre nom"
+                            label={t("auth.register.nomLabel")}
+                            placeholder={t("auth.register.nomPlaceholder")}
                             value={form.nom}
                             onChange={(value) =>
                               updateField("nom", value)
@@ -591,8 +588,8 @@ export default function Register() {
                           />
 
                           <InputField
-                            label="Prénom"
-                            placeholder="Votre prénom"
+                            label={t("auth.register.prenomLabel")}
+                            placeholder={t("auth.register.prenomPlaceholder")}
                             value={form.prenom}
                             onChange={(value) =>
                               updateField("prenom", value)
@@ -603,8 +600,8 @@ export default function Register() {
                           />
 
                           <InputField
-                            label="Téléphone"
-                            placeholder="6 XX XX XX XX"
+                            label={t("auth.register.telephoneLabel")}
+                            placeholder={t("auth.register.telephonePlaceholder")}
                             value={form.telephone}
                             onChange={(value) =>
                               updateField("telephone", value)
@@ -616,12 +613,12 @@ export default function Register() {
                           />
                           <label className="flex cursor-pointer items-center gap-3 rounded-xl border border-dashed border-slate-300 bg-slate-50 p-3 text-xs text-slate-600">
                             {form.photoProfil ? (
-                              <img src={form.photoProfil} alt="Aperçu" className="h-12 w-12 rounded-full object-cover" />
+                              <img src={form.photoProfil} alt={t("auth.register.photoApercu")} className="h-12 w-12 rounded-full object-cover" />
                             ) : (
                               <span className="flex h-12 w-12 items-center justify-center rounded-full bg-white text-slate-400"><Camera size={18} /></span>
                             )}
-                            <span><strong className="block text-slate-700">Photo de profil <em className="font-normal not-italic text-slate-400">(facultatif)</em></strong><span>JPG ou PNG, aperçu uniquement avant l'envoi.</span></span>
-                            <input type="file" accept="image/png,image/jpeg,image/webp" className="sr-only" onChange={async (event) => { const file = event.target.files?.[0]; if (!file) return; try { updateField("photoProfil", await preparerPhotoProfil(file)); setServerError(""); } catch (err) { setServerError(err instanceof Error ? err.message : "Image invalide."); } }} />
+                            <span><strong className="block text-slate-700">{t("auth.register.photoLabel")} <em className="font-normal not-italic text-slate-400">{t("auth.register.photoFacultatif")}</em></strong><span>{t("auth.register.photoHelper")}</span></span>
+                            <input type="file" accept="image/png,image/jpeg,image/webp" className="sr-only" onChange={async (event) => { const file = event.target.files?.[0]; if (!file) return; try { updateField("photoProfil", await preparerPhotoProfil(file)); setServerError(""); } catch (err) { setServerError(err instanceof Error ? err.message : t("auth.register.imageInvalide")); } }} />
                           </label>
                         </motion.div>
                       )}
@@ -638,8 +635,8 @@ export default function Register() {
                           className="space-y-3"
                         >
                           <InputField
-                            label="Adresse e-mail"
-                            placeholder="exemple@email.com"
+                            label={t("auth.register.emailLabel")}
+                            placeholder={t("auth.register.emailPlaceholder")}
                             value={form.email}
                             onChange={(value) =>
                               updateField("email", value)
@@ -651,8 +648,8 @@ export default function Register() {
                           />
 
                           <PasswordField
-                            label="Mot de passe"
-                            placeholder="Minimum 8 caractères"
+                            label={t("auth.register.motDePasseLabel")}
+                            placeholder={t("auth.register.motDePassePlaceholder")}
                             value={form.motDePasse}
                             onChange={(value) =>
                               updateField("motDePasse", value)
@@ -665,8 +662,8 @@ export default function Register() {
                           />
 
                           <PasswordField
-                            label="Confirmation"
-                            placeholder="Confirmez votre mot de passe"
+                            label={t("auth.register.confirmationLabel")}
+                            placeholder={t("auth.register.confirmationPlaceholder")}
                             value={form.confirmationMotDePasse}
                             onChange={(value) =>
                               updateField(
@@ -684,8 +681,7 @@ export default function Register() {
                           <div className="flex items-center gap-2 pt-1">
                             <LockKeyhole className="h-3.5 w-3.5 text-emerald-400" />
                             <p className="text-[10px] leading-4 text-slate-500 sm:text-xs">
-                              Votre mot de passe doit contenir au moins 8
-                              caractères.
+                              {t("auth.register.passwordHelper")}
                             </p>
                           </div>
                         </motion.div>
@@ -704,8 +700,8 @@ export default function Register() {
                         >
                           <RoleCard
                             selected={form.roleDemande === "SUPERVISEUR"}
-                            title="Superviseur"
-                            description="Superviser les bacs, suivre les alertes et organiser les interventions."
+                            title={t("auth.register.roleSuperviseurTitre")}
+                            description={t("auth.register.roleSuperviseurDesc")}
                             icon={<ShieldCheck className="h-5 w-5" />}
                             onClick={() =>
                               updateField(
@@ -719,8 +715,8 @@ export default function Register() {
                             selected={
                               form.roleDemande === "AGENT_COLLECTE"
                             }
-                            title="Agent de collecte"
-                            description="Consulter et exécuter les missions de collecte qui vous sont affectées."
+                            title={t("auth.register.roleAgentTitre")}
+                            description={t("auth.register.roleAgentDesc")}
                             icon={
                               <BriefcaseBusiness className="h-5 w-5" />
                             }
@@ -741,33 +737,33 @@ export default function Register() {
                           {/* Recap */}
                           <div className="mt-2 rounded-xl border border-white/8 bg-black/10 p-3 sm:p-3.5">
                             <p className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-slate-500">
-                              Récapitulatif
+                              {t("auth.register.recapitulatif")}
                             </p>
 
                             <div className="grid grid-cols-2 gap-x-4 gap-y-2">
                               <SummaryItem
-                                label="Nom"
+                                label={t("auth.register.recapNom")}
                                 value={`${form.prenom} ${form.nom}`}
                               />
 
                               <SummaryItem
-                                label="Téléphone"
+                                label={t("auth.register.recapTelephone")}
                                 value={form.telephone}
                               />
 
                               <SummaryItem
-                                label="E-mail"
+                                label={t("auth.register.recapEmail")}
                                 value={form.email}
                               />
 
                               <SummaryItem
-                                label="Compte"
+                                label={t("auth.register.recapCompte")}
                                 value={
                                   form.roleDemande === "SUPERVISEUR"
-                                    ? "Superviseur"
+                                    ? t("auth.register.compteSuperviseur")
                                     : form.roleDemande === "AGENT_COLLECTE"
-                                      ? "Agent"
-                                      : "Non sélectionné"
+                                      ? t("auth.register.compteAgent")
+                                      : t("auth.register.compteNonSelectionne")
                                 }
                               />
                             </div>
@@ -786,7 +782,7 @@ export default function Register() {
                         className="flex h-10 items-center gap-2 rounded-xl border border-white/10 bg-white/[0.04] px-3 text-xs font-medium text-slate-300 transition hover:border-white/20 hover:bg-white/[0.08] hover:text-white sm:h-11 sm:px-4 sm:text-sm"
                       >
                         <ArrowLeft className="h-4 w-4" />
-                        <span>Précédent</span>
+                        <span>{t("auth.register.precedent")}</span>
                       </button>
                     ) : (
                       <div />
@@ -797,7 +793,7 @@ export default function Register() {
                         type="submit"
                         className="ml-auto flex h-10 items-center gap-2 rounded-xl bg-emerald-500 px-4 text-xs font-semibold text-white shadow-lg shadow-emerald-500/15 transition hover:bg-emerald-400 sm:h-11 sm:px-5 sm:text-sm"
                       >
-                        Continuer
+                        {t("auth.register.continuer")}
                         <ArrowRight className="h-4 w-4" />
                       </button>
                     ) : (
@@ -809,11 +805,11 @@ export default function Register() {
                         {loading ? (
                           <>
                             <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
-                            Envoi...
+                            {t("auth.register.envoiEnCours")}
                           </>
                         ) : (
                           <>
-                            Envoyer la demande
+                            {t("auth.register.envoyerDemande")}
                             <ArrowRight className="h-4 w-4" />
                           </>
                         )}
@@ -825,12 +821,12 @@ export default function Register() {
                 {/* Login */}
                 <div className="mt-4 border-t border-white/5 pt-3 text-center">
                   <p className="text-[11px] text-slate-500 sm:text-xs">
-                    Vous avez déjà un compte ?{" "}
+                    {t("auth.register.dejaCompte")}{" "}
                     <Link
                       to="/login"
                       className="font-semibold text-emerald-400 transition hover:text-emerald-300"
                     >
-                      Se connecter
+                      {t("auth.register.seConnecter")}
                     </Link>
                   </p>
                 </div>
@@ -926,6 +922,8 @@ function PasswordField({
   onToggle,
   error,
 }: PasswordFieldProps) {
+  const { t } = useTranslation();
+
   return (
     <div>
       <label className="mb-1.5 block text-xs font-medium text-slate-300 sm:text-sm">
@@ -959,7 +957,7 @@ function PasswordField({
         <button
           type="button"
           onClick={onToggle}
-          aria-label={visible ? "Masquer le mot de passe" : "Afficher le mot de passe"}
+          aria-label={visible ? t("auth.register.masquerMotDePasse") : t("auth.register.afficherMotDePasse")}
           className="ml-2 flex h-8 w-8 items-center justify-center rounded-lg text-slate-500 transition hover:bg-white/5 hover:text-slate-200"
         >
           {visible ? (

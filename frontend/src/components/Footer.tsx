@@ -6,7 +6,11 @@ import {
 } from "lucide-react";
 import { Link } from "react-router-dom";
 
+import { useTranslation } from "../i18n";
+
 export default function Footer() {
+    const { t } = useTranslation();
+
     const scrollToTop = () => {
         window.scrollTo({
             top: 0,
@@ -31,16 +35,13 @@ export default function Footer() {
                         </Link>
 
                         <p className="mt-5 max-w-md text-sm leading-7 text-slate-400">
-                            Une plateforme intelligente de supervision des
-                            bacs à déchets basée sur l'Internet des Objets,
-                            pour améliorer la gestion et la collecte des
-                            déchets urbains.
+                            {t("footer.description")}
                         </p>
 
                         <div className="mt-6 flex flex-wrap gap-3">
                             <span className="inline-flex items-center gap-2 rounded-full bg-white/5 px-3 py-2 text-xs text-slate-300">
                                 <Leaf size={14} />
-                                Ville durable
+                                {t("footer.villeDurable")}
                             </span>
 
                             <span className="inline-flex items-center gap-2 rounded-full bg-white/5 px-3 py-2 text-xs text-slate-300">
@@ -50,14 +51,14 @@ export default function Footer() {
 
                             <span className="inline-flex items-center gap-2 rounded-full bg-white/5 px-3 py-2 text-xs text-slate-300">
                                 <MapPin size={14} />
-                                Géolocalisation
+                                {t("footer.geolocalisation")}
                             </span>
                         </div>
                     </div>
 
                     <div>
                         <h3 className="text-sm font-semibold text-white">
-                            Navigation
+                            {t("footer.navigation")}
                         </h3>
 
                         <div className="mt-5 flex flex-col gap-3">
@@ -65,28 +66,28 @@ export default function Footer() {
                                 href="#accueil"
                                 className="text-sm text-slate-400 transition-colors hover:text-green-400"
                             >
-                                Accueil
+                                {t("nav.accueil")}
                             </a>
 
                             <a
                                 href="#fonctionnalites"
                                 className="text-sm text-slate-400 transition-colors hover:text-green-400"
                             >
-                                Fonctionnalités
+                                {t("nav.fonctionnalites")}
                             </a>
 
                             <a
                                 href="#fonctionnement"
                                 className="text-sm text-slate-400 transition-colors hover:text-green-400"
                             >
-                                Fonctionnement
+                                {t("nav.fonctionnement")}
                             </a>
 
                             <a
                                 href="#technologies"
                                 className="text-sm text-slate-400 transition-colors hover:text-green-400"
                             >
-                                Technologies
+                                {t("nav.technologies")}
                             </a>
                         </div>
                     </div>
@@ -101,14 +102,14 @@ export default function Footer() {
                                 to="/login"
                                 className="text-sm text-slate-400 transition-colors hover:text-green-400"
                             >
-                                Se connecter
+                                {t("auth.login.seConnecter")}
                             </Link>
 
                             <Link
                                 to="/register"
                                 className="text-sm text-slate-400 transition-colors hover:text-green-400"
                             >
-                                Demander un accès
+                                {t("footer.demanderAcces")}
                             </Link>
                         </div>
                     </div>
@@ -116,8 +117,7 @@ export default function Footer() {
 
                 <div className="mt-12 flex flex-col gap-5 border-t border-white/10 pt-6 sm:flex-row sm:items-center sm:justify-between">
                     <p className="text-xs leading-5 text-slate-500">
-                        © {new Date().getFullYear()} SmartCityWaste. Tous
-                        droits réservés.
+                        {t("footer.droitsReserves", { annee: new Date().getFullYear() })}
                     </p>
 
                     <button
@@ -125,7 +125,7 @@ export default function Footer() {
                         onClick={scrollToTop}
                         className="inline-flex w-fit items-center gap-2 rounded-xl border border-white/10 px-3 py-2 text-xs font-medium text-slate-400 transition-colors hover:border-green-500/30 hover:text-green-400"
                     >
-                        Retour en haut
+                        {t("footer.retourEnHaut")}
                         <ArrowUp size={14} />
                     </button>
                 </div>

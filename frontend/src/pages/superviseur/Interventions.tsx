@@ -28,7 +28,7 @@ import {
   RefPill,
   SecondaryButton,
   StatutBadge,
-  libelleStatut,
+  useLibelleStatut,
   tonStatut,
 } from "../../components/ui/kit";
 import {
@@ -46,6 +46,7 @@ import { useTempsReel } from "../../hooks/useTempsReel";
 import Modal, { ConfirmDialog } from "../../components/ui/Modal";
 import FiltreDates from "../../components/ui/FiltreDates";
 import { dansPlage, plageVide, type PlageDates } from "../../utils/plageDates";
+import { LOCALE_INTL, useTranslation } from "../../i18n";
 
 type Priorite = "NORMALE" | "MOYENNE" | "HAUTE" | "CRITIQUE";
 type Filtre = "TOUTES" | "EN_ATTENTE" | "PLANIFIEE" | "EN_COURS" | "TERMINEE" | "ANNULEE";
@@ -65,19 +66,12 @@ const STATUTS_ACTIFS = ["EN_ATTENTE", "PLANIFIEE", "EN_COURS"];
 const tonPriorite = (priorite?: string) =>
   priorite === "CRITIQUE" ? "rouge" : priorite === "HAUTE" ? "orange" : priorite === "MOYENNE" ? "bleu" : "gris";
 
-const formaterDate = (valeur?: string | null) => {
-  if (!valeur) return null;
-  const date = new Date(valeur);
-
-  return Number.isNaN(date.getTime())
-    ? null
-    : new Intl.DateTimeFormat("fr-FR", { dateStyle: "medium", timeStyle: "short" }).format(date);
-};
-
 const champ =
   "h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm outline-none transition focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 disabled:bg-slate-50";
 
 const Interventions = () => {
+  const { t, langue } = useTranslation();
+  const libelleStatut = useLibelleStatut();
   const [searchParams, setSearchParams] = useSearchParams();
   const [interventions, setInterventions] = useState<Intervention[]>([]);
   const [bacs, setBacs] = useState<Bac[]>([]);
@@ -94,6 +88,15 @@ const Interventions = () => {
   const [aAnnuler, setAAnnuler] = useState<Intervention | null>(null);
   const [annulation, setAnnulation] = useState(false);
 
+  const formaterDate = (valeur?: string | null) => {
+    if (!valeur) return null;
+    const date = new Date(valeur);
+
+    return Number.isNaN(date.getTime())
+      ? null
+      : new Intl.DateTimeFormat(LOCALE_INTL[langue], { dateStyle: "medium", timeStyle: "short" }).format(date);
+  };
+
   const charger = useCallback(async (actualisation = false) => {
     try {
       setError("");
@@ -107,12 +110,12 @@ const Interventions = () => {
       setBacs(reponseBacs.bacs ?? []);
       setAgents(reponseAgents.agents ?? []);
     } catch (err: any) {
-      setError(err?.response?.data?.message || "Impossible de charger les interventions.");
+      setError(err?.response?.data?.message || t("superviseurInterventions.erreurChargement"));
     } finally {
       setLoading(false);
       setRefreshing(false);
     }
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     charger();
@@ -167,9 +170,9 @@ const Interventions = () => {
     event.preventDefault();
     setErreurForm("");
 
-    if (!form.id_bac) return setErreurForm("Veuillez sélectionner un bac.");
-    if (!form.id_agent) return setErreurForm("Veuillez sélectionner un agent de collecte.");
-    if (!form.motif.trim()) return setErreurForm("Le motif de l'intervention est obligatoire.");
+    if (!form.id_bac) return setErreurForm(t("superviseurInterventions.veuillezSelectionnerBac"));
+    if (!form.id_agent) return setErreurForm(t("superviseurInterventions.veuillezSelectionnerAgent"));
+    if (!form.motif.trim()) return setErreurForm(t("superviseurInterventions.motifObligatoire"));
 
     try {
       setEnvoi(true);
@@ -183,11 +186,11 @@ const Interventions = () => {
       });
 
       const agent = agents.find((item) => String(item.idUtilisateur) === form.id_agent);
-      toast.success(`Intervention créée. ${agent ? `${agent.prenom} ${agent.nom} a été notifié.` : ""}`);
+      toast.success(t("superviseurInterventions.interventionCreeNotifie", { nom: agent ? `${agent.prenom} ${agent.nom}` : "" }));
       setFormOuvert(false);
       await charger(true);
     } catch (err: any) {
-      setErreurForm(err?.response?.data?.message || "Impossible de planifier cette intervention.");
+      setErreurForm(err?.response?.data?.message || t("superviseurInterventions.impossiblePlanifier"));
     } finally {
       setEnvoi(false);
     }
@@ -199,11 +202,11 @@ const Interventions = () => {
     try {
       setAnnulation(true);
       await annulerInterventionSuperviseur(aAnnuler.idIntervention);
-      toast.success("Intervention annulée.");
+      toast.success(t("superviseurInterventions.interventionAnnulee"));
       setAAnnuler(null);
       await charger(true);
     } catch (err: any) {
-      toast.error(err?.response?.data?.message || "Impossible d'annuler cette intervention.");
+      toast.error(err?.response?.data?.message || t("superviseurInterventions.impossibleAnnuler"));
     } finally {
       setAnnulation(false);
     }
@@ -220,19 +223,19 @@ const Interventions = () => {
     [interventions, filtre, periode]
   );
 
-  if (loading) return <Chargement texte="Chargement des interventions..." />;
+  if (loading) return <Chargement texte={t("adminInterventions.chargementInterventions")} />;
 
   const bacChoisi = bacs.find((bac) => String(bac.id_bac) === form.id_bac);
 
   return (
     <div className="space-y-5">
       <PageHeader
-        titre="Interventions de collecte"
-        description="Planifiez la collecte des bacs et affectez un agent de votre zone."
+        titre={t("superviseurInterventions.titre")}
+        description={t("superviseurInterventions.description")}
         actions={
           <>
             <SecondaryButton icone={RefreshCw} chargement={refreshing} onClick={() => charger(true)}>
-              Actualiser
+              {t("adminDemandes.actualiser")}
             </SecondaryButton>
             <PrimaryButton
               icone={Plus}
@@ -240,13 +243,13 @@ const Interventions = () => {
               disabled={bacsPlanifiables.length === 0 || agentsDisponibles.length === 0}
               title={
                 bacsPlanifiables.length === 0
-                  ? "Aucun bac à traiter"
+                  ? t("superviseurInterventions.aucunBacATraiter")
                   : agentsDisponibles.length === 0
-                    ? "Aucun agent disponible"
+                    ? t("superviseurInterventions.aucunAgentDisponible")
                     : undefined
               }
             >
-              Planifier
+              {t("superviseurInterventions.planifier")}
             </PrimaryButton>
           </>
         }
@@ -256,41 +259,41 @@ const Interventions = () => {
 
       {agents.length === 0 && (
         <div className="rounded-2xl border border-orange-200 bg-orange-50 p-4 text-sm text-orange-800">
-          Aucun agent de collecte n'est affecté à votre zone : l'administrateur doit en affecter avant de planifier.
+          {t("superviseurInterventions.aucunAgentZone")}
         </div>
       )}
 
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4 lg:gap-4">
-        <KpiCard libelle="En attente" valeur={compte("EN_ATTENTE")} icone={Clock} teinte="orange" />
-        <KpiCard libelle="Planifiées" valeur={compte("PLANIFIEE")} icone={ClipboardList} teinte="bleu" />
-        <KpiCard libelle="En cours" valeur={compte("EN_COURS")} icone={Truck} teinte="vert" />
-        <KpiCard libelle="Terminées" valeur={compte("TERMINEE")} icone={CheckCircle2} teinte="gris" />
+        <KpiCard libelle={t("commun.statutEnAttente")} valeur={compte("EN_ATTENTE")} icone={Clock} teinte="orange" />
+        <KpiCard libelle={t("adminInterventions.optPlanifiees")} valeur={compte("PLANIFIEE")} icone={ClipboardList} teinte="bleu" />
+        <KpiCard libelle={t("commun.statutEnCours")} valeur={compte("EN_COURS")} icone={Truck} teinte="vert" />
+        <KpiCard libelle={t("adminInterventions.optTerminees")} valeur={compte("TERMINEE")} icone={CheckCircle2} teinte="gris" />
       </div>
 
       <FilterChips
         valeur={filtre}
         onChange={setFiltre}
         options={[
-          { valeur: "TOUTES", libelle: "Toutes", compteur: interventions.length },
-          { valeur: "EN_ATTENTE", libelle: "En attente", compteur: compte("EN_ATTENTE"), couleur: "#f97316" },
-          { valeur: "PLANIFIEE", libelle: "Planifiées", compteur: compte("PLANIFIEE"), couleur: "#0ea5e9" },
-          { valeur: "EN_COURS", libelle: "En cours", compteur: compte("EN_COURS"), couleur: "#16a34a" },
-          { valeur: "TERMINEE", libelle: "Terminées", compteur: compte("TERMINEE"), couleur: "#94a3b8" },
-          { valeur: "ANNULEE", libelle: "Annulées", compteur: compte("ANNULEE"), couleur: "#dc2626" },
+          { valeur: "TOUTES", libelle: t("adminDemandes.filtreToutes"), compteur: interventions.length },
+          { valeur: "EN_ATTENTE", libelle: t("commun.statutEnAttente"), compteur: compte("EN_ATTENTE"), couleur: "#f97316" },
+          { valeur: "PLANIFIEE", libelle: t("adminInterventions.optPlanifiees"), compteur: compte("PLANIFIEE"), couleur: "#0ea5e9" },
+          { valeur: "EN_COURS", libelle: t("commun.statutEnCours"), compteur: compte("EN_COURS"), couleur: "#16a34a" },
+          { valeur: "TERMINEE", libelle: t("adminInterventions.optTerminees"), compteur: compte("TERMINEE"), couleur: "#94a3b8" },
+          { valeur: "ANNULEE", libelle: t("adminInterventions.optAnnulees"), compteur: compte("ANNULEE"), couleur: "#dc2626" },
         ]}
       />
 
-      <FiltreDates valeur={periode} onChange={setPeriode} libelle="Créées" />
+      <FiltreDates valeur={periode} onChange={setPeriode} libelle={t("adminInterventions.creees")} />
 
       {visibles.length === 0 ? (
         <Card>
           <EtatVide
             icone={ClipboardList}
-            titre="Aucune intervention"
+            titre={t("superviseurInterventions.aucuneIntervention")}
             description={
               interventions.length === 0
-                ? "Utilisez « Planifier » pour créer une intervention sur un bac en alerte."
-                : "Aucune intervention ne correspond à ce filtre."
+                ? t("superviseurInterventions.utilisezPlanifier")
+                : t("superviseurInterventions.aucuneCorrespondFiltre")
             }
           />
         </Card>
@@ -316,7 +319,7 @@ const Interventions = () => {
                       <StatutBadge ton={tonStatut(intervention.statut)}>{libelleStatut(intervention.statut)}</StatutBadge>
                       <StatutBadge ton={tonPriorite(intervention.priorite)}>{libelleStatut(intervention.priorite)}</StatutBadge>
                     </div>
-                    <p className="mt-2 text-sm font-bold text-slate-900">Intervention n°{intervention.idIntervention}</p>
+                    <p className="mt-2 text-sm font-bold text-slate-900">{t("superviseurInterventions.interventionNumero", { n: intervention.idIntervention })}</p>
                     {intervention.motif && <p className="mt-0.5 line-clamp-2 text-xs text-slate-500">{intervention.motif}</p>}
                   </div>
                 </div>
@@ -331,23 +334,22 @@ const Interventions = () => {
                       {agent.telephone && (
                         <a href={`tel:${agent.telephone}`} className="inline-flex items-center gap-1 font-semibold text-emerald-700">
                           <Phone size={13} />
-                          Appeler
+                          {t("superviseurInterventions.appeler")}
                         </a>
                       )}
                     </div>
                   ) : (
-                    <p className="font-medium text-orange-600">Aucun agent affecté</p>
+                    <p className="font-medium text-orange-600">{t("superviseurDashboard.aucunAgentAffecte")}</p>
                   )}
                   {intervention.mission && (
                     <p>
-                      Mission :{" "}
-                      <span className="font-semibold">{libelleStatut(intervention.mission.statut)}</span>
+                      {t("superviseurInterventions.missionLabel", { statut: libelleStatut(intervention.mission.statut) })}
                     </p>
                   )}
                   {prevue && (
                     <p className="flex items-center gap-1.5">
                       <CalendarClock size={13} />
-                      Prévue {prevue}
+                      {t("missionCard.prevue", { date: prevue })}
                     </p>
                   )}
                 </div>
@@ -359,7 +361,7 @@ const Interventions = () => {
                       className="inline-flex items-center justify-center gap-2 rounded-2xl bg-indigo-50 px-4 py-2.5 text-sm font-bold text-indigo-700 hover:bg-indigo-100"
                     >
                       <Radar size={16} />
-                      Suivre
+                      {t("superviseurInterventions.suivre")}
                     </Link>
                     <button
                       type="button"
@@ -367,7 +369,7 @@ const Interventions = () => {
                       className="inline-flex items-center justify-center gap-2 rounded-2xl bg-red-50 px-4 py-2.5 text-sm font-bold text-red-600 hover:bg-red-100"
                     >
                       <XCircle size={16} />
-                      Annuler
+                      {t("superviseurInterventions.annuler")}
                     </button>
                   </div>
                 )}
@@ -380,8 +382,8 @@ const Interventions = () => {
       <Modal
         ouvert={formOuvert}
         onFermer={() => setFormOuvert(false)}
-        titre="Planifier une intervention"
-        description="L'agent choisi sera notifié et verra le bac concerné."
+        titre={t("superviseurInterventions.planifierUneIntervention")}
+        description={t("superviseurInterventions.agentSeraNotifie")}
       >
         <form onSubmit={soumettre}>
         {erreurForm && (
@@ -390,7 +392,7 @@ const Interventions = () => {
 
         <div className="space-y-4">
           <label className="block text-sm font-semibold text-slate-700">
-            Bac à collecter
+            {t("superviseurInterventions.bacACollecter")}
             <select
               className={`${champ} mt-1.5`}
               value={form.id_bac}
@@ -403,7 +405,7 @@ const Interventions = () => {
                 });
               }}
             >
-              <option value="">Sélectionner un bac</option>
+              <option value="">{t("adminInterventions.selectionnerBac")}</option>
               {bacsPlanifiables.map((bac) => (
                 <option key={bac.id_bac} value={bac.id_bac}>
                   {bac.reference} — {Math.round(Number(bac.niveau_remplissage))}%
@@ -412,23 +414,23 @@ const Interventions = () => {
             </select>
             {bacChoisi && bacsPlanifiables.every((bac) => bac.id_bac !== bacChoisi.id_bac) && (
               <span className="mt-1 block text-xs font-normal text-orange-600">
-                Ce bac a déjà une intervention active ou n'est plus en alerte.
+                {t("superviseurInterventions.bacDejaActifOuNormal")}
               </span>
             )}
           </label>
 
           <label className="block text-sm font-semibold text-slate-700">
-            Agent de collecte de ma zone
+            {t("superviseurInterventions.agentDeMaZone")}
             <select
               className={`${champ} mt-1.5`}
               value={form.id_agent}
               onChange={(event) => setForm({ ...form, id_agent: event.target.value })}
             >
-              <option value="">Sélectionner un agent</option>
+              <option value="">{t("superviseurInterventions.selectionnerUnAgent")}</option>
               {agents.map((agent) => (
                 <option key={agent.idUtilisateur} value={agent.idUtilisateur} disabled={agent.disponible === false}>
                   {agent.prenom} {agent.nom} —{" "}
-                  {agent.disponible === false ? "indisponible" : `${agent.missionsActives ?? 0} mission(s) active(s)`}
+                  {agent.disponible === false ? t("superviseurInterventions.indisponible") : t("superviseurInterventions.missionsActives", { n: agent.missionsActives ?? 0 })}
                 </option>
               ))}
             </select>
@@ -436,21 +438,21 @@ const Interventions = () => {
 
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <label className="block text-sm font-semibold text-slate-700">
-              Priorité
+              {t("adminInterventions.colPriorite")}
               <select
                 className={`${champ} mt-1.5`}
                 value={form.priorite}
                 onChange={(event) => setForm({ ...form, priorite: event.target.value as Priorite })}
               >
-                <option value="NORMALE">Normale</option>
-                <option value="MOYENNE">Moyenne</option>
-                <option value="HAUTE">Haute</option>
-                <option value="CRITIQUE">Critique</option>
+                <option value="NORMALE">{t("commun.prioriteNormale")}</option>
+                <option value="MOYENNE">{t("commun.prioriteMoyenne")}</option>
+                <option value="HAUTE">{t("commun.prioriteHaute")}</option>
+                <option value="CRITIQUE">{t("commun.prioriteCritique")}</option>
               </select>
             </label>
 
             <label className="block text-sm font-semibold text-slate-700">
-              Date prévue <span className="font-normal text-slate-400">(facultatif)</span>
+              {t("superviseurInterventions.datePrevue")} <span className="font-normal text-slate-400">{t("superviseurInterventions.facultatif")}</span>
               <input
                 type="datetime-local"
                 className={`${champ} mt-1.5`}
@@ -461,12 +463,12 @@ const Interventions = () => {
           </div>
 
           <label className="block text-sm font-semibold text-slate-700">
-            Motif
+            {t("adminInterventions.champMotif")}
             <textarea
               rows={3}
               maxLength={255}
               className={`${champ} mt-1.5 h-auto py-2.5`}
-              placeholder="Ex. : bac plein, débordement constaté"
+              placeholder={t("superviseurInterventions.motifPlaceholder")}
               value={form.motif}
               onChange={(event) => setForm({ ...form, motif: event.target.value })}
             />
@@ -474,9 +476,9 @@ const Interventions = () => {
         </div>
 
         <div className="mt-6 grid grid-cols-2 gap-2">
-          <SecondaryButton onClick={() => setFormOuvert(false)}>Annuler</SecondaryButton>
+          <SecondaryButton onClick={() => setFormOuvert(false)}>{t("superviseurInterventions.annuler")}</SecondaryButton>
           <PrimaryButton type="submit" chargement={envoi}>
-            Créer et notifier
+            {t("superviseurInterventions.creerEtNotifier")}
           </PrimaryButton>
         </div>
         </form>
@@ -484,13 +486,13 @@ const Interventions = () => {
 
       <ConfirmDialog
         ouvert={aAnnuler !== null}
-        titre="Annuler l'intervention ?"
+        titre={t("superviseurInterventions.annulerInterventionTitre")}
         message={
           aAnnuler
-            ? `L'intervention n°${aAnnuler.idIntervention} sera annulée et la mission de l'agent aussi.`
+            ? t("superviseurInterventions.annulerInterventionMessage", { n: aAnnuler.idIntervention })
             : ""
         }
-        libelleConfirmer="Annuler l'intervention"
+        libelleConfirmer={t("superviseurInterventions.annulerIntervention")}
         danger
         enCours={annulation}
         onConfirmer={confirmerAnnulation}

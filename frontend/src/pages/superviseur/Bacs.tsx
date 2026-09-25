@@ -20,12 +20,14 @@ import {
 } from "../../services/superviseurService";
 import { obtenirCategorieNiveauBac, type BacLevelCategory } from "../../utils/bacLevel";
 import { useTempsReel } from "../../hooks/useTempsReel";
+import { useTranslation } from "../../i18n";
 
 type Filtre = "TOUS" | BacLevelCategory;
 
 const STATUTS_ACTIFS = ["EN_ATTENTE", "PLANIFIEE", "EN_COURS"];
 
 const Bacs = () => {
+  const { t } = useTranslation();
   const [bacs, setBacs] = useState<Bac[]>([]);
   const [interventions, setInterventions] = useState<Intervention[]>([]);
   const [filtre, setFiltre] = useState<Filtre>("TOUS");
@@ -45,12 +47,12 @@ const Bacs = () => {
       setBacs(reponseBacs.bacs);
       setInterventions(reponseInterventions.interventions);
     } catch (err: any) {
-      setError(err?.response?.data?.message || "Impossible de charger les bacs.");
+      setError(err?.response?.data?.message || t("superviseurBacs.erreurChargement"));
     } finally {
       setLoading(false);
       setRefreshing(false);
     }
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     charger();
@@ -80,16 +82,16 @@ const Bacs = () => {
       .sort((a, b) => Number(b.niveau_remplissage) - Number(a.niveau_remplissage));
   }, [bacs, filtre, recherche]);
 
-  if (loading) return <Chargement texte="Chargement des bacs..." />;
+  if (loading) return <Chargement texte={t("adminBacs.chargementBacs")} />;
 
   return (
     <div className="space-y-5">
       <PageHeader
-        titre="Superviser les bacs"
-        description="État de remplissage des bacs de votre zone, mis à jour automatiquement."
+        titre={t("shell.titreSuperviserBacs")}
+        description={t("superviseurBacs.description")}
         actions={
           <SecondaryButton icone={RefreshCw} chargement={refreshing} onClick={() => charger(true)}>
-            Actualiser
+            {t("adminDemandes.actualiser")}
           </SecondaryButton>
         }
       />
@@ -102,7 +104,7 @@ const Bacs = () => {
           type="search"
           value={recherche}
           onChange={(event) => setRecherche(event.target.value)}
-          placeholder="Rechercher un bac par référence"
+          placeholder={t("superviseurBacs.rechercherPlaceholder")}
           className="h-12 w-full rounded-2xl border border-slate-200 bg-white pl-11 pr-4 text-sm shadow-sm outline-none transition focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10"
         />
       </div>
@@ -111,10 +113,10 @@ const Bacs = () => {
         valeur={filtre}
         onChange={setFiltre}
         options={[
-          { valeur: "TOUS", libelle: "Tous", compteur: bacs.length },
-          { valeur: "PLEIN", libelle: "Critiques", compteur: compte("PLEIN"), couleur: etatMeta.PLEIN.couleur },
-          { valeur: "ALERTE", libelle: "Alertes", compteur: compte("ALERTE"), couleur: etatMeta.ALERTE.couleur },
-          { valeur: "NORMAL", libelle: "Normaux", compteur: compte("NORMAL"), couleur: etatMeta.NORMAL.couleur },
+          { valeur: "TOUS", libelle: t("adminUtilisateurs.filtreTous"), compteur: bacs.length },
+          { valeur: "PLEIN", libelle: t("superviseurBacs.filtreCritiques"), compteur: compte("PLEIN"), couleur: etatMeta.PLEIN.couleur },
+          { valeur: "ALERTE", libelle: t("superviseurBacs.filtreAlertes"), compteur: compte("ALERTE"), couleur: etatMeta.ALERTE.couleur },
+          { valeur: "NORMAL", libelle: t("superviseurBacs.filtreNormaux"), compteur: compte("NORMAL"), couleur: etatMeta.NORMAL.couleur },
         ]}
       />
 
@@ -122,8 +124,8 @@ const Bacs = () => {
         <Card>
           <EtatVide
             icone={Trash2}
-            titre="Aucun bac trouvé"
-            description={bacs.length === 0 ? "Aucun bac n'est enregistré dans votre zone." : "Modifiez la recherche ou le filtre."}
+            titre={t("superviseurBacs.aucunBacTitre")}
+            description={bacs.length === 0 ? t("superviseurBacs.aucunBacZone") : t("superviseurBacs.modifierRechercheFiltre")}
           />
         </Card>
       ) : (

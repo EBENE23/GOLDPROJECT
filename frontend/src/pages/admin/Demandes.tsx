@@ -31,11 +31,12 @@ import {
   SecondaryButton,
   SectionTitle,
   StatutBadge,
-  dateRelative,
+  useDateRelative,
 } from "../../components/ui/kit";
 import { useConfirmation } from "../../hooks/useConfirmation";
 import api from "../../services/api";
 import { dansPlage, plageVide, type PlageDates } from "../../utils/plageDates";
+import { useTranslation } from "../../i18n";
 
 type DemandeRole = "SUPERVISEUR" | "AGENT_COLLECTE";
 type DemandeStatut = "EN_ATTENTE" | "APPROUVEE" | "REFUSEE";
@@ -62,17 +63,6 @@ interface OccupationZone {
   placesAgents: number;
 }
 
-const LIBELLE_ROLE: Record<DemandeRole, string> = {
-  SUPERVISEUR: "Superviseur",
-  AGENT_COLLECTE: "Agent de collecte",
-};
-
-const LIBELLE_STATUT: Record<DemandeStatut, string> = {
-  EN_ATTENTE: "En attente",
-  APPROUVEE: "Approuvée",
-  REFUSEE: "Refusée",
-};
-
 const TON_STATUT: Record<DemandeStatut, "orange" | "vert" | "rouge"> = {
   EN_ATTENTE: "orange",
   APPROUVEE: "vert",
@@ -82,13 +72,6 @@ const TON_STATUT: Record<DemandeStatut, "orange" | "vert" | "rouge"> = {
 // Une zone peut-elle accueillir ce rôle ? (mêmes règles que le serveur)
 const zoneAccepte = (zone: OccupationZone, role: DemandeRole) =>
   role === "SUPERVISEUR" ? zone.superviseurLibre : zone.placesAgents > 0;
-
-const motifRefusZone = (zone: OccupationZone, role: DemandeRole) => {
-  if (zoneAccepte(zone, role)) return null;
-  return role === "SUPERVISEUR"
-    ? `Déjà supervisée par ${zone.superviseur?.prenom ?? ""} ${zone.superviseur?.nom ?? ""}`.trim()
-    : `Complète (${zone.nbAgents}/${zone.maxAgents} agents)`;
-};
 
 function JaugeAgents({ nb, max }: { nb: number; max: number }) {
   const plein = nb >= max;
@@ -109,6 +92,8 @@ function JaugeAgents({ nb, max }: { nb: number; max: number }) {
 }
 
 export default function Demandes() {
+  const { t } = useTranslation();
+  const dateRelative = useDateRelative();
   const { confirmer, dialogue } = useConfirmation();
   const [demandes, setDemandes] = useState<DemandeInscription[]>([]);
   const [zones, setZones] = useState<OccupationZone[]>([]);
@@ -123,6 +108,24 @@ export default function Demandes() {
   const [zoneChoisie, setZoneChoisie] = useState<number | null>(null);
   const [enCours, setEnCours] = useState<number | null>(null);
   const [erreurAction, setErreurAction] = useState("");
+
+  const LIBELLE_ROLE: Record<DemandeRole, string> = {
+    SUPERVISEUR: t("shell.roleSuperviseur"),
+    AGENT_COLLECTE: t("shell.roleAgent"),
+  };
+
+  const LIBELLE_STATUT: Record<DemandeStatut, string> = {
+    EN_ATTENTE: t("commun.statutEnAttente"),
+    APPROUVEE: t("commun.statutApprouvee"),
+    REFUSEE: t("commun.statutRefusee"),
+  };
+
+  const motifRefusZone = (zone: OccupationZone, roleDemande: DemandeRole) => {
+    if (zoneAccepte(zone, roleDemande)) return null;
+    return roleDemande === "SUPERVISEUR"
+      ? t("adminDemandes.dejaSuperviseePar", { nom: `${zone.superviseur?.prenom ?? ""} ${zone.superviseur?.nom ?? ""}`.trim() })
+      : t("adminDemandes.complete", { nb: zone.nbAgents, max: zone.maxAgents });
+  };
 
   const charger = useCallback(async (manuel = false) => {
     try {
@@ -139,12 +142,12 @@ export default function Demandes() {
       );
       setZones(reponseZones.data?.zones ?? []);
     } catch (err: any) {
-      setErreur(err?.response?.data?.message || "Impossible de charger les demandes d'inscription.");
+      setErreur(err?.response?.data?.message || t("adminDemandes.erreurChargement"));
     } finally {
       setLoading(false);
       setActualisation(false);
     }
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     charger();
@@ -175,7 +178,7 @@ export default function Demandes() {
 
   const zonesDuRole = useMemo(
     () => (selection ? zones.map((zone) => ({ zone, motif: motifRefusZone(zone, selection.roleDemande) })) : []),
-    [zones, selection]
+    [zones, selection, t]
   );
   const auMoinsUneZoneLibre = zonesDuRole.some(({ motif }) => motif === null);
 
@@ -187,17 +190,17 @@ export default function Demandes() {
 
   const approuver = async () => {
     if (!selection) return;
-    if (!zoneChoisie) return setErreurAction("Choisissez la zone d'affectation.");
+    if (!zoneChoisie) return setErreurAction(t("adminDemandes.choisirZone"));
 
     try {
       setEnCours(selection.idDemande);
       setErreurAction("");
       await api.put(`/demandes-inscription/${selection.idDemande}/approuver`, { idZone: zoneChoisie });
-      toast.success(`${selection.prenom} ${selection.nom} est inscrit(e) et peut se connecter.`);
+      toast.success(t("adminDemandes.inscritEtPeutSeConnecter", { nom: `${selection.prenom} ${selection.nom}` }));
       setSelection(null);
       await charger(true);
     } catch (err: any) {
-      setErreurAction(err?.response?.data?.message || "Impossible d'approuver la demande.");
+      setErreurAction(err?.response?.data?.message || t("adminDemandes.impossibleApprouver"));
       await charger(true);
     } finally {
       setEnCours(null);
@@ -206,9 +209,9 @@ export default function Demandes() {
 
   const refuser = async (demande: DemandeInscription) => {
     const ok = await confirmer({
-      titre: "Refuser cette demande ?",
-      message: `${demande.prenom} ${demande.nom} ne pourra pas accéder à la plateforme avec cette demande.`,
-      libelle: "Refuser",
+      titre: t("adminDemandes.refuserTitre"),
+      message: t("adminDemandes.refuserMessage", { nom: `${demande.prenom} ${demande.nom}` }),
+      libelle: t("adminDemandes.refuser"),
       danger: true,
     });
     if (!ok) return;
@@ -216,26 +219,26 @@ export default function Demandes() {
     try {
       setEnCours(demande.idDemande);
       await api.put(`/demandes-inscription/${demande.idDemande}/refuser`);
-      toast.success("Demande refusée.");
+      toast.success(t("adminDemandes.demandeRefusee"));
       setSelection(null);
       await charger(true);
     } catch (err: any) {
-      toast.error(err?.response?.data?.message || "Impossible de refuser la demande.");
+      toast.error(err?.response?.data?.message || t("adminDemandes.impossibleRefuser"));
     } finally {
       setEnCours(null);
     }
   };
 
-  if (loading) return <Chargement texte="Chargement des demandes..." />;
+  if (loading) return <Chargement texte={t("adminDemandes.chargement")} />;
 
   return (
     <div className="space-y-5">
       <PageHeader
-        titre="Demandes d'inscription"
-        description="Vérifiez les demandes, puis affectez chaque personne à une zone."
+        titre={t("adminDemandes.titre")}
+        description={t("adminDemandes.description")}
         actions={
           <SecondaryButton icone={RefreshCw} chargement={actualisation} onClick={() => charger(true)}>
-            Actualiser
+            {t("adminDemandes.actualiser")}
           </SecondaryButton>
         }
       />
@@ -244,9 +247,9 @@ export default function Demandes() {
 
       <div className="grid grid-cols-3 gap-3">
         {[
-          { libelle: "En attente", valeur: compte.attente, icone: Clock3, classe: "bg-orange-50 text-orange-600" },
-          { libelle: "Approuvées", valeur: compte.approuvees, icone: Check, classe: "bg-emerald-50 text-emerald-600" },
-          { libelle: "Refusées", valeur: compte.refusees, icone: UserX, classe: "bg-red-50 text-red-600" },
+          { libelle: t("commun.statutEnAttente"), valeur: compte.attente, icone: Clock3, classe: "bg-orange-50 text-orange-600" },
+          { libelle: t("adminDemandes.kpiApprouvees"), valeur: compte.approuvees, icone: Check, classe: "bg-emerald-50 text-emerald-600" },
+          { libelle: t("adminDemandes.kpiRefusees"), valeur: compte.refusees, icone: UserX, classe: "bg-red-50 text-red-600" },
         ].map(({ libelle, valeur, icone: Icone, classe }) => (
           <Card key={libelle} className="p-3.5 sm:p-4">
             <span className={`mb-2 flex h-9 w-9 items-center justify-center rounded-xl ${classe}`}>
@@ -261,8 +264,8 @@ export default function Demandes() {
       <section className="space-y-3">
         <SectionTitle
           icone={MapPin}
-          titre="Occupation des zones"
-          sousTitre="Chaque zone a un seul superviseur et 5 agents de collecte au plus"
+          titre={t("adminDemandes.occupationZonesTitre")}
+          sousTitre={t("adminDemandes.occupationZonesSousTitre")}
         />
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
           {zones.map((zone) => (
@@ -270,9 +273,9 @@ export default function Demandes() {
               <div className="flex items-center justify-between gap-2">
                 <p className="truncate font-bold text-slate-900">{zone.nomZone}</p>
                 {zone.superviseurLibre ? (
-                  <StatutBadge ton="orange">Sans superviseur</StatutBadge>
+                  <StatutBadge ton="orange">{t("adminDemandes.sansSuperviseurBadge")}</StatutBadge>
                 ) : (
-                  <StatutBadge ton="vert">Supervisée</StatutBadge>
+                  <StatutBadge ton="vert">{t("adminDemandes.superviseeBadge")}</StatutBadge>
                 )}
               </div>
 
@@ -285,13 +288,13 @@ export default function Demandes() {
                     </p>
                   </>
                 ) : (
-                  <p className="text-sm text-slate-400">Poste de superviseur vacant</p>
+                  <p className="text-sm text-slate-400">{t("adminDemandes.posteVacant")}</p>
                 )}
               </div>
 
               <div className="mt-3">
                 <p className="mb-1 flex items-center gap-1.5 text-xs font-medium text-slate-500">
-                  <Users size={12} /> Agents de collecte
+                  <Users size={12} /> {t("adminDemandes.agentsDeCollecte")}
                 </p>
                 <JaugeAgents nb={zone.nbAgents} max={zone.maxAgents} />
               </div>
@@ -305,10 +308,10 @@ export default function Demandes() {
           valeur={statut}
           onChange={setStatut}
           options={[
-            { valeur: "EN_ATTENTE", libelle: "En attente", compteur: compte.attente, couleur: "#f97316" },
-            { valeur: "APPROUVEE", libelle: "Approuvées", compteur: compte.approuvees, couleur: "#16a34a" },
-            { valeur: "REFUSEE", libelle: "Refusées", compteur: compte.refusees, couleur: "#dc2626" },
-            { valeur: "TOUS", libelle: "Toutes", compteur: demandes.length },
+            { valeur: "EN_ATTENTE", libelle: t("commun.statutEnAttente"), compteur: compte.attente, couleur: "#f97316" },
+            { valeur: "APPROUVEE", libelle: t("adminDemandes.kpiApprouvees"), compteur: compte.approuvees, couleur: "#16a34a" },
+            { valeur: "REFUSEE", libelle: t("adminDemandes.kpiRefusees"), compteur: compte.refusees, couleur: "#dc2626" },
+            { valeur: "TOUS", libelle: t("adminDemandes.filtreToutes"), compteur: demandes.length },
           ]}
         />
 
@@ -318,7 +321,7 @@ export default function Demandes() {
             <input
               value={recherche}
               onChange={(e) => setRecherche(e.target.value)}
-              placeholder="Rechercher par nom ou e-mail…"
+              placeholder={t("adminDemandes.rechercherPlaceholder")}
               className="h-11 w-full rounded-xl border border-slate-200 bg-white pl-10 pr-3 text-sm outline-none transition focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10"
             />
           </div>
@@ -327,20 +330,20 @@ export default function Demandes() {
             onChange={(e) => setRole(e.target.value as "TOUS" | DemandeRole)}
             className="h-11 rounded-xl border border-slate-200 bg-white px-3 text-sm font-medium outline-none focus:border-emerald-500"
           >
-            <option value="TOUS">Tous les rôles</option>
-            <option value="SUPERVISEUR">Superviseur</option>
-            <option value="AGENT_COLLECTE">Agent de collecte</option>
+            <option value="TOUS">{t("adminDemandes.tousLesRoles")}</option>
+            <option value="SUPERVISEUR">{t("shell.roleSuperviseur")}</option>
+            <option value="AGENT_COLLECTE">{t("shell.roleAgent")}</option>
           </select>
         </div>
-        <FiltreDates valeur={periode} onChange={setPeriode} libelle="Demandes reçues" />
+        <FiltreDates valeur={periode} onChange={setPeriode} libelle={t("adminDemandes.demandesRecues")} />
       </section>
 
       {visibles.length === 0 ? (
         <Card>
           <EtatVide
             icone={UserPlus}
-            titre={statut === "EN_ATTENTE" ? "Aucune demande en attente" : "Aucune demande trouvée"}
-            description="Les nouvelles demandes apparaîtront ici."
+            titre={statut === "EN_ATTENTE" ? t("adminDemandes.aucuneDemandeAttente") : t("adminDemandes.aucuneDemandeTrouvee")}
+            description={t("adminDemandes.nouvellesApparaitront")}
           />
         </Card>
       ) : (
@@ -368,7 +371,7 @@ export default function Demandes() {
                       <Phone size={12} className="shrink-0" /> {demande.telephone}
                     </p>
                   )}
-                  <p className="mt-1.5 text-[11px] text-slate-400">Reçue {dateRelative(demande.dateDemande)}</p>
+                  <p className="mt-1.5 text-[11px] text-slate-400">{t("adminDemandes.recue", { temps: dateRelative(demande.dateDemande) })}</p>
                 </div>
               </div>
 
@@ -376,7 +379,7 @@ export default function Demandes() {
                 {demande.statut === "EN_ATTENTE" ? (
                   <>
                     <PrimaryButton icone={UserCheck} className="flex-1 !py-2.5" onClick={() => ouvrir(demande)}>
-                      Approuver
+                      {t("adminDemandes.approuver")}
                     </PrimaryButton>
                     <button
                       type="button"
@@ -384,12 +387,12 @@ export default function Demandes() {
                       disabled={enCours === demande.idDemande}
                       className="inline-flex items-center justify-center gap-2 rounded-2xl bg-red-50 px-4 py-2.5 text-sm font-bold text-red-600 transition hover:bg-red-100 active:scale-[0.98] disabled:opacity-50"
                     >
-                      <UserX size={16} /> Refuser
+                      <UserX size={16} /> {t("adminDemandes.refuser")}
                     </button>
                   </>
                 ) : (
                   <SecondaryButton className="flex-1 !py-2.5" onClick={() => ouvrir(demande)}>
-                    Consulter
+                    {t("adminDemandes.consulter")}
                   </SecondaryButton>
                 )}
               </div>
@@ -401,7 +404,7 @@ export default function Demandes() {
       <Modal
         ouvert={selection !== null}
         onFermer={() => setSelection(null)}
-        titre={selection?.statut === "EN_ATTENTE" ? "Approuver la demande" : "Détail de la demande"}
+        titre={selection?.statut === "EN_ATTENTE" ? t("adminDemandes.approuverLaDemande") : t("adminDemandes.detailDemande")}
         description={selection ? `${selection.prenom} ${selection.nom} · ${LIBELLE_ROLE[selection.roleDemande]}` : undefined}
         largeur="lg"
       >
@@ -411,7 +414,7 @@ export default function Demandes() {
               <Avatar prenom={selection.prenom} nom={selection.nom} photo={selection.photoProfil} taille={64} />
               <div className="min-w-0 text-sm">
                 <p className="truncate text-slate-700">{selection.email}</p>
-                <p className="text-slate-500">{selection.telephone || "Téléphone non renseigné"}</p>
+                <p className="text-slate-500">{selection.telephone || t("adminDemandes.telephoneNonRenseigne")}</p>
                 <div className="mt-1.5">
                   <StatutBadge ton={TON_STATUT[selection.statut]}>{LIBELLE_STATUT[selection.statut]}</StatutBadge>
                 </div>
@@ -421,11 +424,11 @@ export default function Demandes() {
             {selection.statut === "EN_ATTENTE" && (
               <>
                 <div>
-                  <p className="text-sm font-semibold text-slate-700">Zone d'affectation</p>
+                  <p className="text-sm font-semibold text-slate-700">{t("adminDemandes.zoneAffectation")}</p>
                   <p className="mt-0.5 text-xs text-slate-500">
                     {selection.roleDemande === "SUPERVISEUR"
-                      ? "Une zone n'a qu'un seul superviseur : seules les zones sans superviseur sont proposées."
-                      : "Une zone compte 5 agents de collecte au plus."}
+                      ? t("adminDemandes.zoneUniqueSuperviseur")
+                      : t("adminDemandes.zoneMax5Agents")}
                   </p>
 
                   <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
@@ -450,7 +453,9 @@ export default function Demandes() {
                             {choisie && <CheckCircle2 size={18} className="text-emerald-600" />}
                           </span>
                           <span className="mt-1 block text-xs text-slate-500">
-                            {zone.superviseur ? `Superviseur : ${zone.superviseur.prenom} ${zone.superviseur.nom}` : "Sans superviseur"}
+                            {zone.superviseur
+                              ? t("adminDemandes.superviseurLabel", { nom: `${zone.superviseur.prenom} ${zone.superviseur.nom}` })
+                              : t("adminDemandes.sansSuperviseurBadge")}
                           </span>
                           <span className="mt-2 block">
                             <JaugeAgents nb={zone.nbAgents} max={zone.maxAgents} />
@@ -458,7 +463,7 @@ export default function Demandes() {
                           {motif && <span className="mt-1.5 block text-[11px] font-semibold text-orange-600">{motif}</span>}
                           {!motif && sansSuperviseur && (
                             <span className="mt-1.5 block text-[11px] font-semibold text-orange-600">
-                              Aucun superviseur pour l'instant
+                              {t("adminDemandes.aucunSuperviseurPourInstant")}
                             </span>
                           )}
                         </button>
@@ -469,7 +474,7 @@ export default function Demandes() {
                   {!auMoinsUneZoneLibre && (
                     <p className="mt-3 flex items-start gap-2 rounded-xl bg-orange-50 p-3 text-xs text-orange-700">
                       <AlertTriangle size={15} className="mt-0.5 shrink-0" />
-                      Aucune zone ne peut accueillir cette personne pour le moment.
+                      {t("adminDemandes.aucuneZoneDisponible")}
                     </p>
                   )}
                 </div>
@@ -485,7 +490,7 @@ export default function Demandes() {
                     disabled={enCours === selection.idDemande}
                     className="inline-flex items-center justify-center gap-2 rounded-2xl bg-red-50 px-4 py-3 text-sm font-bold text-red-600 transition hover:bg-red-100 active:scale-[0.98] disabled:opacity-50"
                   >
-                    <UserX size={17} /> Refuser
+                    <UserX size={17} /> {t("adminDemandes.refuser")}
                   </button>
                   <PrimaryButton
                     icone={UserCheck}
@@ -493,7 +498,7 @@ export default function Demandes() {
                     disabled={!zoneChoisie}
                     onClick={approuver}
                   >
-                    Approuver
+                    {t("adminDemandes.approuver")}
                   </PrimaryButton>
                 </div>
               </>
