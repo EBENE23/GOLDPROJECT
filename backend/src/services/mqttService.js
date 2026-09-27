@@ -47,30 +47,19 @@ const creerNotificationAlerte = async ({
     return;
   }
 
-  if (nouvelEtat === "NORMAL") {
+  // On ne notifie le superviseur que lorsque le bac devient critique (PLEIN).
+  // Les passages à ALERTE (ou tout changement de remplissage intermédiaire) ne
+  // génèrent volontairement aucune notification, pour éviter de le noyer sous
+  // des alertes pour chaque petite variation de niveau.
+  if (nouvelEtat !== "PLEIN") {
     return;
   }
 
-  let contenu = "";
-
-  if (nouvelEtat === "ALERTE") {
-    contenu =
-      `Alerte : le bac ${bac.reference} a atteint ` +
-      `${bac.niveau_remplissage}% de remplissage. ` +
-      `Une intervention peut être planifiée.`;
-  }
-
-  if (nouvelEtat === "PLEIN") {
-    contenu =
-      `Urgence : le bac ${bac.reference} est plein ` +
-      `avec un niveau de remplissage de ` +
-      `${bac.niveau_remplissage}%. ` +
-      `Une intervention est nécessaire.`;
-  }
-
-  if (!contenu) {
-    return;
-  }
+  const contenu =
+    `Urgence : le bac ${bac.reference} est plein ` +
+    `avec un niveau de remplissage de ` +
+    `${bac.niveau_remplissage}%. ` +
+    `Une intervention est nécessaire.`;
 
   await Notification.create(
     {

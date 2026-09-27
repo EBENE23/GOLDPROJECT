@@ -174,6 +174,14 @@ export default function AppShell({ config }: { config: ShellConfig }) {
     setFeuillePlus(false); // eslint-disable-line react-hooks/set-state-in-effect
   }, [pathname]);
 
+  // Un seul onglet correspond à la cloche (notifications, ou demandes pour l'admin) :
+  // c'est celui-là qui doit porter le petit point rouge quand il y a du nouveau.
+  const aUneNotification = compteur > 0;
+  const estCibleCloche = (item: NavItem) => item.path === config.cloche.path;
+  const PointRouge = () => (
+    <span className="absolute -right-0.5 -top-0.5 h-2.5 w-2.5 rounded-full bg-red-500 ring-2 ring-white" aria-hidden="true" />
+  );
+
   const tous = useMemo(() => [...config.navigation, ...config.compte], [config]);
   const courant = useMemo(
     () =>
@@ -232,7 +240,10 @@ export default function AppShell({ config }: { config: ShellConfig }) {
           actif ? "bg-(--accent-active) text-white shadow-sm" : "text-white/65 hover:bg-white/10 hover:text-white"
         }`}
       >
-        <Icone size={17} strokeWidth={1.9} />
+        <span className="relative flex shrink-0">
+          <Icone size={17} strokeWidth={1.9} />
+          {aUneNotification && estCibleCloche(item) && <PointRouge />}
+        </span>
         <span className="truncate">{item.label}</span>
       </NavLink>
     );
@@ -339,7 +350,10 @@ export default function AppShell({ config }: { config: ShellConfig }) {
                     actif ? "text-emerald-800" : "text-slate-500"
                   }`}
                 >
-                  <Icone size={22} strokeWidth={actif ? 2.4 : 1.8} />
+                  <span className="relative flex shrink-0">
+                    <Icone size={22} strokeWidth={actif ? 2.4 : 1.8} />
+                    {aUneNotification && estCibleCloche(item) && <PointRouge />}
+                  </span>
                   <span className="max-w-full truncate">{item.label}</span>
                 </NavLink>
               </li>
@@ -353,7 +367,10 @@ export default function AppShell({ config }: { config: ShellConfig }) {
                 plusActif ? "text-emerald-800" : "text-slate-500"
               }`}
             >
-              <MoreHorizontal size={22} strokeWidth={plusActif ? 2.4 : 1.8} />
+              <span className="relative flex shrink-0">
+                <MoreHorizontal size={22} strokeWidth={plusActif ? 2.4 : 1.8} />
+                {aUneNotification && !barre.some(estCibleCloche) && <PointRouge />}
+              </span>
               {t("shell.plus")}
             </button>
           </li>
@@ -383,7 +400,10 @@ export default function AppShell({ config }: { config: ShellConfig }) {
                   actif ? "bg-emerald-50 text-emerald-800" : "bg-slate-50 text-slate-600 hover:bg-slate-100"
                 }`}
               >
-                <Icone size={22} />
+                <span className="relative flex shrink-0">
+                  <Icone size={22} />
+                  {aUneNotification && estCibleCloche(item) && <PointRouge />}
+                </span>
                 <span className="leading-tight">{item.label}</span>
               </Link>
             );
