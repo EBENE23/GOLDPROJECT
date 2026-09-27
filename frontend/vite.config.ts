@@ -36,6 +36,13 @@ export default defineConfig({
         // est refusé par défaut ("Blocked request. This host is not allowed.").
         // Nécessaire pour partager l'application via un tunnel.
         allowedHosts: true,
+        // Derrière un tunnel, le port public vu par le navigateur (443, HTTPS)
+        // n'est pas le port local (5173) : sans ce réglage, le script de
+        // rechargement à chaud de Vite essaie de se connecter sur le mauvais
+        // port et reste bloqué indéfiniment (page blanche qui ne finit jamais
+        // de charger). En local (VITE_HTTPS=true, pas de tunnel), on garde le
+        // comportement par défaut qui fonctionne déjà correctement.
+        hmr: httpsLocal ? undefined : { protocol: "wss", clientPort: 443 },
     },
     preview: {
         host: true,
